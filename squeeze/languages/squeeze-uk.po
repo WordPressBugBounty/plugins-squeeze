@@ -1,0 +1,1394 @@
+# Copyright (C) 2023 Bogdan Bendziukov
+# This file is distributed under the GNU GPL v3.
+msgid ""
+msgstr ""
+"Project-Id-Version: Squeeze 1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/squeeze\n"
+"POT-Creation-Date: 2026-01-09T16:02:15+00:00\n"
+"PO-Revision-Date: 2026-01-09 16:22+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"X-Generator: Poedit 3.1.1\n"
+"X-Domain: squeeze\n"
+
+#. Plugin Name of the plugin
+msgid "Squeeze – Image Optimization & Compression, WebP Conversion"
+msgstr "Squeeze - Оптимізація та стиснення зображень, перетворення у WebP"
+
+#. Description of the plugin
+msgid ""
+"Compress unlimited images directly into your browser. Convert images to WebP "
+"format. No limits on file size or number of images. No third-party services "
+"or API keys required."
+msgstr ""
+"Стискайте необмежену кількість зображень безпосередньо у браузері. "
+"Конвертуйте зображення у формат WebP. Без обмежень на розмір файлу або "
+"кількість зображень. Не потрібні сторонні сервіси або ключі API."
+
+#. Author of the plugin
+msgid "Bogdan Bendziukov"
+msgstr "Богдан Бендзюков"
+
+#. Author URI of the plugin
+msgid "https://pluginarium.com"
+msgstr ""
+
+#: freemius.php:12 squeeze.php:432
+msgid "Go Premium"
+msgstr "Хочу Преміум"
+
+#: freemius.php:13 freemius.php:14
+msgid "Congratulations"
+msgstr "Вітаємо"
+
+#: inc/handlers.php:43 inc/handlers.php:264 inc/handlers.php:314
+#: inc/handlers.php:818
+msgid "You do not have permission to upload files"
+msgstr "У вас немає дозволу на завантаження файлів"
+
+#: inc/handlers.php:47 inc/helpers.php:95
+msgid "No image data found"
+msgstr "Медіа дані не знайдено"
+
+#: inc/handlers.php:65
+msgid "Invalid image format"
+msgstr "Невірний формат зображення"
+
+#: inc/handlers.php:74 inc/handlers.php:240 inc/handlers.php:268
+msgid "Attachment not found"
+msgstr "Медіафайл не знайдено"
+
+#: inc/handlers.php:81 inc/handlers.php:281 assets/js/parallel.js:66
+#: assets/js/script.bundle.js:49 assets/js/squeeze.js:214
+msgid "Attachment is excluded from compression"
+msgstr "Вкладення виключено зі стиснення"
+
+#: inc/handlers.php:81 inc/handlers.php:281 inc/settings.php:970
+#: assets/js/script.bundle.js:49 assets/js/squeeze.js:214
+msgid "found substring: "
+msgstr "знайдено підрядок: "
+
+#: inc/handlers.php:127
+msgid "Compressed image size is greater than original size."
+msgstr "Розмір стисненого зображення більший за розмір оригіналу."
+
+#: inc/handlers.php:128
+msgid ""
+"Please try to change your <a href=\"%s\" target=\"_blank\">compression "
+"settings</a> by decreasing the quality or compression level."
+msgstr ""
+"Спробуйте змінити <a href=\"%s\" target=\"_blank\">налаштування стиснення</"
+"a>, зменшивши якість або рівень стиснення."
+
+#: inc/handlers.php:212 inc/handlers.php:230
+msgid "Squeezed successfully"
+msgstr "Стиснуто успішно"
+
+#: inc/handlers.php:250
+msgid "Restored successfully"
+msgstr "Відновлено успішно"
+
+#: inc/handlers.php:252
+msgid "Attachment not restored"
+msgstr "Медіафайл не відновлено"
+
+#: inc/handlers.php:318
+msgid "Path not found"
+msgstr "Папку не знайдено"
+
+#: inc/handlers.php:390
+msgid "Images were not found in the selected directories"
+msgstr "Зображення не знайдено у вибраних каталогах"
+
+#: inc/handlers.php:423 tests/HandlersTest.php:663 tests/HandlersTest.php:678
+#: tests/HandlersTest.php:692
+msgid "Restore Original Image"
+msgstr "Відновити оригінальне зображення"
+
+#: inc/handlers.php:424 tests/HandlersTest.php:664 tests/HandlersTest.php:679
+#: tests/HandlersTest.php:693
+msgid "Squeeze Image"
+msgstr "Стиснути зображення"
+
+#: inc/handlers.php:425 tests/HandlersTest.php:665 tests/HandlersTest.php:680
+#: tests/HandlersTest.php:694
+msgid "Delete Backup Image"
+msgstr "Видалити резервне зображення"
+
+#: inc/handlers.php:426 tests/HandlersTest.php:666 tests/HandlersTest.php:681
+#: tests/HandlersTest.php:695
+msgid "Delete WEBP Image"
+msgstr "Видалити WEBP-зображення"
+
+#. translators: %d: number of attachments restored
+#: inc/handlers.php:487
+msgid "%d attachment restored."
+msgid_plural "%d attachments restored."
+msgstr[0] "%d медіафайл відновлено."
+msgstr[1] "%d медіафайли відновлено."
+msgstr[2] "%d медіафайлів відновлено."
+
+#. translators: %d: number of attachments squeezed
+#: inc/handlers.php:500
+msgid "%d attachment squeezed."
+msgid_plural "%d attachments squeezed."
+msgstr[0] "%d медіафайл стиснуто."
+msgstr[1] "%d медіафайли стиснуто."
+msgstr[2] "%d медіафайлів стиснуто."
+
+#. translators: %d: number of backup images deleted
+#: inc/handlers.php:513
+msgid "%d backup image deleted."
+msgid_plural "%d backup images deleted."
+msgstr[0] "%d резервне зображення видалено."
+msgstr[1] "Резервних зображення видалено."
+msgstr[2] "Резервних зображень видалено."
+
+#. translators: %d: number of webp images deleted
+#: inc/handlers.php:526
+msgid "%d WEBP image deleted."
+msgid_plural "%d WEBP images deleted."
+msgstr[0] "%d WEBP-зображення видалено."
+msgstr[1] "Резервних зображення видалено."
+msgstr[2] "Резервних зображень видалено."
+
+#: inc/handlers.php:574
+msgid ""
+"Single file upload is not supported for the image compression by Squeeze. "
+"Please use multi-file uploader or bulk squeeze."
+msgstr ""
+"Одиночне завантаження не підтримується для стиснення зображень за допомогою "
+"Squeeze. Будь ласка, використовуйте багатофайлове завантаження або масове "
+"стиснення."
+
+#: inc/handlers.php:824
+msgid "Options not found"
+msgstr "Параметри не знайдено"
+
+#: inc/handlers.php:830
+msgid "Options not saved"
+msgstr "Параметри не збережено"
+
+#: inc/handlers.php:833
+msgid "Options saved successfully"
+msgstr "Параметри успішно збережено"
+
+#: inc/helpers.php:54
+msgid "Backup original image failed"
+msgstr "Не вдалося створити резервну копію оригінального зображення"
+
+#: inc/helpers.php:87 inc/helpers.php:163
+msgid "Upload image failed"
+msgstr "Не вдалося завантажити зображення"
+
+#: inc/helpers.php:173 inc/helpers.php:189
+msgid "No WebP data found"
+msgstr "Дані WebP не знайдено"
+
+#: inc/helpers.php:261
+msgid "Backup image not found"
+msgstr "Резервне зображення не знайдено"
+
+#: inc/helpers.php:272
+msgid "Restore original image failed"
+msgstr "Відновлення оригінального зображення не вдалося"
+
+#: inc/helpers.php:349
+msgid "Size Name"
+msgstr "Розмір"
+
+#: inc/helpers.php:349
+msgid "Original Size"
+msgstr "Початковий"
+
+#: inc/helpers.php:349
+msgid "Squeezed Size"
+msgstr "Стиснутий"
+
+#: inc/helpers.php:349
+msgid "Savings"
+msgstr "Збережено"
+
+#: inc/premium/premium.php:22
+msgid "Page URL not found"
+msgstr "URL-адресу сторінки не знайдено"
+
+#: inc/premium/premium.php:38
+msgid "URL is not from the same domain"
+msgstr "URL-адреса не з того самого домену"
+
+#: inc/premium/premium.php:48
+msgid "Error fetching the page:"
+msgstr "Помилка при завантаженні сторінки:"
+
+#: inc/premium/premium.php:220 inc/premium/premium.php:224
+msgid "No images found on the page"
+msgstr "На сторінці не знайдено жодного зображення"
+
+#: inc/premium/premium.php:300 inc/settings.php:38 inc/settings.php:966
+#: inc/settings.php:989 tests/SettingsTest.php:535
+msgid "Squeeze"
+msgstr ""
+
+#: inc/premium/premium.php:310
+msgid "Squeeze images from this page"
+msgstr "Стиснути зображення з цієї сторінки"
+
+#: inc/premium/premium.php:313
+msgid "Squeeze images from the current page"
+msgstr "Стиснути зображення з поточної сторінки"
+
+#: inc/premium/premium.php:323 squeeze.php:427 assets/js/script.bundle.js:39
+#: assets/js/script.js:560
+msgid "Settings"
+msgstr "Налаштування"
+
+#: inc/premium/premium.php:326
+msgid "Squeeze settings"
+msgstr "Налаштування Squeeze"
+
+#: inc/premium/premium.php:391
+msgid "File name not found"
+msgstr "Ім'я файлу не знайдено"
+
+#: inc/settings.php:37
+msgid "Squeeze Settings"
+msgstr "Налаштування Squeeze"
+
+#: inc/settings.php:48 inc/settings.php:49 squeeze.php:428
+#: assets/js/admin.bundle.js:19 assets/js/admin.js:199 assets/js/admin.js:275
+msgid "Bulk Squeeze"
+msgstr "Масове стиснення"
+
+#: inc/settings.php:94
+msgid "Bulk Media Library Squeeze"
+msgstr "Масове стиснення зображень із меідатеки"
+
+#: inc/settings.php:104
+msgid "Heads up! Direct WebP conversion is enabled."
+msgstr "Увага! Пряме перетворення у WebP увімкнено."
+
+#: inc/settings.php:105
+msgid ""
+"Your JPG/PNG images will be automatically converted to WebP. To avoid broken "
+"links, please check and update any places where you've hard-coded JPG/PNG "
+"URLs (e.g. image blocks, custom HTML, CSS, or shortcodes)."
+msgstr ""
+"Ваші зображення у форматі JPG/PNG будуть автоматично конвертовані у WebP. "
+"Щоб уникнути непрацюючих посилань, будь ласка, перевірте та оновіть всі "
+"місця, де ви ввели URL-адреси JPG/PNG (наприклад, блоки зображень, "
+"користувацький HTML, CSS або шорткоди)."
+
+#: inc/settings.php:123
+msgid "Squeezed images: "
+msgstr "Стиснуті зображення: "
+
+#: inc/settings.php:134 assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39 assets/js/helpers.js:206
+#: assets/js/script.bundle.js:29
+msgid "Run Bulk Squeeze"
+msgstr "Масове стиснення"
+
+#: inc/settings.php:140 assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39 assets/js/helpers.js:207
+#: assets/js/script.bundle.js:29
+msgid "Repeat Bulk Squeeze"
+msgstr "Повторити масове стиснення"
+
+#: inc/settings.php:148
+msgid "Directory Squeeze"
+msgstr "Стиснення каталогів"
+
+#: inc/settings.php:157
+msgid "Heads up! Automatic backup is not available here."
+msgstr "Увага! Автоматичне резервне копіювання тут недоступне."
+
+#: inc/settings.php:158
+msgid ""
+"Please make a manual backup of your images before starting directory "
+"squeezing."
+msgstr ""
+"Будь ласка, зробіть резервну копію зображень вручну перед початком стискання "
+"з каталогів."
+
+#: inc/settings.php:164
+msgid "Directory Path:"
+msgstr "Шлях до каталогу:"
+
+#: inc/settings.php:185 inc/settings.php:209
+msgid "Select Directory"
+msgstr "Вибрати каталог"
+
+#: inc/settings.php:189
+msgid "Select Directory for Squeeze"
+msgstr "Виберіть каталог для стиснення"
+
+#: inc/settings.php:201
+msgid "Loading directories..."
+msgstr "Завантаження каталогів..."
+
+#: inc/settings.php:219 assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39 assets/js/helpers.js:208
+#: assets/js/script.bundle.js:29
+msgid "Run Directory Squeeze"
+msgstr "Стиснення каталогів"
+
+#: inc/settings.php:231
+msgid "Single Page Squeeze"
+msgstr "Стиснення зображень зі сторінки"
+
+#: inc/settings.php:251
+msgid "Fetching images..."
+msgstr "Отримання зображень..."
+
+#: inc/settings.php:262
+msgid "Pause Squeezing"
+msgstr "Призупинити стиснення"
+
+#: inc/settings.php:278
+msgid "Processed formats:"
+msgstr "Формати, що обробляються:"
+
+#: inc/settings.php:279
+msgid ""
+"You can change the image formats for squeezing on the <a href=\"%s\" target="
+"\"_blank\">settings page.</a>"
+msgstr ""
+"Ви можете змінити формати зображень для стиснення на <a href=\"%s\" target="
+"\"_blank\">сторінці налаштувань.</a>"
+
+#: inc/settings.php:289
+msgid "Start Squeezing your images and watch the progress here."
+msgstr "Почніть стискати свої зображення і стежте за прогресом тут."
+
+#: inc/settings.php:318
+msgid ""
+"The Apache mod_rewrite module is not enabled on your server OR your server "
+"is not running Apache."
+msgstr ""
+"На вашому сервері не ввімкнено модуль Apache mod_rewrite АБО на вашому "
+"сервері не запущено Apache."
+
+#: inc/settings.php:319
+msgid ""
+"In order to make WebP serving work, you need to check the \"Replace images "
+"URLs\" option OR enable the mod_rewrite module."
+msgstr ""
+"Для того, щоб WebP-сервіс працював, вам потрібно увімкнути опцію \"Замінити "
+"URL-адреси зображень\" АБО увімкнути модуль mod_rewrite."
+
+#: inc/settings.php:339 inc/settings.php:368 inc/settings.php:544
+msgid "Basic Settings"
+msgstr "Основні налаштування"
+
+#: inc/settings.php:340 inc/settings.php:381 inc/settings.php:575
+msgid "JPEG Settings"
+msgstr "Налаштування JPEG"
+
+#: inc/settings.php:341 inc/settings.php:405 inc/settings.php:605
+msgid "PNG Settings"
+msgstr "Налаштування PNG"
+
+#: inc/settings.php:342 inc/settings.php:418 inc/settings.php:609
+msgid "WEBP Settings"
+msgstr "Налаштування WEBP"
+
+#: inc/settings.php:343 inc/settings.php:431 inc/settings.php:616
+msgid "AVIF Settings"
+msgstr "Налаштування AVIF"
+
+#: inc/settings.php:344 inc/settings.php:444 squeeze.php:429
+msgid "Documentation"
+msgstr "Документація"
+
+#: inc/settings.php:346 inc/settings.php:471
+msgid "Upgrade"
+msgstr "Преміум тут"
+
+#: inc/settings.php:352
+msgid "Your License"
+msgstr "Ваша ліцензія"
+
+#: inc/settings.php:392
+msgid "JPEG Advanced Settings"
+msgstr "Розширені налаштування JPEG"
+
+#: inc/settings.php:445
+msgid "Documentation for Squeeze plugin."
+msgstr "Документація для плагіна Squeeze."
+
+#: inc/settings.php:455
+msgid ""
+"For more information, please visit the <a href=\"%s\" target=\"_blank"
+"\">official documentation website</a>."
+msgstr ""
+"Для отримання додаткової інформації, будь ласка, відвідайте <a href=\"%s\" "
+"target=\"_blank\">офіційний сайт</a>."
+
+#: inc/settings.php:478
+msgid "Image Comparison"
+msgstr "Зображення ДО-ПІСЛЯ"
+
+#: inc/settings.php:478
+msgid "Compare original and Squeezed image directly in the Media Library."
+msgstr "Порівняйте оригінал і стиснене зображення безпосередньо в медіатеці."
+
+#: inc/settings.php:479
+msgid "Resize Original Image"
+msgstr "Змінити розмір оригінального зображення"
+
+#: inc/settings.php:479
+msgid "Set maximum width and height for the original image."
+msgstr "Встановіть максимальну ширину та висоту для вихідного зображення."
+
+#: inc/settings.php:480
+msgid "Bulk Squeeze from a Page"
+msgstr "Масове вилучення зі сторінки"
+
+#: inc/settings.php:480
+msgid "Compress all images from a specific page."
+msgstr "Стиснути всі зображення з певної сторінки."
+
+#: inc/settings.php:481
+msgid "Image Exclusion"
+msgstr "Виключення зображення"
+
+#: inc/settings.php:481
+msgid "Exclude specific images from bulk compression."
+msgstr "Виключити певні зображення з масового стиснення."
+
+#: inc/settings.php:498
+msgid ""
+"To upgrade to the Premium version, <a href=\"%s\" target=\"_blank\">click "
+"here</a>."
+msgstr ""
+"Щоб перейти на Преміум-версію, <a href=\"%s\" target=\"_blank\">натисніть "
+"тут</a>."
+
+#: inc/settings.php:516
+msgid "Your license hasn't been activated"
+msgstr "Ваша ліцензія не активована"
+
+#: inc/settings.php:521
+msgid ""
+"After you entered your license key, you will receive a confirmation email. "
+"Pleae click on the confirmation button in that email to complete the opt in."
+msgstr ""
+"Після того, як ви введете ліцензійний ключ, ви отримаєте лист з "
+"підтвердженням. Будь ласка, натисніть на кнопку підтвердження в цьому листі, "
+"щоб завершити реєстрацію."
+
+#: inc/settings.php:529
+msgid "Save Changes"
+msgstr "Зберегти зміни"
+
+#: inc/settings.php:530
+msgid "Restore defaults"
+msgstr "Відновлення налаштувань за замовчуванням"
+
+#: inc/settings.php:546
+msgid "Squeeze on upload"
+msgstr "Стискати при завантаженні"
+
+#: inc/settings.php:547
+msgid "Backup original image"
+msgstr "Створити резервну копію оригінального зображення"
+
+#: inc/settings.php:549
+msgid "Image formats"
+msgstr "Формати зображення"
+
+#: inc/settings.php:549
+msgid "Select which image formats you want to be squeezed."
+msgstr "Оберіть які формати зображень ви хочете стискати."
+
+#: inc/settings.php:551
+msgid "Direct WebP Conversion"
+msgstr "Пряме перетворення WebP"
+
+#: inc/settings.php:551
+msgid ""
+"Convert all uploaded images to WEBP format and replace the originals. The "
+"original JPEG/PNG files are not stored on the server, which reduces disk "
+"usage."
+msgstr ""
+"Конвертувати всі завантажені зображення у формат WEBP і замінити оригінали. "
+"Оригінальні файли JPEG/PNG не зберігаються на сервері, що зменшує "
+"використання диска."
+
+#: inc/settings.php:552
+msgid "Generate WEBP"
+msgstr "Згенерувати WEBP"
+
+#: inc/settings.php:552
+msgid ""
+"Instead of the original image URL, the image will be served in WEBP format. "
+"WEBP images are stored in a separate directory: wp-content/squeeze-webp."
+msgstr ""
+"Замість оригінальної URL-адреси зображення буде подано у форматі WEBP. WEBP-"
+"зображення зберігаються в окремому каталозі: wp-content/squeeze-webp."
+
+#: inc/settings.php:552
+msgid ""
+"This is the old method, in case you already have images being converted "
+"using this approach. Otherwise, it is recommended that you use the direct "
+"WEBP conversion method above."
+msgstr ""
+"Це старий метод, на випадок, якщо у вас вже є зображення, перетворені за "
+"допомогою цього підходу. В іншому випадку рекомендується використовувати "
+"метод прямого перетворення WEBP, описаний вище."
+
+#: inc/settings.php:553
+msgid "Replace images URLs"
+msgstr "Замінити URL-адреси зображень"
+
+#: inc/settings.php:553
+msgid ""
+"If the method above does not work, try this option. This method replaces the "
+"original URLs of the images with related WEBP images."
+msgstr ""
+"Якщо наведений вище метод не працює, спробуйте цей варіант. Цей метод "
+"замінює оригінальні URL-адреси зображень на відповідні WEBP-зображення."
+
+#: inc/settings.php:557
+msgid "CDN URL"
+msgstr "URL-адреса CDN"
+
+#: inc/settings.php:557
+msgid "If your site is using CDN, please enter the URL of your CDN here."
+msgstr ""
+"Якщо ваш сайт використовує CDN, будь ласка, введіть тут URL-адресу вашого "
+"CDN."
+
+#: inc/settings.php:560
+msgid "Squeeze thumbnails"
+msgstr "Стиснути мініатюри"
+
+#: inc/settings.php:560
+msgid ""
+"Choose which image thumbnail sizes you want to squeeze along with the "
+"original image."
+msgstr ""
+"Виберіть розміри мініатюр зображення, які ви хочете стиснути разом із "
+"оригінальним зображенням."
+
+#: inc/settings.php:563 inc/settings.php:567
+msgid "Max. image width"
+msgstr "Максимальна ширина зображення"
+
+#: inc/settings.php:563 inc/settings.php:567
+msgid ""
+"Limit a width of an original image. Leave this field empty if you do not "
+"want to crop the image by width."
+msgstr ""
+"Обмежте ширину оригінального зображення. Залиште це поле порожнім, якщо ви "
+"не хочете обрізати зображення по ширині."
+
+#: inc/settings.php:564 inc/settings.php:568
+msgid "Max. image height"
+msgstr "Максимальна висота зображення"
+
+#: inc/settings.php:564 inc/settings.php:568
+msgid ""
+"Limit a height of an original image. Leave this field empty if you do not "
+"want to crop the image by height."
+msgstr ""
+"Обмежте висоту оригінального зображення. Залиште це поле порожнім, якщо ви "
+"не хочете обрізати зображення по висоті."
+
+#: inc/settings.php:565 inc/settings.php:569
+msgid "Excluded images"
+msgstr "Виключені зображення"
+
+#: inc/settings.php:565 inc/settings.php:569
+msgid ""
+"Enter a list of images that you want to exclude from squeezing. Both full "
+"URLs and partial strings can be used. One URL per line."
+msgstr ""
+"Введіть список зображень, які потрібно виключити зі стискання. Можна "
+"використовувати як повні URL-адреси, так і часткові рядки. Один URL на рядок."
+
+#: inc/settings.php:572
+msgid "Squeeze timeout"
+msgstr "Тайм-аут стискання"
+
+#: inc/settings.php:572
+msgid ""
+"Time limit for squeezing an image. If you get an error during image "
+"squeezing, try to increase this value."
+msgstr ""
+"Ліміт часу для стискання зображення. Якщо ви отримуєте помилку під час "
+"стискання зображення, спробуйте збільшити це значення."
+
+#: inc/settings.php:577 inc/settings.php:607 inc/settings.php:612
+#: inc/settings.php:618
+msgid "Quality"
+msgstr "Якість"
+
+#: inc/settings.php:578
+msgid "Smoothing"
+msgstr "Згладжування"
+
+#: inc/settings.php:579
+msgid "Pointless spec compliance"
+msgstr ""
+
+#: inc/settings.php:582
+msgid "Progressive rendering"
+msgstr ""
+
+#: inc/settings.php:583
+msgid "Optimize Huffman table"
+msgstr ""
+
+#: inc/settings.php:584
+msgid "Channels"
+msgstr ""
+
+#: inc/settings.php:585
+msgid "Quantization"
+msgstr ""
+
+#: inc/settings.php:596
+msgid "Trellis multipass"
+msgstr ""
+
+#: inc/settings.php:597
+msgid "Optimize zero block runs"
+msgstr ""
+
+#: inc/settings.php:598
+msgid "Optimize after trellis quantization"
+msgstr ""
+
+#: inc/settings.php:599
+msgid "Trellis quantization passes"
+msgstr ""
+
+#: inc/settings.php:600
+msgid "Auto subsample chroma"
+msgstr ""
+
+#: inc/settings.php:601
+msgid "Subsample chroma by"
+msgstr ""
+
+#: inc/settings.php:602
+msgid "Separate chroma quality"
+msgstr ""
+
+#: inc/settings.php:603
+msgid "Chroma quality"
+msgstr ""
+
+#: inc/settings.php:611
+msgid "Effort"
+msgstr ""
+
+#: inc/settings.php:613
+msgid "Lossless"
+msgstr ""
+
+#: inc/settings.php:614
+msgid "Near lossless"
+msgstr ""
+
+#: inc/settings.php:664
+msgid "Settings have been updated."
+msgstr "Налаштування було оновлено."
+
+#: inc/settings.php:793
+msgid "(mandatory when Direct WEBP is enabled)"
+msgstr "(обов'язково, коли увімкнено Direct WEBP)"
+
+#: inc/settings.php:811
+msgid ""
+"This feature is available only in the <a href=\"%s\">premium version</a>."
+msgstr ""
+"Ця функція доступна лише в <a href=\"%s\" target=\"_blank\">преміум-версії</"
+"a>."
+
+#: inc/settings.php:825 inc/settings.php:848 inc/settings.php:874
+msgid "Example:"
+msgstr "Приклад:"
+
+#: inc/settings.php:828 inc/settings.php:851
+msgid "Before"
+msgstr "До"
+
+#: inc/settings.php:829 inc/settings.php:835 inc/settings.php:853
+#: inc/settings.php:860
+msgid "image.jpg"
+msgstr ""
+
+#: inc/settings.php:829 inc/settings.php:835 inc/settings.php:853
+msgid "500 KB"
+msgstr ""
+
+#: inc/settings.php:830 inc/settings.php:836 inc/settings.php:854
+#: inc/settings.php:861
+msgid "image-100x100.jpg"
+msgstr ""
+
+#: inc/settings.php:830 inc/settings.php:836 inc/settings.php:854
+msgid "98 KB"
+msgstr ""
+
+#: inc/settings.php:831 inc/settings.php:837 inc/settings.php:855
+#: inc/settings.php:862
+msgid "image-300x300.jpg"
+msgstr ""
+
+#: inc/settings.php:831 inc/settings.php:837 inc/settings.php:855
+msgid "230 KB"
+msgstr ""
+
+#: inc/settings.php:834 inc/settings.php:858
+msgid "After"
+msgstr "Після"
+
+#: inc/settings.php:838 inc/settings.php:864
+msgid "image.webp"
+msgstr ""
+
+#: inc/settings.php:838 inc/settings.php:864
+msgid "50 KB"
+msgstr ""
+
+#: inc/settings.php:839 inc/settings.php:865
+msgid "image-100x100.webp"
+msgstr ""
+
+#: inc/settings.php:839 inc/settings.php:865
+msgid "5 KB"
+msgstr ""
+
+#: inc/settings.php:840 inc/settings.php:866
+msgid "image-300x300.webp"
+msgstr ""
+
+#: inc/settings.php:840 inc/settings.php:866
+msgid "20 KB"
+msgstr ""
+
+#: inc/settings.php:852 inc/settings.php:859
+msgid "/uploads/2025/07/"
+msgstr ""
+
+#: inc/settings.php:860
+msgid "100 KB"
+msgstr ""
+
+#: inc/settings.php:861
+msgid "15 KB"
+msgstr ""
+
+#: inc/settings.php:862
+msgid "40 KB"
+msgstr ""
+
+#: inc/settings.php:863
+msgid "/squeeze-webp/uploads/2025/07/"
+msgstr ""
+
+#: inc/settings.php:877
+msgid "Example image"
+msgstr "Приклад зображення"
+
+#: inc/settings.php:889
+msgid "Basic squeezing settings."
+msgstr "Основні налаштування стискання зображень."
+
+#: inc/settings.php:892
+msgid "Squeezing settings for JPEG images."
+msgstr "Налаштування для JPEG зображень."
+
+#: inc/settings.php:895
+msgid "More precise settings for experienced users."
+msgstr "Більш точні налаштування стиснення для досвідчених користувачів."
+
+#: inc/settings.php:898
+msgid "Squeezing settings for PNG images."
+msgstr "Налаштування для PNG зображень."
+
+#: inc/settings.php:901
+msgid "Squeezing settings for WebP images."
+msgstr "Налаштування для WebP зображень."
+
+#: inc/settings.php:904
+msgid "Squeezing settings for Avif images."
+msgstr "Налаштування для Avif зображень."
+
+#: inc/settings.php:907
+msgid "Upgrade to premium version for more features."
+msgstr "Оновіть до преміум-версії, щоб отримати більше функцій."
+
+#: inc/settings.php:911
+msgid ""
+"To activate your license and manage your account details (e.g. to receive "
+"security & feature updates notifications), please enter your license key."
+msgstr ""
+"Щоб активувати ліцензію та керувати даними свого облікового запису "
+"(наприклад, отримувати сповіщення про оновлення безпеки та функцій), введіть "
+"свій ліцензійний ключ."
+
+#: inc/settings.php:923
+msgid "Opt In & Connect"
+msgstr "Зареєструватися та підключитися"
+
+#: inc/settings.php:934
+msgid "Settings have been restored."
+msgstr "Налаштування відновлено."
+
+#: inc/settings.php:936
+msgid "Settings have not been restored."
+msgstr "Налаштування не було відновлено."
+
+#: inc/settings.php:944
+msgid "Rewrite rules have been flushed."
+msgstr "Налаштування посилань було оновлено."
+
+#: inc/settings.php:968
+msgid "Image format is not selected for compression in the plugin settings"
+msgstr "Формат зображення не вибрано для стиснення в налаштуваннях плагіна"
+
+#: inc/settings.php:970
+msgid "Image is excluded from compression"
+msgstr "Зображення виключено зі стиснення"
+
+#: inc/settings.php:973
+msgid "Squeezed"
+msgstr "Стиснуто"
+
+#: inc/settings.php:974
+msgid "Restore original image"
+msgstr "Відновити оригінальне зображення"
+
+#: inc/settings.php:975
+msgid "Re-Squeeze image"
+msgstr "Повторно стиснути зображення"
+
+#: inc/settings.php:977
+msgid "Not squeezed"
+msgstr "Не стиснутий"
+
+#: inc/settings.php:978
+msgid "Squeeze Now"
+msgstr "Стиснути"
+
+#: inc/settings.php:1059 assets/js/admin.bundle.js:19 assets/js/admin.js:178
+msgid "Squeeze: All images"
+msgstr "Squeeze: Усі зображення"
+
+#: inc/settings.php:1060 assets/js/admin.bundle.js:19 assets/js/admin.js:186
+msgid "Non Squeezed Images"
+msgstr "Не стиснуті зображення"
+
+#: inc/settings.php:1149 assets/js/script.bundle.js:39 assets/js/script.js:435
+msgid "Image comparison with Squeeze"
+msgstr "Порівняння зображення для стиснення"
+
+#: inc/settings.php:1151 assets/js/script.bundle.js:39 assets/js/script.js:447
+msgid "(<a href=\"%s\" target=\"_blank\">premium only</a>)"
+msgstr "(<a href=\"%s\" target=\"_blank\">тільки преміум</a>)"
+
+#: inc/settings.php:1184
+msgid ""
+"The WebP Express plugin is active. Please deactivate it in order to use "
+"correct WebP serving from <strong>Squeeze plugin</strong>."
+msgstr ""
+"Плагін WebP Express активний. Будь ласка, вимкніть його, щоб використовувати "
+"коректне конвертування WebP зображень з <strong>плагіна Squeeze</strong>."
+
+#: inc/settings.php:1196
+msgid ""
+"The Image Converter for WebP plugin is active. Please deactivate it in order "
+"to use correct WebP serving from <strong>Squeeze plugin</strong>."
+msgstr ""
+"Плагін Image Converter for WebP активний. Будь ласка, вимкніть його, щоб "
+"використовувати коректне конвертування WebP зображень з <strong>плагіна "
+"Squeeze</strong>."
+
+#: squeeze.php:199
+msgid ""
+"Confirmation email was sent! Please check your inbox to complete the Squeeze "
+"Premium setup."
+msgstr ""
+"Підтвердження відправлено на електронну пошту! Будь ласка, перевірте свою "
+"поштову скриньку, щоб завершити налаштування Squeeze Premium."
+
+#: assets/js/4240e511ac61ecfff2d8.js:299
+#: assets/js/assets_js_squeeze_js-assets_js_worker_js.script.bundle.js:19
+msgid "Request timed out."
+msgstr "Час очікування запиту минув."
+
+#: assets/js/4240e511ac61ecfff2d8.js:487
+#: assets/js/assets_js_squeeze_js-assets_js_worker_js.script.bundle.js:19
+msgid "Skipped"
+msgstr "Пропущено"
+
+#: assets/js/admin.bundle.js:19 assets/js/admin.js:238
+msgid "Please select at least one image."
+msgstr "Будь ласка, виберіть хоча б одне зображення."
+
+#: assets/js/admin.bundle.js:19 assets/js/admin.bundle.js:29
+#: assets/js/admin.bundle.js:39 assets/js/admin.js:254
+#: assets/js/editor.bundle.js:29 assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:225 assets/js/handlers copy.js:162 copy.js:513
+#: assets/js/helpers.js:627 assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29 assets/js/script.bundle.js:39
+#: assets/js/script.js:163 assets/js/script.js:169
+msgid "Squeezing..."
+msgstr "Стискання..."
+
+#: assets/js/admin.bundle.js:19 assets/js/admin.bundle.js:29
+#: assets/js/admin.js:262 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:197 assets/js/handlers.js:489
+#: assets/js/script.bundle.js:19 assets/js/script.bundle.js:39
+#: assets/js/script.js:74
+msgid "Squeezing complete"
+msgstr "Стискання завершено"
+
+#: assets/js/admin.bundle.js:19 assets/js/admin.bundle.js:29
+#: assets/js/admin.js:263 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:195 assets/js/handlers.js:198
+#: assets/js/handlers.js:487 assets/js/handlers copy.js:141 copy.js:469
+#: assets/js/script.bundle.js:19 assets/js/script.bundle.js:39
+#: assets/js/script.js:72 assets/js/script.js:75
+msgid "All images have been processed!"
+msgstr "Всі зображення були оброблені!"
+
+#: assets/js/admin.bundle.js:19 assets/js/admin.bundle.js:29
+#: assets/js/admin.js:270 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:209 assets/js/handlers.js:449
+#: assets/js/handlers.js:502 assets/js/handlers copy.js:150 copy.js:431
+#: copy.js:477 assets/js/script.bundle.js:19 assets/js/script.bundle.js:39
+#: assets/js/script.js:86 assets/js/script.js:185
+msgid "An error has occured. Check the console for details."
+msgstr "Виникла помилка. Перевірте консоль для отримання подробиць."
+
+#: assets/js/admin.bundle.js:29 assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:29 assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:47 assets/js/handlers copy.js:290
+#: assets/js/helpers.js:110 assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29
+msgid "Media"
+msgstr "Медіа"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:72 assets/js/handlers.js:296 assets/js/handlers
+#: copy.js:23 copy.js:225 assets/js/script.bundle.js:19
+msgid "Resume bulk squeezing"
+msgstr "Відновити стиснення"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:72 assets/js/handlers copy.js:23
+#: assets/js/script.bundle.js:19
+msgid "Pause bulk squeezing"
+msgstr "Призупинити стиснення"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:146 assets/js/script.bundle.js:19
+msgid "Restoring the original image..."
+msgstr "Відновлення оригінального зображення..."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:149 assets/js/script.bundle.js:19
+msgid ""
+"Still restoring... Just need to regenerate thumbnails, please wait a moment."
+msgstr ""
+"Все ще відновлюється.. Лише потрібно перегенерувати мініатюри, зачекайте "
+"хвильку."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:184 assets/js/handlers.js:476 assets/js/handlers
+#: copy.js:128 copy.js:458 assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:39 assets/js/script.js:61
+msgid "Pausing..."
+msgstr "Пауза..."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:230 assets/js/script.bundle.js:19
+msgid "Still squeezing... This may take a while depending on the image size."
+msgstr ""
+"Ще стискається.. Це може зайняти певний час, залежно від розміру зображення."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:283 assets/js/handlers copy.js:212
+#: assets/js/script.bundle.js:19
+msgid ""
+"Are you sure you want to leave this page? The squeezing process will be "
+"terminated!"
+msgstr ""
+"Ви впевнені, що хочете залишити сторінку? Процесс стиснення зображень буде "
+"перерваний!"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:286 assets/js/handlers copy.js:215
+#: assets/js/script.bundle.js:19
+msgid ""
+"Are you sure you want to leave this page? The settings will not be saved!"
+msgstr ""
+"Ви впевнені, що хочете залишити сторінку? Налаштування не будуть збережені!"
+
+#: assets/js/admin.bundle.js:29 assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:29 assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:292 assets/js/handlers copy.js:221
+#: assets/js/helpers.js:110 assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29
+msgid "Bulk squeezing has been paused!"
+msgstr "Стиснення було зупинене!"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:323 assets/js/handlers copy.js:312 copy.js:320
+#: assets/js/script.bundle.js:19
+msgid "No more images found!"
+msgstr "Більше зображень не знайдено!"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:347 assets/js/handlers copy.js:331
+#: assets/js/parallel.js:35 assets/js/script.bundle.js:19
+msgid "Start squeezing..."
+msgstr "Починаємо стискання..."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:436 assets/js/handlers copy.js:420
+#: assets/js/script.bundle.js:19
+msgid "Found images on the page:"
+msgstr "Знайдено зображень на сторінці:"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:445 assets/js/handlers copy.js:427
+#: assets/js/script.bundle.js:19
+msgid "Error:"
+msgstr "Помилка:"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:452 assets/js/handlers.js:455 assets/js/handlers
+#: copy.js:434 copy.js:437 assets/js/script.bundle.js:19
+msgid ""
+"An error has occurred while fetching images from the page. Check the console "
+"for details."
+msgstr ""
+"Виникла помилка під час завантаження зображень зі сторінки. Зверніться до "
+"консолі для отримання подробиць."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:490 assets/js/script.bundle.js:19
+msgid "All images from the page have been processed!"
+msgstr "Всі зображення зі сторінки були оброблені!"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:490 assets/js/script.bundle.js:19
+msgid "You will be redirected back to the page after you close this message."
+msgstr ""
+"Ви будете перенаправленні назад на сторінку після закриття цього "
+"повідомлення."
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:606 assets/js/script.bundle.js:19
+msgid "File is excluded from compression:"
+msgstr "Вкладення виключено зі стиснення:"
+
+#: assets/js/admin.bundle.js:29 assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:606 assets/js/script.bundle.js:19
+msgid "File compression failed:"
+msgstr "Не вдалося стиснути файл:"
+
+#: assets/js/admin.bundle.js:39 assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:110 assets/js/script.bundle.js:29
+msgid "Bulk squeezing has been completed!"
+msgstr "Масове стиснення було зупинене!"
+
+#: assets/js/admin.bundle.js:39 assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:119 assets/js/helpers.js:123
+#: assets/js/script.bundle.js:29
+msgid "Show details"
+msgstr "Показати деталі"
+
+#: assets/js/admin.bundle.js:39 assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:123 assets/js/script.bundle.js:29
+msgid "Hide details"
+msgstr "Сховати деталі"
+
+#: assets/js/admin.bundle.js:39 assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:257 assets/js/script.bundle.js:29
+msgid "No directories found!"
+msgstr "Каталоги не знайдено!"
+
+#: assets/js/admin.bundle.js:39 assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:333 assets/js/script.bundle.js:29
+msgid "Error parsing path input!"
+msgstr "Помилка при обробці шляху до каталогу!"
+
+#: assets/js/editor.bundle.js:19 assets/js/editor.js:78
+#: assets/js/editor__old.js:131
+msgid "Squeezing image…"
+msgstr "Стискаємо зображення…"
+
+#: assets/js/editor.bundle.js:19 assets/js/editor.js:123
+#: assets/js/editor__old.js:30 assets/js/script.bundle.js:39
+#: assets/js/script.js:349
+msgid "Error fetching attachment: %s"
+msgstr "Помилка при завантаженні вкладення: %s"
+
+#: assets/js/editor.bundle.js:19 assets/js/editor.js:156
+#: assets/js/editor__old.js:60
+msgid "Error uploading image: %s"
+msgstr "Помилка при завантаженні зображення: %s"
+
+#: assets/js/editor.bundle.js:19 assets/js/editor.js:290
+#: assets/js/script.bundle.js:39 assets/js/script.js:273
+msgid "Squeezing the image..."
+msgstr "Стискаємо зображення..."
+
+#: assets/js/editor.bundle.js:19 assets/js/editor.js:362
+#: assets/js/editor.js:378
+msgid "Error squeezing the image: %s"
+msgstr "Помилка при стисканні зображення: %s"
+
+#: assets/js/handlers copy.js:95
+msgid "Restore in process..."
+msgstr "Відновлення в процесі..."
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:37
+msgid "Please enter a valid path!"
+msgstr "Будьте ласкаві, введіть коректний шлях до папки!"
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:362
+msgid "Squeezing thumbnails..."
+msgstr "Стискаю мініатюри..."
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:386
+msgid "Successfully squeezed!"
+msgstr "Стиснуто успішно!"
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:391
+#: assets/js/script.js:399
+msgid ""
+"Something went wrong during compression. Check the console for more details."
+msgstr ""
+"Щось пішло не так під час стиснення. Перевірте консоль для отримання більш "
+"детальної інформації."
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:434
+#: assets/js/script.js:468
+msgid "Compare Squeeze"
+msgstr "Порівняти"
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:468
+msgid "Loading..."
+msgstr "Завантаження..."
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:561
+#: assets/js/script.js:604
+msgid "Collapse"
+msgstr "Сховати"
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:562
+msgid "Apply"
+msgstr "Застосувати"
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:577
+msgid ""
+"An error occurred while rendering the preview. Check the console for details."
+msgstr ""
+"Виникла помилка під час завантаження попереднього перегляду. Зверніться до "
+"консолі для отримання подробиць."
+
+#: assets/js/script.bundle.js:39 assets/js/script.js:607
+msgid "Expand"
+msgstr "Показати"
+
+#: assets/js/script.bundle.js:49 assets/js/squeeze.js:93
+#: assets/js/squeeze.js:496
+msgid ""
+"Request timed out. Try to increase the timeout limit on the Squeeze <a "
+"target=\"_blank\" href=\"%s\">settings page</a>."
+msgstr ""
+"Час очікування запиту закінчився. Спробуйте збільшити час очікування на <a "
+"target=\"_blank\" href=\"%s\">сторінці налаштувань</a> Squeeze."
+
+#: assets/js/script.bundle.js:49 assets/js/squeeze.js:262
+msgid ""
+"Skipped: the image is broken or its format is not supported or excluded from "
+"squeezing."
+msgstr ""
+"Пропущено: зображення пошкоджене або його формат не підтримується чи "
+"виключений із стиснення."
+
+#: assets/js/script.bundle.js:49 assets/js/squeeze.js:548
+msgid "Image conversion blocked by browser privacy setting"
+msgstr ""
+"Перетворення зображень заблоковано налаштуваннями конфіденційності браузера"
+
+#~ msgid "Squeeze Preview"
+#~ msgstr "Попередній перегляд"
+
+#~ msgid "Restore original"
+#~ msgstr "Відновити оригінальне зображення"
+
+#~ msgid "Squeeze again"
+#~ msgstr "Стиснути знову"
+
+#~ msgid "All images have been processed."
+#~ msgstr "Всі зображення були обробленію"
+
+#~ msgid "Warning! You have enabled Direct WebP image conversion option."
+#~ msgstr "Увага! Ви увімкнули опцію прямого перетворення зображень WebP."
+
+#~ msgid ""
+#~ "All existing JPG/PNG images will be converted to WebP format. Make sure "
+#~ "to update your existing image URLs accordingly."
+#~ msgstr ""
+#~ "Всі існуючі зображення у форматі JPG/PNG будуть конвертовані у формат "
+#~ "WebP. Переконайтеся, що ви оновили URL-адреси існуючих зображень "
+#~ "відповідним чином."
+
+#~ msgid "Warning! Backup option is NOT applicable here."
+#~ msgstr "Увага! Опція резервного копіювання тут НЕ застосовується."
+
+#~ msgid "Log will be displayed here"
+#~ msgstr "Тут відображатиметься журнал"
+
+#~ msgid "Generate WEBP <br>(legacy method)"
+#~ msgstr "Згенерувати WEBP <br>(застарілий метод)"
+
+#~ msgid ""
+#~ "Generate and serve WEBP images for all uploaded images. The original "
+#~ "image URL remains the same, instead the image will be served in a WEBP "
+#~ "format."
+#~ msgstr ""
+#~ "Створювати і подавати WEBP-зображення для всіх завантажених зображень. "
+#~ "URL-адреса оригінального зображення залишається незмінною, натомість "
+#~ "зображення буде подано у форматі WEBP."
+
+#~ msgid "Upload WEBP image failed"
+#~ msgstr "Не вдалося завантажити WEBP зображення"
+
+#~ msgid "Attachment WEBP not updated"
+#~ msgstr "Медіафайл WEBP не оновлено"
+
+#~ msgid "Attachment not updated"
+#~ msgstr "Медіафайл не оновлено"
+
+#~ msgid "Replace original URLs of images with the related WEBP images."
+#~ msgstr ""
+#~ "Замініть оригінальні URL-адреси зображень на відповідні WEBP-зображення."
+
+#~ msgid "Supported formats: JPG, PNG, AVIF, WebP"
+#~ msgstr "Підтримувані формати: JPG, PNG, AVIF, WebP"
+
+#~ msgid "Generate WEBP images for all uploaded images."
+#~ msgstr "Згенеруйте WEBP-зображення для всіх завантажених зображень."
+
+#~ msgid "Squeeze Supported"
+#~ msgstr "Підтримувані Squeeze"
+
+#~ msgid "Images that can be compressed by Squeeze"
+#~ msgstr "Зображення, що можуть бути стиснуті із Squeeze"
+
+#~ msgid "Squeeze Bulk"
+#~ msgstr "Масове стиснення"
+
+#~ msgid "Optimise uncompressed images"
+#~ msgstr "Оптимізація нестиснутих зображень"
+
+#~ msgid "Re-Optimise all images"
+#~ msgstr "Повторно оптимізуйте всі зображення"
+
+#~ msgid "Optimise images from custom path"
+#~ msgstr "Оптимізуйте зображення із папки"
+
+#~ msgid ""
+#~ "Are you sure you want to leave this page? The compression process will be "
+#~ "terminated!"
+#~ msgstr ""
+#~ "Ви впевнені, що хочете залишити сторінку? Процесс стиснення зображень "
+#~ "буде перерваний!"
+
+#~ msgid "Compressing..."
+#~ msgstr "Стискаємо..."
+
+#~ msgid "Compressed successfully, updating..."
+#~ msgstr "Успішно стиснуто, оновлення..."
+
+#~ msgid "All images have been compressed!"
+#~ msgstr "Всі зображення були стиснуті!"
+
+#~ msgid "All images have been re-compressed again!"
+#~ msgstr "Всі зображення були повторно стиснуті!"
+
+#~ msgid "Compressed successfully"
+#~ msgstr "Компресія успішна"
+
+#~ msgid "Compressed images: "
+#~ msgstr "Стиснуті зображення:"
+
+#~ msgid "Compressed"
+#~ msgstr "Стиснуто"
+
+#~ msgid "Compress again"
+#~ msgstr "Стиснути знову"
+
+#~ msgid "Not compressed"
+#~ msgstr "Не стиснуто"
+
+#~ msgid "Compress"
+#~ msgstr "Стиснути"
+
+#~ msgid "Compress images by squoosh.app"
+#~ msgstr "Стискайте зображення за допомогою squoosh.app"
+
+#~ msgid "This page allows you to compress all images in your media library."
+#~ msgstr "Ця сторінка дозволяє стиснути всі зображення у вашій медіатеці."
+
+#~ msgid "Do not close this page during the compressing process."
+#~ msgstr "Не закривайте цю сторінку під час процесу стиснення."
+
+#~ msgid ""
+#~ "Please note that this process may take a long time depending on the "
+#~ "number of images in your library."
+#~ msgstr ""
+#~ "Зверніть увагу, що цей процес може зайняти багато часу, залежно від "
+#~ "кількості зображень у вашій бібліотеці."
+
+#~ msgid "All images in your media library are compressed."
+#~ msgstr "Усі зображення у вашій медіатеці стиснуті."
+
+#~ msgid "Auto compress"
+#~ msgstr "Автоматичне стиснення"
+
+#~ msgid "Compress thumbnails"
+#~ msgstr "Стиснути мініатюри"
+
+#~ msgid "Compression timeout (in seconds)"
+#~ msgstr "Час очікування стиснення (у секундах)"
+
+#~ msgid "Basic options"
+#~ msgstr "Базові опції"
+
+#~ msgid "Compress settings for JPEG images using MozJPEG encoder"
+#~ msgstr "Налаштування стиснення зображень JPEG за допомогою кодера MozJPEG"
+
+#~ msgid "Compress settings for PNG images using OxiPNG encoder"
+#~ msgstr "Налаштування стиснення зображень PNG за допомогою кодера OxiPNG"
+
+#~ msgid "Compress settings for WEBP images using WebP encoder"
+#~ msgstr "Налаштування стиснення зображень WEBP за допомогою кодера WebP"
+
+#~ msgid "Compress settings for AVIF images using AVIF encoder"
+#~ msgstr "Налаштування стиснення зображень AVIF за допомогою кодера AVIF"
+
+#~ msgid ""
+#~ "You have <strong>%s</strong> uncompressed JPG/PNG/WEBP images from total "
+#~ "<strong>%s</strong> JPG/PNG/WEBP images in your media library."
+#~ msgstr ""
+#~ "У вашій медіатеці є <strong>%s</strong> нестиснутих зображень JPG/PNG/"
+#~ "WEBP із загальної кількості <strong>%s</strong> зображень JPG/PNG/WEBP."

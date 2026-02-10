@@ -1,0 +1,11 @@
+<div class="media-log-step">
+    <svg class="squeeze-icon {{iconId}}">
+        {{#if iconId === 'image-file-icon'}}
+            <use xlink:href="#lemon-dot-icon"></use>
+        {{/if}}
+        {{#if iconId !== 'image-file-icon'}}
+            <use xlink:href="#{{iconId}}"></use>
+        {{/if}}
+    </svg>
+    <span>{{msg}}</span>
+</div>

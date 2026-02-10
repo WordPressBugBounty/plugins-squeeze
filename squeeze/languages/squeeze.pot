@@ -1,0 +1,1279 @@
+# Copyright (C) 2026 Bogdan Bendziukov
+# This file is distributed under the GPLv3.
+msgid ""
+msgstr ""
+"Project-Id-Version: Squeeze – Image Optimization & Compression, WebP Conversion 1.7.4\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/squeeze\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-01-09T16:02:15+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.6.0\n"
+"X-Domain: squeeze\n"
+
+#. Plugin Name of the plugin
+msgid "Squeeze – Image Optimization & Compression, WebP Conversion"
+msgstr ""
+
+#. Description of the plugin
+msgid "Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required."
+msgstr ""
+
+#. Author of the plugin
+msgid "Bogdan Bendziukov"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://pluginarium.com"
+msgstr ""
+
+#: freemius.php:12
+#: squeeze.php:432
+msgid "Go Premium"
+msgstr ""
+
+#: freemius.php:13
+#: freemius.php:14
+msgid "Congratulations"
+msgstr ""
+
+#: inc/handlers.php:43
+#: inc/handlers.php:264
+#: inc/handlers.php:314
+#: inc/handlers.php:818
+msgid "You do not have permission to upload files"
+msgstr ""
+
+#: inc/handlers.php:47
+#: inc/helpers.php:95
+msgid "No image data found"
+msgstr ""
+
+#: inc/handlers.php:65
+msgid "Invalid image format"
+msgstr ""
+
+#: inc/handlers.php:74
+#: inc/handlers.php:240
+#: inc/handlers.php:268
+msgid "Attachment not found"
+msgstr ""
+
+#: inc/handlers.php:81
+#: inc/handlers.php:281
+#: assets/js/parallel.js:66
+#: assets/js/script.bundle.js:49
+#: assets/js/squeeze.js:214
+msgid "Attachment is excluded from compression"
+msgstr ""
+
+#: inc/handlers.php:81
+#: inc/handlers.php:281
+#: inc/settings.php:970
+#: assets/js/script.bundle.js:49
+#: assets/js/squeeze.js:214
+msgid "found substring: "
+msgstr ""
+
+#: inc/handlers.php:127
+msgid "Compressed image size is greater than original size."
+msgstr ""
+
+#: inc/handlers.php:128
+msgid "Please try to change your <a href=\"%s\" target=\"_blank\">compression settings</a> by decreasing the quality or compression level."
+msgstr ""
+
+#: inc/handlers.php:212
+#: inc/handlers.php:230
+msgid "Squeezed successfully"
+msgstr ""
+
+#: inc/handlers.php:250
+msgid "Restored successfully"
+msgstr ""
+
+#: inc/handlers.php:252
+msgid "Attachment not restored"
+msgstr ""
+
+#: inc/handlers.php:318
+msgid "Path not found"
+msgstr ""
+
+#: inc/handlers.php:390
+msgid "Images were not found in the selected directories"
+msgstr ""
+
+#: inc/handlers.php:423
+#: tests/HandlersTest.php:663
+#: tests/HandlersTest.php:678
+#: tests/HandlersTest.php:692
+msgid "Restore Original Image"
+msgstr ""
+
+#: inc/handlers.php:424
+#: tests/HandlersTest.php:664
+#: tests/HandlersTest.php:679
+#: tests/HandlersTest.php:693
+msgid "Squeeze Image"
+msgstr ""
+
+#: inc/handlers.php:425
+#: tests/HandlersTest.php:665
+#: tests/HandlersTest.php:680
+#: tests/HandlersTest.php:694
+msgid "Delete Backup Image"
+msgstr ""
+
+#: inc/handlers.php:426
+#: tests/HandlersTest.php:666
+#: tests/HandlersTest.php:681
+#: tests/HandlersTest.php:695
+msgid "Delete WEBP Image"
+msgstr ""
+
+#. translators: %d: number of attachments restored
+#: inc/handlers.php:487
+msgid "%d attachment restored."
+msgid_plural "%d attachments restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of attachments squeezed
+#: inc/handlers.php:500
+msgid "%d attachment squeezed."
+msgid_plural "%d attachments squeezed."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of backup images deleted
+#: inc/handlers.php:513
+msgid "%d backup image deleted."
+msgid_plural "%d backup images deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of webp images deleted
+#: inc/handlers.php:526
+msgid "%d WEBP image deleted."
+msgid_plural "%d WEBP images deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/handlers.php:574
+msgid "Single file upload is not supported for the image compression by Squeeze. Please use multi-file uploader or bulk squeeze."
+msgstr ""
+
+#: inc/handlers.php:824
+msgid "Options not found"
+msgstr ""
+
+#: inc/handlers.php:830
+msgid "Options not saved"
+msgstr ""
+
+#: inc/handlers.php:833
+msgid "Options saved successfully"
+msgstr ""
+
+#: inc/helpers.php:54
+msgid "Backup original image failed"
+msgstr ""
+
+#: inc/helpers.php:87
+#: inc/helpers.php:163
+msgid "Upload image failed"
+msgstr ""
+
+#: inc/helpers.php:173
+#: inc/helpers.php:189
+msgid "No WebP data found"
+msgstr ""
+
+#: inc/helpers.php:261
+msgid "Backup image not found"
+msgstr ""
+
+#: inc/helpers.php:272
+msgid "Restore original image failed"
+msgstr ""
+
+#: inc/helpers.php:349
+msgid "Size Name"
+msgstr ""
+
+#: inc/helpers.php:349
+msgid "Original Size"
+msgstr ""
+
+#: inc/helpers.php:349
+msgid "Squeezed Size"
+msgstr ""
+
+#: inc/helpers.php:349
+msgid "Savings"
+msgstr ""
+
+#: inc/premium/premium.php:22
+msgid "Page URL not found"
+msgstr ""
+
+#: inc/premium/premium.php:38
+msgid "URL is not from the same domain"
+msgstr ""
+
+#: inc/premium/premium.php:48
+msgid "Error fetching the page:"
+msgstr ""
+
+#: inc/premium/premium.php:220
+#: inc/premium/premium.php:224
+msgid "No images found on the page"
+msgstr ""
+
+#: inc/premium/premium.php:300
+#: inc/settings.php:38
+#: inc/settings.php:966
+#: inc/settings.php:989
+#: tests/SettingsTest.php:535
+msgid "Squeeze"
+msgstr ""
+
+#: inc/premium/premium.php:310
+msgid "Squeeze images from this page"
+msgstr ""
+
+#: inc/premium/premium.php:313
+msgid "Squeeze images from the current page"
+msgstr ""
+
+#: inc/premium/premium.php:323
+#: squeeze.php:427
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:560
+msgid "Settings"
+msgstr ""
+
+#: inc/premium/premium.php:326
+msgid "Squeeze settings"
+msgstr ""
+
+#: inc/premium/premium.php:391
+msgid "File name not found"
+msgstr ""
+
+#: inc/settings.php:37
+msgid "Squeeze Settings"
+msgstr ""
+
+#: inc/settings.php:48
+#: inc/settings.php:49
+#: squeeze.php:428
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.js:199
+#: assets/js/admin.js:275
+msgid "Bulk Squeeze"
+msgstr ""
+
+#: inc/settings.php:94
+msgid "Bulk Media Library Squeeze"
+msgstr ""
+
+#: inc/settings.php:104
+msgid "Heads up! Direct WebP conversion is enabled."
+msgstr ""
+
+#: inc/settings.php:105
+msgid "Your JPG/PNG images will be automatically converted to WebP. To avoid broken links, please check and update any places where you've hard-coded JPG/PNG URLs (e.g. image blocks, custom HTML, CSS, or shortcodes)."
+msgstr ""
+
+#: inc/settings.php:123
+msgid "Squeezed images: "
+msgstr ""
+
+#: inc/settings.php:134
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:206
+#: assets/js/script.bundle.js:29
+msgid "Run Bulk Squeeze"
+msgstr ""
+
+#: inc/settings.php:140
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:207
+#: assets/js/script.bundle.js:29
+msgid "Repeat Bulk Squeeze"
+msgstr ""
+
+#: inc/settings.php:148
+msgid "Directory Squeeze"
+msgstr ""
+
+#: inc/settings.php:157
+msgid "Heads up! Automatic backup is not available here."
+msgstr ""
+
+#: inc/settings.php:158
+msgid "Please make a manual backup of your images before starting directory squeezing."
+msgstr ""
+
+#: inc/settings.php:164
+msgid "Directory Path:"
+msgstr ""
+
+#: inc/settings.php:185
+#: inc/settings.php:209
+msgid "Select Directory"
+msgstr ""
+
+#: inc/settings.php:189
+msgid "Select Directory for Squeeze"
+msgstr ""
+
+#: inc/settings.php:201
+msgid "Loading directories..."
+msgstr ""
+
+#: inc/settings.php:219
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:208
+#: assets/js/script.bundle.js:29
+msgid "Run Directory Squeeze"
+msgstr ""
+
+#: inc/settings.php:231
+msgid "Single Page Squeeze"
+msgstr ""
+
+#: inc/settings.php:251
+msgid "Fetching images..."
+msgstr ""
+
+#: inc/settings.php:262
+msgid "Pause Squeezing"
+msgstr ""
+
+#: inc/settings.php:278
+msgid "Processed formats:"
+msgstr ""
+
+#: inc/settings.php:279
+msgid "You can change the image formats for squeezing on the <a href=\"%s\" target=\"_blank\">settings page.</a>"
+msgstr ""
+
+#: inc/settings.php:289
+msgid "Start Squeezing your images and watch the progress here."
+msgstr ""
+
+#: inc/settings.php:318
+msgid "The Apache mod_rewrite module is not enabled on your server OR your server is not running Apache."
+msgstr ""
+
+#: inc/settings.php:319
+msgid "In order to make WebP serving work, you need to check the \"Replace images URLs\" option OR enable the mod_rewrite module."
+msgstr ""
+
+#: inc/settings.php:339
+#: inc/settings.php:368
+#: inc/settings.php:544
+msgid "Basic Settings"
+msgstr ""
+
+#: inc/settings.php:340
+#: inc/settings.php:381
+#: inc/settings.php:575
+msgid "JPEG Settings"
+msgstr ""
+
+#: inc/settings.php:341
+#: inc/settings.php:405
+#: inc/settings.php:605
+msgid "PNG Settings"
+msgstr ""
+
+#: inc/settings.php:342
+#: inc/settings.php:418
+#: inc/settings.php:609
+msgid "WEBP Settings"
+msgstr ""
+
+#: inc/settings.php:343
+#: inc/settings.php:431
+#: inc/settings.php:616
+msgid "AVIF Settings"
+msgstr ""
+
+#: inc/settings.php:344
+#: inc/settings.php:444
+#: squeeze.php:429
+msgid "Documentation"
+msgstr ""
+
+#: inc/settings.php:346
+#: inc/settings.php:471
+msgid "Upgrade"
+msgstr ""
+
+#: inc/settings.php:352
+msgid "Your License"
+msgstr ""
+
+#: inc/settings.php:392
+msgid "JPEG Advanced Settings"
+msgstr ""
+
+#: inc/settings.php:445
+msgid "Documentation for Squeeze plugin."
+msgstr ""
+
+#: inc/settings.php:455
+msgid "For more information, please visit the <a href=\"%s\" target=\"_blank\">official documentation website</a>."
+msgstr ""
+
+#: inc/settings.php:478
+msgid "Image Comparison"
+msgstr ""
+
+#: inc/settings.php:478
+msgid "Compare original and Squeezed image directly in the Media Library."
+msgstr ""
+
+#: inc/settings.php:479
+msgid "Resize Original Image"
+msgstr ""
+
+#: inc/settings.php:479
+msgid "Set maximum width and height for the original image."
+msgstr ""
+
+#: inc/settings.php:480
+msgid "Bulk Squeeze from a Page"
+msgstr ""
+
+#: inc/settings.php:480
+msgid "Compress all images from a specific page."
+msgstr ""
+
+#: inc/settings.php:481
+msgid "Image Exclusion"
+msgstr ""
+
+#: inc/settings.php:481
+msgid "Exclude specific images from bulk compression."
+msgstr ""
+
+#: inc/settings.php:498
+msgid "To upgrade to the Premium version, <a href=\"%s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: inc/settings.php:516
+msgid "Your license hasn't been activated"
+msgstr ""
+
+#: inc/settings.php:521
+msgid "After you entered your license key, you will receive a confirmation email. Pleae click on the confirmation button in that email to complete the opt in."
+msgstr ""
+
+#: inc/settings.php:529
+msgid "Save Changes"
+msgstr ""
+
+#: inc/settings.php:530
+msgid "Restore defaults"
+msgstr ""
+
+#: inc/settings.php:546
+msgid "Squeeze on upload"
+msgstr ""
+
+#: inc/settings.php:547
+msgid "Backup original image"
+msgstr ""
+
+#: inc/settings.php:549
+msgid "Image formats"
+msgstr ""
+
+#: inc/settings.php:549
+msgid "Select which image formats you want to be squeezed."
+msgstr ""
+
+#: inc/settings.php:551
+msgid "Direct WebP Conversion"
+msgstr ""
+
+#: inc/settings.php:551
+msgid "Convert all uploaded images to WEBP format and replace the originals. The original JPEG/PNG files are not stored on the server, which reduces disk usage."
+msgstr ""
+
+#: inc/settings.php:552
+msgid "Generate WEBP"
+msgstr ""
+
+#: inc/settings.php:552
+msgid "Instead of the original image URL, the image will be served in WEBP format. WEBP images are stored in a separate directory: wp-content/squeeze-webp."
+msgstr ""
+
+#: inc/settings.php:552
+msgid "This is the old method, in case you already have images being converted using this approach. Otherwise, it is recommended that you use the direct WEBP conversion method above."
+msgstr ""
+
+#: inc/settings.php:553
+msgid "Replace images URLs"
+msgstr ""
+
+#: inc/settings.php:553
+msgid "If the method above does not work, try this option. This method replaces the original URLs of the images with related WEBP images."
+msgstr ""
+
+#: inc/settings.php:557
+msgid "CDN URL"
+msgstr ""
+
+#: inc/settings.php:557
+msgid "If your site is using CDN, please enter the URL of your CDN here."
+msgstr ""
+
+#: inc/settings.php:560
+msgid "Squeeze thumbnails"
+msgstr ""
+
+#: inc/settings.php:560
+msgid "Choose which image thumbnail sizes you want to squeeze along with the original image."
+msgstr ""
+
+#: inc/settings.php:563
+#: inc/settings.php:567
+msgid "Max. image width"
+msgstr ""
+
+#: inc/settings.php:563
+#: inc/settings.php:567
+msgid "Limit a width of an original image. Leave this field empty if you do not want to crop the image by width."
+msgstr ""
+
+#: inc/settings.php:564
+#: inc/settings.php:568
+msgid "Max. image height"
+msgstr ""
+
+#: inc/settings.php:564
+#: inc/settings.php:568
+msgid "Limit a height of an original image. Leave this field empty if you do not want to crop the image by height."
+msgstr ""
+
+#: inc/settings.php:565
+#: inc/settings.php:569
+msgid "Excluded images"
+msgstr ""
+
+#: inc/settings.php:565
+#: inc/settings.php:569
+msgid "Enter a list of images that you want to exclude from squeezing. Both full URLs and partial strings can be used. One URL per line."
+msgstr ""
+
+#: inc/settings.php:572
+msgid "Squeeze timeout"
+msgstr ""
+
+#: inc/settings.php:572
+msgid "Time limit for squeezing an image. If you get an error during image squeezing, try to increase this value."
+msgstr ""
+
+#: inc/settings.php:577
+#: inc/settings.php:607
+#: inc/settings.php:612
+#: inc/settings.php:618
+msgid "Quality"
+msgstr ""
+
+#: inc/settings.php:578
+msgid "Smoothing"
+msgstr ""
+
+#: inc/settings.php:579
+msgid "Pointless spec compliance"
+msgstr ""
+
+#: inc/settings.php:582
+msgid "Progressive rendering"
+msgstr ""
+
+#: inc/settings.php:583
+msgid "Optimize Huffman table"
+msgstr ""
+
+#: inc/settings.php:584
+msgid "Channels"
+msgstr ""
+
+#: inc/settings.php:585
+msgid "Quantization"
+msgstr ""
+
+#: inc/settings.php:596
+msgid "Trellis multipass"
+msgstr ""
+
+#: inc/settings.php:597
+msgid "Optimize zero block runs"
+msgstr ""
+
+#: inc/settings.php:598
+msgid "Optimize after trellis quantization"
+msgstr ""
+
+#: inc/settings.php:599
+msgid "Trellis quantization passes"
+msgstr ""
+
+#: inc/settings.php:600
+msgid "Auto subsample chroma"
+msgstr ""
+
+#: inc/settings.php:601
+msgid "Subsample chroma by"
+msgstr ""
+
+#: inc/settings.php:602
+msgid "Separate chroma quality"
+msgstr ""
+
+#: inc/settings.php:603
+msgid "Chroma quality"
+msgstr ""
+
+#: inc/settings.php:611
+msgid "Effort"
+msgstr ""
+
+#: inc/settings.php:613
+msgid "Lossless"
+msgstr ""
+
+#: inc/settings.php:614
+msgid "Near lossless"
+msgstr ""
+
+#: inc/settings.php:664
+msgid "Settings have been updated."
+msgstr ""
+
+#: inc/settings.php:793
+msgid "(mandatory when Direct WEBP is enabled)"
+msgstr ""
+
+#: inc/settings.php:811
+msgid "This feature is available only in the <a href=\"%s\">premium version</a>."
+msgstr ""
+
+#: inc/settings.php:825
+#: inc/settings.php:848
+#: inc/settings.php:874
+msgid "Example:"
+msgstr ""
+
+#: inc/settings.php:828
+#: inc/settings.php:851
+msgid "Before"
+msgstr ""
+
+#: inc/settings.php:829
+#: inc/settings.php:835
+#: inc/settings.php:853
+#: inc/settings.php:860
+msgid "image.jpg"
+msgstr ""
+
+#: inc/settings.php:829
+#: inc/settings.php:835
+#: inc/settings.php:853
+msgid "500 KB"
+msgstr ""
+
+#: inc/settings.php:830
+#: inc/settings.php:836
+#: inc/settings.php:854
+#: inc/settings.php:861
+msgid "image-100x100.jpg"
+msgstr ""
+
+#: inc/settings.php:830
+#: inc/settings.php:836
+#: inc/settings.php:854
+msgid "98 KB"
+msgstr ""
+
+#: inc/settings.php:831
+#: inc/settings.php:837
+#: inc/settings.php:855
+#: inc/settings.php:862
+msgid "image-300x300.jpg"
+msgstr ""
+
+#: inc/settings.php:831
+#: inc/settings.php:837
+#: inc/settings.php:855
+msgid "230 KB"
+msgstr ""
+
+#: inc/settings.php:834
+#: inc/settings.php:858
+msgid "After"
+msgstr ""
+
+#: inc/settings.php:838
+#: inc/settings.php:864
+msgid "image.webp"
+msgstr ""
+
+#: inc/settings.php:838
+#: inc/settings.php:864
+msgid "50 KB"
+msgstr ""
+
+#: inc/settings.php:839
+#: inc/settings.php:865
+msgid "image-100x100.webp"
+msgstr ""
+
+#: inc/settings.php:839
+#: inc/settings.php:865
+msgid "5 KB"
+msgstr ""
+
+#: inc/settings.php:840
+#: inc/settings.php:866
+msgid "image-300x300.webp"
+msgstr ""
+
+#: inc/settings.php:840
+#: inc/settings.php:866
+msgid "20 KB"
+msgstr ""
+
+#: inc/settings.php:852
+#: inc/settings.php:859
+msgid "/uploads/2025/07/"
+msgstr ""
+
+#: inc/settings.php:860
+msgid "100 KB"
+msgstr ""
+
+#: inc/settings.php:861
+msgid "15 KB"
+msgstr ""
+
+#: inc/settings.php:862
+msgid "40 KB"
+msgstr ""
+
+#: inc/settings.php:863
+msgid "/squeeze-webp/uploads/2025/07/"
+msgstr ""
+
+#: inc/settings.php:877
+msgid "Example image"
+msgstr ""
+
+#: inc/settings.php:889
+msgid "Basic squeezing settings."
+msgstr ""
+
+#: inc/settings.php:892
+msgid "Squeezing settings for JPEG images."
+msgstr ""
+
+#: inc/settings.php:895
+msgid "More precise settings for experienced users."
+msgstr ""
+
+#: inc/settings.php:898
+msgid "Squeezing settings for PNG images."
+msgstr ""
+
+#: inc/settings.php:901
+msgid "Squeezing settings for WebP images."
+msgstr ""
+
+#: inc/settings.php:904
+msgid "Squeezing settings for Avif images."
+msgstr ""
+
+#: inc/settings.php:907
+msgid "Upgrade to premium version for more features."
+msgstr ""
+
+#: inc/settings.php:911
+msgid "To activate your license and manage your account details (e.g. to receive security & feature updates notifications), please enter your license key."
+msgstr ""
+
+#: inc/settings.php:923
+msgid "Opt In & Connect"
+msgstr ""
+
+#: inc/settings.php:934
+msgid "Settings have been restored."
+msgstr ""
+
+#: inc/settings.php:936
+msgid "Settings have not been restored."
+msgstr ""
+
+#: inc/settings.php:944
+msgid "Rewrite rules have been flushed."
+msgstr ""
+
+#: inc/settings.php:968
+msgid "Image format is not selected for compression in the plugin settings"
+msgstr ""
+
+#: inc/settings.php:970
+msgid "Image is excluded from compression"
+msgstr ""
+
+#: inc/settings.php:973
+msgid "Squeezed"
+msgstr ""
+
+#: inc/settings.php:974
+msgid "Restore original image"
+msgstr ""
+
+#: inc/settings.php:975
+msgid "Re-Squeeze image"
+msgstr ""
+
+#: inc/settings.php:977
+msgid "Not squeezed"
+msgstr ""
+
+#: inc/settings.php:978
+msgid "Squeeze Now"
+msgstr ""
+
+#: inc/settings.php:1059
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.js:178
+msgid "Squeeze: All images"
+msgstr ""
+
+#: inc/settings.php:1060
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.js:186
+msgid "Non Squeezed Images"
+msgstr ""
+
+#: inc/settings.php:1149
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:435
+msgid "Image comparison with Squeeze"
+msgstr ""
+
+#: inc/settings.php:1151
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:447
+msgid "(<a href=\"%s\" target=\"_blank\">premium only</a>)"
+msgstr ""
+
+#: inc/settings.php:1184
+msgid "The WebP Express plugin is active. Please deactivate it in order to use correct WebP serving from <strong>Squeeze plugin</strong>."
+msgstr ""
+
+#: inc/settings.php:1196
+msgid "The Image Converter for WebP plugin is active. Please deactivate it in order to use correct WebP serving from <strong>Squeeze plugin</strong>."
+msgstr ""
+
+#: squeeze.php:199
+msgid "Confirmation email was sent! Please check your inbox to complete the Squeeze Premium setup."
+msgstr ""
+
+#: assets/js/4240e511ac61ecfff2d8.js:299
+#: assets/js/assets_js_squeeze_js-assets_js_worker_js.script.bundle.js:19
+msgid "Request timed out."
+msgstr ""
+
+#: assets/js/4240e511ac61ecfff2d8.js:487
+#: assets/js/assets_js_squeeze_js-assets_js_worker_js.script.bundle.js:19
+msgid "Skipped"
+msgstr ""
+
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.js:238
+msgid "Please select at least one image."
+msgstr ""
+
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.bundle.js:39
+#: assets/js/admin.js:254
+#: assets/js/editor.bundle.js:29
+#: assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:225
+#: assets/js/handlers copy.js:162
+#: assets/js/handlers copy.js:513
+#: assets/js/helpers.js:627
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:163
+#: assets/js/script.js:169
+msgid "Squeezing..."
+msgstr ""
+
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.js:262
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:197
+#: assets/js/handlers.js:489
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:74
+msgid "Squeezing complete"
+msgstr ""
+
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.js:263
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:195
+#: assets/js/handlers.js:198
+#: assets/js/handlers.js:487
+#: assets/js/handlers copy.js:141
+#: assets/js/handlers copy.js:469
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:72
+#: assets/js/script.js:75
+msgid "All images have been processed!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:19
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.js:270
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:209
+#: assets/js/handlers.js:449
+#: assets/js/handlers.js:502
+#: assets/js/handlers copy.js:150
+#: assets/js/handlers copy.js:431
+#: assets/js/handlers copy.js:477
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:86
+#: assets/js/script.js:185
+msgid "An error has occured. Check the console for details."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:29
+#: assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:47
+#: assets/js/handlers copy.js:290
+#: assets/js/helpers.js:110
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29
+msgid "Media"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:72
+#: assets/js/handlers.js:296
+#: assets/js/handlers copy.js:23
+#: assets/js/handlers copy.js:225
+#: assets/js/script.bundle.js:19
+msgid "Resume bulk squeezing"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:72
+#: assets/js/handlers copy.js:23
+#: assets/js/script.bundle.js:19
+msgid "Pause bulk squeezing"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:146
+#: assets/js/script.bundle.js:19
+msgid "Restoring the original image..."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:149
+#: assets/js/script.bundle.js:19
+msgid "Still restoring... Just need to regenerate thumbnails, please wait a moment."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:184
+#: assets/js/handlers.js:476
+#: assets/js/handlers copy.js:128
+#: assets/js/handlers copy.js:458
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:61
+msgid "Pausing..."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:230
+#: assets/js/script.bundle.js:19
+msgid "Still squeezing... This may take a while depending on the image size."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:283
+#: assets/js/handlers copy.js:212
+#: assets/js/script.bundle.js:19
+msgid "Are you sure you want to leave this page? The squeezing process will be terminated!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:286
+#: assets/js/handlers copy.js:215
+#: assets/js/script.bundle.js:19
+msgid "Are you sure you want to leave this page? The settings will not be saved!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:29
+#: assets/js/editor.bundle.js:39
+#: assets/js/handlers.js:292
+#: assets/js/handlers copy.js:221
+#: assets/js/helpers.js:110
+#: assets/js/script.bundle.js:19
+#: assets/js/script.bundle.js:29
+msgid "Bulk squeezing has been paused!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:323
+#: assets/js/handlers copy.js:312
+#: assets/js/handlers copy.js:320
+#: assets/js/script.bundle.js:19
+msgid "No more images found!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:347
+#: assets/js/handlers copy.js:331
+#: assets/js/parallel.js:35
+#: assets/js/script.bundle.js:19
+msgid "Start squeezing..."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:436
+#: assets/js/handlers copy.js:420
+#: assets/js/script.bundle.js:19
+msgid "Found images on the page:"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:445
+#: assets/js/handlers copy.js:427
+#: assets/js/script.bundle.js:19
+msgid "Error:"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:452
+#: assets/js/handlers.js:455
+#: assets/js/handlers copy.js:434
+#: assets/js/handlers copy.js:437
+#: assets/js/script.bundle.js:19
+msgid "An error has occurred while fetching images from the page. Check the console for details."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:490
+#: assets/js/script.bundle.js:19
+msgid "All images from the page have been processed!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:490
+#: assets/js/script.bundle.js:19
+msgid "You will be redirected back to the page after you close this message."
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:606
+#: assets/js/script.bundle.js:19
+msgid "File is excluded from compression:"
+msgstr ""
+
+#: assets/js/admin.bundle.js:29
+#: assets/js/editor.bundle.js:29
+#: assets/js/handlers.js:606
+#: assets/js/script.bundle.js:19
+msgid "File compression failed:"
+msgstr ""
+
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:110
+#: assets/js/script.bundle.js:29
+msgid "Bulk squeezing has been completed!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:119
+#: assets/js/helpers.js:123
+#: assets/js/script.bundle.js:29
+msgid "Show details"
+msgstr ""
+
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:123
+#: assets/js/script.bundle.js:29
+msgid "Hide details"
+msgstr ""
+
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:257
+#: assets/js/script.bundle.js:29
+msgid "No directories found!"
+msgstr ""
+
+#: assets/js/admin.bundle.js:39
+#: assets/js/editor.bundle.js:39
+#: assets/js/helpers.js:333
+#: assets/js/script.bundle.js:29
+msgid "Error parsing path input!"
+msgstr ""
+
+#: assets/js/editor.bundle.js:19
+#: assets/js/editor.js:78
+#: assets/js/editor__old.js:131
+msgid "Squeezing image…"
+msgstr ""
+
+#: assets/js/editor.bundle.js:19
+#: assets/js/editor.js:123
+#: assets/js/editor__old.js:30
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:349
+msgid "Error fetching attachment: %s"
+msgstr ""
+
+#: assets/js/editor.bundle.js:19
+#: assets/js/editor.js:156
+#: assets/js/editor__old.js:60
+msgid "Error uploading image: %s"
+msgstr ""
+
+#: assets/js/editor.bundle.js:19
+#: assets/js/editor.js:290
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:273
+msgid "Squeezing the image..."
+msgstr ""
+
+#: assets/js/editor.bundle.js:19
+#: assets/js/editor.js:362
+#: assets/js/editor.js:378
+msgid "Error squeezing the image: %s"
+msgstr ""
+
+#: assets/js/handlers copy.js:95
+msgid "Restore in process..."
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:37
+msgid "Please enter a valid path!"
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:362
+msgid "Squeezing thumbnails..."
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:386
+msgid "Successfully squeezed!"
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:391
+#: assets/js/script.js:399
+msgid "Something went wrong during compression. Check the console for more details."
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:434
+#: assets/js/script.js:468
+msgid "Compare Squeeze"
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:468
+msgid "Loading..."
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:561
+#: assets/js/script.js:604
+msgid "Collapse"
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:562
+msgid "Apply"
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:577
+msgid "An error occurred while rendering the preview. Check the console for details."
+msgstr ""
+
+#: assets/js/script.bundle.js:39
+#: assets/js/script.js:607
+msgid "Expand"
+msgstr ""
+
+#: assets/js/script.bundle.js:49
+#: assets/js/squeeze.js:93
+#: assets/js/squeeze.js:496
+msgid "Request timed out. Try to increase the timeout limit on the Squeeze <a target=\"_blank\" href=\"%s\">settings page</a>."
+msgstr ""
+
+#: assets/js/script.bundle.js:49
+#: assets/js/squeeze.js:262
+msgid "Skipped: the image is broken or its format is not supported or excluded from squeezing."
+msgstr ""
+
+#: assets/js/script.bundle.js:49
+#: assets/js/squeeze.js:548
+msgid "Image conversion blocked by browser privacy setting"
+msgstr ""

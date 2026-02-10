@@ -1,0 +1,11 @@
+<div class="directory-item {{classes}}" data-parent="{{parent}}" data-path="{{path}}">
+    <div class="directory-item__inner">
+        {{#if isWritable}}
+        <input type="checkbox" value="{{path}}" />
+        {{/if}}
+        {{#if isChecked}}
+        <input type="checkbox" value="{{path}}" checked />
+        {{/if}}
+        <label>{{label}}</label>
+    </div>
+</div>
