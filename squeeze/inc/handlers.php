@@ -511,8 +511,28 @@ class SqueezeHandlers extends SqueezeInit {
 
     public function get_directories() {
         check_ajax_referer( 'squeeze-nonce', '_ajax_nonce' );
-        $parent_directory = ( isset( $_POST['parentDir'] ) ? sanitize_text_field( $_POST['parentDir'] ) : '' );
-        $base_dir = ( $parent_directory ? ABSPATH . $parent_directory : WP_CONTENT_DIR );
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'You do not have permission to browse directories.', 'squeeze' ) );
+        }
+        $parent_directory = ( isset( $_POST['parentDir'] ) ? sanitize_text_field( wp_unslash( $_POST['parentDir'] ) ) : '' );
+        $allowed_base = realpath( WP_CONTENT_DIR );
+        if ( $allowed_base === false ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Content directory is not accessible.', 'squeeze' ) );
+        }
+        if ( $parent_directory === '' ) {
+            $base_dir = $allowed_base;
+        } else {
+            // Prevent path traversal: resolve path and ensure it stays under WP_CONTENT_DIR.
+            $parent_directory = str_replace( '\\', '/', $parent_directory );
+            $parent_directory = preg_replace( '#/+#', '/', trim( $parent_directory, '/' ) );
+            if ( $parent_directory === '' || preg_match( '#(^|/)\\.\\.(/|$)#', $parent_directory ) ) {
+                wp_send_json_error( '❌ ' . esc_html__( 'Invalid directory path.', 'squeeze' ) );
+            }
+            $base_dir = realpath( $allowed_base . '/' . $parent_directory );
+            if ( $base_dir === false || strpos( $base_dir, $allowed_base ) !== 0 ) {
+                wp_send_json_error( '❌ ' . esc_html__( 'Invalid directory path.', 'squeeze' ) );
+            }
+        }
         $directories = scandir( $base_dir );
         if ( !$parent_directory ) {
             $directories[] = $base_dir;

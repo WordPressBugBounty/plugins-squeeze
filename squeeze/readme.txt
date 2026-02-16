@@ -4,7 +4,7 @@ Tags: image compression, convert webp, image optimization, compress images, opti
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.3
-Stable tag: 1.7.7
+Stable tag: 1.7.8
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -184,6 +184,8 @@ The full documentation is available here: [https://pluginarium.com/squeeze/squee
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.8 =
+* Improved security for backend
 = 1.7.7 =
 * Fixed undefined function error for squeeze_premium
 = 1.7.6 =

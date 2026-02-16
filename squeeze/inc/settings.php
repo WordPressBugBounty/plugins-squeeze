@@ -1676,7 +1676,7 @@ class SqueezeSettings extends SqueezeInit {
             return;
         }
         echo '<div class="squeeze-preview-button is-placeholder">';
-        echo '<input type="checkbox" disabled class="squeeze-ios8-switch" id="squeeze-ios8-switch"><label for="squeeze-ios8-switch" title="' . esc_attr__( "Image comparison with Squeeze", "squeeze" ) . '">' . \esc_html__( "Compare Squeeze", "squeeze" ) . ' ';
+        echo '<input type="checkbox" disabled class="squeeze-ios8-switch" id="squeeze-ios8-switch"><label for="squeeze-ios8-switch" title="' . esc_attr__( "Image comparison with Squeeze", "squeeze" ) . '">' . esc_html__( "Compare Squeeze", "squeeze" ) . ' ';
         echo sprintf( __( '(<a href="%s" target="_blank">premium only</a>)', 'squeeze' ), esc_url( self::$UPGRADE_URL ) ) . '</label>';
         echo '</div>';
     }
