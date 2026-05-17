@@ -4,7 +4,7 @@ Tags: image compression, convert webp, image optimization, compress images, opti
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.3
-Stable tag: 1.7.8
+Stable tag: 1.7.9
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -37,6 +37,7 @@ It’s privacy-safe, lightning-fast, and storage-efficient.
 * **Upload Optimization:** Compresses images on-the-fly during the upload process, ensuring optimized images are added to your media library.
 * **Gutenberg and GenerateBlocks Support:** Squeeze images directly on upload in Gutenberg or GenerateBlocks builder.
 * **Bulk Compression:** Allows you to compress multiple images at once from your WordPress Media Library.
+* **Image Exclusion:** Exclude images by URL or filename pattern (one per line) from upload and bulk squeeze.
 * **Custom Directory Compression:** Select a directory on your site and compress all the images within it.
 * **Selective Compression:** Choose which images to compress based on your preferences and requirements.
 * **Custom Squeezing Settings:** Adjust compression parameters such as quality level to suit your specific needs.
@@ -48,7 +49,6 @@ It’s privacy-safe, lightning-fast, and storage-efficient.
 * **Resize Original Image:** Set maximum width and height for the original image.
 * **Bulk Squeeze from a Page:** Compress all images from a specific page.
 * **Elementor Integration:** Squeeze images directly while editing in Elementor.
-* **Image Exclusion:** Exclude specific images from bulk compression.
 * **Priority support & updates!**
 
 Don't settle for limitations—upgrade now and supercharge your experience!
@@ -184,6 +184,13 @@ The full documentation is available here: [https://pluginarium.com/squeeze/squee
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.9 =
+* Redesigned WebP delivery settings with three clear modes: Direct WebP, separate squeeze-webp folder with URL rewrite, and separate folder with server-side delivery (.htaccess)
+* CDN URL option is kept for all WebP delivery modes, including Direct WebP
+* Improved URL-to-filesystem resolution when checking WebP files (CDN-aware)
+* Bulk directory browser returns site-relative paths only (no absolute server paths in API responses)
+* Fixed Media Library bulk squeeze completion popup (missing JavaScript helper import)
+* PHPUnit and bulk browse path handling improvements
 = 1.7.8 =
 * Improved security for backend
 = 1.7.7 =
@@ -281,6 +288,8 @@ The full documentation is available here: [https://pluginarium.com/squeeze/squee
 * First release.
 
 == Upgrade Notice ==
+= 1.7.9 =
+* WebP delivery settings updated: three modes, CDN works with Direct WebP.
 = 1.7.5 =
 * Updated notifications texts and icons
 * Upgraded the Freemius version

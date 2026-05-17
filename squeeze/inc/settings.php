@@ -85,11 +85,11 @@ class SqueezeSettings extends SqueezeInit {
         $total_pages = ceil( $total_count / self::$MEDIA_PER_PAGE );
         $compressed_count = $total_count - $uncompressed_count;
         $compressed_percentage = ( $total_count > 0 ? round( $compressed_count / $total_count * 100, 2 ) : 0 );
-        $dasharray = $compressed_percentage * 560 / 100;
         //$total_count = array_sum((array)wp_count_attachments("image"));
         $not_compressed_posts = implode( ",", self::$SqueezeHelpers->get_uncompressed_images() );
         $all_posts = implode( ",", self::$SqueezeHelpers->get_total_images() );
         $directory_path = ( get_transient( 'squeeze_bulk_path' ) ? get_transient( 'squeeze_bulk_path' ) : array('/wp-content/uploads/') );
+        $directory_path = array_map( array(self::$SqueezeHelpers, 'normalize_bulk_directory_storage_path'), (array) $directory_path );
         $directory_path_json = wp_json_encode( $directory_path );
         $is_direct_webp = self::$SqueezeHelpers->get_option( 'direct_webp' );
         ?>
@@ -99,194 +99,248 @@ class SqueezeSettings extends SqueezeInit {
         echo esc_html( get_admin_page_title() );
         ?>
             </h1>
+            <?php 
+        if ( !$is_single_page_squeeze ) {
+            ?>
+            <p class="squeeze-bulk-lede description">
+                <?php 
+            esc_html_e( 'Compress and convert images in bulk. "Squeeze" means optimize file size (and optionally change format) for items in your Media Library or a folder you choose.', 'squeeze' );
+            ?>
+            </p>
+            <?php 
+        }
+        ?>
             <section class="squeeze-box">
-                <div class="squeeze-box-bulk-grid">
+                <div class="squeeze-box-bulk-stack">
                     <?php 
         if ( !$is_single_page_squeeze ) {
             ?>
-                    <div class="squeeze-box-bulk-grid__col">
-                        <div class="squeeze-box-header">
-                            <h2><?php 
+                    <div class="squeeze-box-bulk-workflows">
+                    <section id="squeeze-bulk-section-library" class="squeeze-bulk-section squeeze-bulk-section--library" aria-labelledby="squeeze-heading-library">
+                        <header class="squeeze-bulk-section__head">
+                            <h2 id="squeeze-heading-library"><?php 
             esc_html_e( 'Bulk Media Library Squeeze', 'squeeze' );
             ?></h2>
-                        </div>
-                        <div class="squeeze-box-content">
+                            <p class="squeeze-bulk-section__meta"><?php 
+            esc_html_e( 'Uses attachments in the library; backups follow your plugin settings.', 'squeeze' );
+            ?></p>
+                        </header>
+                        <div class="squeeze-bulk-section__body">
                             <?php 
             if ( $is_direct_webp ) {
                 ?>
-                            <div class="squeeze-box-content__col squeeze-box-content__col--start">
-                                <div class="squeeze-banner squeeze-banner--notice">
-                                    <svg class="squeeze-icon">
-                                        <use xlink:href="#info-icon"></use>
-                                    </svg>
-                                    <div class="squeeze-banner__content">
-                                        <p><?php 
-                esc_html_e( 'Heads up! Direct WebP conversion is enabled.', 'squeeze' );
+                            <div class="squeeze-banner squeeze-banner--notice">
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#info-icon"></use>
+                                </svg>
+                                <div class="squeeze-banner__content">
+                                    <p class="squeeze-banner__title"><?php 
+                esc_html_e( 'Direct WebP conversion is on', 'squeeze' );
                 ?></p>
-                                        <p><?php 
-                esc_html_e( 'Your JPG/PNG images will be automatically converted to WebP. To avoid broken links, please check and update any places where you\'ve hard-coded JPG/PNG URLs (e.g. image blocks, custom HTML, CSS, or shortcodes).', 'squeeze' );
+                                    <p><?php 
+                esc_html_e( 'After conversion, image URLs may change. Check themes and content for hard-coded .jpg / .png links (image blocks, custom HTML, CSS, or shortcodes) so nothing breaks.', 'squeeze' );
                 ?></p>
-                                    </div>
                                 </div>
                             </div>
                             <?php 
             }
             ?>
-                            <div class="squeeze-box-content__col squeeze-box-content__col--main">
-                                <div class="squeeze-bulk-media-stats">
-                                    <div class="squeeze-bulk-media-stats-chart" style="--squeeze-dasharray: <?php 
-            echo esc_attr( $dasharray );
-            ?>;">
-                                        <svg width="200" height="200">
-                                            <circle cx="100" cy="100" r="90" class="squeeze-bulk-media-stats-chart-total" fill="none" />
-                                            <circle cx="100" cy="100" r="90" class="squeeze-bulk-media-stats-chart-squeezed" fill="none"/>
 
-                                            <g class="squeeze-bulk-media-stats-chart-value">
-                                                <text x="100" y="100" alignment-baseline="central" text-anchor="middle"><?php 
+                            <div class="squeeze-bulk-media-stats squeeze-bulk-media-stats--linear" style="--squeeze-progress-pct: <?php 
+            echo esc_attr( $compressed_percentage );
+            ?>;">
+                                <div class="squeeze-bulk-media-stats-linear-head">
+                                    <div class="squeeze-bulk-media-stats-chart-value squeeze-bulk-media-stats-chart-value--linear">
+                                        <span class="squeeze-bulk-media-stats-chart-pct"><?php 
             echo esc_html( $compressed_percentage );
-            ?>%</text>
-                                            </g>
-                                        </svg>
+            ?>%</span>
+                                        <span class="squeeze-bulk-media-stats-chart-pct-label"><?php 
+            esc_html_e( 'complete', 'squeeze' );
+            ?></span>
                                     </div>
-                                    <div class="squeeze-bulk-media-stats-item">
-                                        <div class="squeeze-bulk-media-stats-item-label"><?php 
-            esc_html_e( 'Squeezed images: ', 'squeeze' );
-            ?></div>
-                                        <div class="squeeze-bulk-media-stats-item-value"><?php 
+                                    <div class="squeeze-bulk-media-stats-item squeeze-bulk-media-stats-item--inline">
+                                        <span class="squeeze-bulk-media-stats-item-label"><?php 
+            esc_html_e( 'Squeezed images', 'squeeze' );
+            ?></span>
+                                        <span class="squeeze-bulk-media-stats-item-value"><?php 
             echo esc_html( $compressed_count );
             ?> / <?php 
             echo esc_html( $total_count );
-            ?></div>
+            ?></span>
                                     </div>
                                 </div>
+                                <div class="squeeze-bulk-media-stats-chart squeeze-bulk-media-stats-chart--linear" aria-hidden="true">
+                                    <div class="squeeze-bulk-media-stats-chart-track">
+                                        <div class="squeeze-bulk-media-stats-chart-fill"></div>
+                                    </div>
+                                </div>
+                                <div class="squeeze-bulk-media-stats-legend">
+                                    <span class="squeeze-bulk-media-stats-legend-item">
+                                        <span class="squeeze-bulk-media-stats-legend-swatch squeeze-bulk-media-stats-legend-swatch--done" aria-hidden="true"></span>
+                                        <?php 
+            esc_html_e( 'Processed (success)', 'squeeze' );
+            ?>
+                                    </span>
+                                    <span class="squeeze-bulk-media-stats-legend-item">
+                                        <span class="squeeze-bulk-media-stats-legend-swatch squeeze-bulk-media-stats-legend-swatch--rest" aria-hidden="true"></span>
+                                        <?php 
+            esc_html_e( 'Remaining or needs attention', 'squeeze' );
+            ?>
+                                    </span>
+                                </div>
                             </div>
-                            <div class="squeeze-box-content__col squeeze-box-content__col--end">
-                                <div class="squeeze-bulk-media-actions">
-                                    <button name="squeeze_bulk" class="button button-primary button-hero" type="button" <?php 
+                        </div>
+                        <div class="squeeze-bulk-section__actions squeeze-bulk-media-actions">
+                            <button name="squeeze_bulk" class="button button-primary button-hero" type="button" <?php 
             echo ( $uncompressed_count === 0 ? 'hidden disabled' : '' );
             ?>>
-                                        <svg class="squeeze-icon">
-                                            <use xlink:href="#play-button-round-icon"></use>
-                                        </svg>
-                                        <?php 
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#play-button-round-icon"></use>
+                                </svg>
+                                <?php 
             esc_attr_e( 'Run Bulk Squeeze', 'squeeze' );
             ?>
-                                    </button>
-                                    <button name="squeeze_bulk_again" class="button button-secondary button-large" type="button">
-                                        <svg class="squeeze-icon">
-                                            <use xlink:href="#repeat-icon"></use>
-                                        </svg>
-                                        <?php 
+                            </button>
+                            <button name="squeeze_bulk_again" class="button button-secondary button-large" type="button">
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#repeat-icon"></use>
+                                </svg>
+                                <?php 
             esc_attr_e( 'Repeat Bulk Squeeze', 'squeeze' );
             ?>
-                                    </button>
-                                </div>
-                            </div>
+                            </button>
                         </div>
-                    </div>
-                    <div class="squeeze-box-bulk-grid__col">
-                        <div class="squeeze-box-header">
-                            <h2><?php 
+                    </section>
+
+                    <section id="squeeze-bulk-section-directory" class="squeeze-bulk-section squeeze-bulk-section--directory" aria-labelledby="squeeze-heading-directory">
+                        <header class="squeeze-bulk-section__head">
+                            <h2 id="squeeze-heading-directory"><?php 
             esc_html_e( 'Directory Squeeze', 'squeeze' );
             ?></h2>
-                        </div>
-                        <div class="squeeze-box-content">
-                            <div class="squeeze-box-content__col squeeze-box-content__col--start">
-                                <div class="squeeze-banner squeeze-banner--notice">
-                                    <svg class="squeeze-icon">
-                                        <use xlink:href="#info-icon"></use>
-                                    </svg>
-                                    <div class="squeeze-banner__content">
-                                        <p><?php 
-            esc_html_e( 'Heads up! Automatic backup is not available here.', 'squeeze' );
+                            <p class="squeeze-bulk-section__meta"><?php 
+            esc_html_e( 'Filesystem folder — not limited to Media Library. No automatic backup in this mode.', 'squeeze' );
             ?></p>
-                                        <p><?php 
-            esc_html_e( 'Please make a manual backup of your images before starting directory squeezing.', 'squeeze' );
+                        </header>
+                        <div class="squeeze-bulk-section__body">
+                            <div class="squeeze-banner squeeze-banner--warning">
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#info-icon"></use>
+                                </svg>
+                                <div class="squeeze-banner__content">
+                                    <p class="squeeze-banner__title"><?php 
+            esc_html_e( 'Back up before you run', 'squeeze' );
             ?></p>
-                                    </div>
+                                    <p><?php 
+            esc_html_e( 'Automatic backup from the plugin is not available here. Manually back up the folder or your site before squeezing.', 'squeeze' );
+            ?></p>
+                                    <ul>
+                                        <li><?php 
+            esc_html_e( 'Use your host snapshot or a backup plugin.', 'squeeze' );
+            ?></li>
+                                        <li><?php 
+            esc_html_e( 'Test on a copy first if you are unsure.', 'squeeze' );
+            ?></li>
+                                    </ul>
                                 </div>
                             </div>
-                            <div class="squeeze-box-content__col squeeze-box-content__col--main">
-                                <label>
-                                    <?php 
-            esc_html_e( 'Directory Path:', 'squeeze' );
-            ?><br>
-                                    
-                                    <input type="hidden" name="squeeze_bulk_path" value="<?php 
+
+                            <input type="hidden" name="squeeze_bulk_path" value="<?php 
             echo esc_attr( $directory_path_json );
             ?>" />
-                                    
-                                    <div class="squeeze-path-list">
+
+                            <div class="squeeze-bulk-field">
+                                <label class="squeeze-bulk-field-label"><?php 
+            esc_html_e( 'Directory path', 'squeeze' );
+            ?></label>
+                                <p id="squeeze-directory-path-hint" class="squeeze-bulk-field-hint"><?php 
+            esc_html_e( 'Relative to site root.', 'squeeze' );
+            ?></p>
+                                <div class="squeeze-path-list" aria-describedby="squeeze-directory-path-hint">
                                     <?php 
+            $squeeze_bulk_path_count = count( $directory_path );
             foreach ( $directory_path as $path ) {
                 ?>
                                         <div class="squeeze-path-list__item">
                                             <input name="squeeze-path-list__item[]" type="text" class="squeeze-path-list__input" value="<?php 
                 echo esc_attr( $path );
                 ?>" readonly />
-                                            <button name="squeeze_remove_path_button" class="squeeze-path-list__remove" type="button">
-                                                <svg class="squeeze-icon">
-                                                    <use xlink:href="#trash-icon"></use>
-                                                </svg>
+                                            <?php 
+                if ( $squeeze_bulk_path_count > 1 ) {
+                    ?>
+                                            <button name="squeeze_remove_path_button" class="squeeze-path-list__remove button" type="button" title="<?php 
+                    esc_attr_e( 'Clear the path field', 'squeeze' );
+                    ?>">
+                                                <?php 
+                    esc_html_e( 'Clear path', 'squeeze' );
+                    ?>
                                             </button>
+                                            <?php 
+                }
+                ?>
                                         </div>
                                     <?php 
             }
             ?>
-                                    </div>
-                                </label>
+                                </div>
+                                <p class="squeeze-bulk-field-hint squeeze-bulk-field-hint--tight"><?php 
+            esc_html_e( 'Clear path only empties the field — it does not delete files on disk.', 'squeeze' );
+            ?></p>
+                            </div>
+
+                            <div class="squeeze-bulk-section__secondary-actions">
                                 <button name="squeeze_select_path_button" class="button button-secondary button-large" type="button">
-                                    <svg class="squeeze-icon">
+                                    <svg class="squeeze-icon" aria-hidden="true">
                                         <use xlink:href="#open-folder-outline-icon"></use>
                                     </svg>
                                     <?php 
             esc_attr_e( 'Select Directory', 'squeeze' );
             ?>
                                 </button>
-                                <dialog id="squeeze-path-dialog">
-                                    <div class="squeeze-box-header">
-                                        <h2><?php 
+                            </div>
+                            <dialog id="squeeze-path-dialog">
+                                <div class="squeeze-box-header">
+                                    <h2><?php 
             esc_html_e( "Select Directory for Squeeze", "squeeze" );
             ?></h2>
-                                        <button name="squeeze_close_path_dialog_button" class="button button-link" type="button">
-                                            <svg class="squeeze-icon">
-                                                <use xlink:href="#close-round-icon"></use>
-                                            </svg>
-                                        </button>
-                                    </div>
-
-                                    <div id="squeeze-bulk-directory-list">
-                                        <svg class="squeeze-icon">
-                                            <use xlink:href="#reload-sync-icon"></use>
+                                    <button name="squeeze_close_path_dialog_button" class="button button-link" type="button">
+                                        <svg class="squeeze-icon" aria-hidden="true">
+                                            <use xlink:href="#close-round-icon"></use>
                                         </svg>
-                                        <?php 
-            esc_attr_e( "Loading directories...", "squeeze" );
-            ?>
-                                    </div>
+                                    </button>
+                                </div>
 
-                                    <div class="squeeze-box-footer">
-                                        <button disabled name="squeeze_save_path_button" class="button button-secondary button-large" type="button">
-                                            <svg class="squeeze-icon">
-                                                <use xlink:href="#open-folder-outline-icon"></use>
-                                            </svg>
-                                            <?php 
-            esc_attr_e( 'Select Directory', 'squeeze' );
-            ?>
-                                        </button>
-                                    </div>
-                                </dialog>
-                            </div>
-                            <div class="squeeze-box-content__col squeeze-box-content__col--end">
-                                <button name="squeeze_bulk_path_button" class="button button-primary button-hero" type="button">
-                                    <svg class="squeeze-icon">
-                                        <use xlink:href="#play-button-round-icon"></use>
+                                <div id="squeeze-bulk-directory-list">
+                                    <svg class="squeeze-icon" aria-hidden="true">
+                                        <use xlink:href="#reload-sync-icon"></use>
                                     </svg>
                                     <?php 
+            esc_html_e( "Loading directories...", "squeeze" );
+            ?>
+                                </div>
+
+                                <div class="squeeze-box-footer">
+                                    <button disabled name="squeeze_save_path_button" class="button button-secondary button-large" type="button">
+                                        <svg class="squeeze-icon" aria-hidden="true">
+                                            <use xlink:href="#open-folder-outline-icon"></use>
+                                        </svg>
+                                        <?php 
+            esc_attr_e( 'Select Directory', 'squeeze' );
+            ?>
+                                    </button>
+                                </div>
+                            </dialog>
+                        </div>
+                        <div class="squeeze-bulk-section__actions squeeze-bulk-media-actions">
+                            <button name="squeeze_bulk_path_button" class="button button-primary button-hero" type="button">
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#play-button-round-icon"></use>
+                                </svg>
+                                <?php 
             esc_attr_e( 'Run Directory Squeeze', 'squeeze' );
             ?>
-                                </button>
-                            </div>
+                            </button>
                         </div>
+                    </section>
                     </div>
                     <?php 
         }
@@ -296,7 +350,7 @@ class SqueezeSettings extends SqueezeInit {
         ?>
 
                     
-                    <div class="squeeze-box-bulk-grid__row">
+                    <div class="squeeze-box-bulk-stack__footer">
                         <div class="squeeze-box-content">
                             <p class="squeeze-hint">
                                 <?php 
@@ -356,19 +410,11 @@ class SqueezeSettings extends SqueezeInit {
                 add_settings_error(
                     'squeeze_notices',
                     'squeeze_notices',
-                    __( 'The Apache mod_rewrite module is not enabled on your server OR your server is not running Apache.', 'squeeze' ) . '<br>' . __( 'In order to make WebP serving work, you need to check the "Replace images URLs" option OR enable the mod_rewrite module.', 'squeeze' ),
+                    __( 'The Apache mod_rewrite module is not enabled on your server OR your server is not running Apache.', 'squeeze' ) . '<br>' . __( 'To serve WebP, enable mod_rewrite, or switch to "Rewrite <img> src to WebP URLs in HTML" delivery.', 'squeeze' ),
                     'warning'
                 );
             }
         }
-        /*if (!self::$SqueezeHelpers->is_rest_enabled()) {
-              add_settings_error(
-                  'squeeze_notices',
-                  'squeeze_notices',
-                  __('The REST API is not enabled on your site. Please enable it in order to use Squeeze plugin.', 'squeeze'),
-                  'error'
-              );
-          }*/
         ?>
         <div class="wrap">
             <h1>
@@ -406,30 +452,96 @@ class SqueezeSettings extends SqueezeInit {
         ?>
             </nav>
             <div class="tab-content">
-                <form action="options.php" method="post">
+                <form action="options.php" method="post" class="squeeze-settings-form">
                     <?php 
         settings_errors( 'squeeze_notices' );
         settings_fields( 'squeeze_options' );
         //do_settings_sections( 'squeeze_options' );
         ?>
 
-                    <section id="squeeze_basic">
-                        <div class="squeeze-box squeeze-box--settings">
-                            <div class="squeeze-box-header">
-                                <div class="squeeze-box-header__col">
-                                    <h2><?php 
-        esc_html_e( 'Basic Settings', 'squeeze' );
+                    <section id="squeeze_basic" class="squeeze-settings-basic">
+                        <div class="squeeze-settings-layout">
+                            <div class="squeeze-settings-main">
+                                <div class="squeeze-card squeeze-card--settings">
+                                    <div class="squeeze-card-header">
+                                        <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'Quick start', 'squeeze' );
         ?></h2>
+                                        <p class="squeeze-card-desc"><?php 
+        esc_html_e( 'Core options used on most sites.', 'squeeze' );
+        ?></p>
+                                    </div>
+                                    <table class="form-table squeeze-form-table--card" role="presentation">
+                                        <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_quick' );
+        ?>
+                                    </table>
+                                </div>
+                                <div class="squeeze-card squeeze-card--settings">
+                                    <div class="squeeze-card-header">
+                                        <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'WebP delivery', 'squeeze' );
+        ?></h2>
+                                        <p class="squeeze-card-desc"><?php 
+        esc_html_e( 'Choose how WebP files are stored and served. Pick one strategy.', 'squeeze' );
+        ?></p>
+                                    </div>
+                                    <div class="squeeze-webp-delivery-fullwidth" role="group" aria-label="<?php 
+        esc_attr_e( 'WebP delivery mode', 'squeeze' );
+        ?>">
+                                        <?php 
+        $this->render_webp_delivery_field();
+        ?>
+                                    </div>
                                     <?php 
-        $this->setting_basic_desc();
         ?>
                                 </div>
-                            </div>
-                            <table class="form-table" role="presentation">
-                                <?php 
-        do_settings_fields( 'squeeze_options', 'squeeze_basic_settings' );
+                                <div class="squeeze-card squeeze-card--settings">
+                                    <div class="squeeze-card-header">
+                                        <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'Thumbnails & limits', 'squeeze' );
+        ?></h2>
+                                        <p class="squeeze-card-desc"><?php 
+        esc_html_e( 'Which generated sizes to squeeze, resize limits, and timeout.', 'squeeze' );
+        ?></p>
+                                    </div>
+                                    <table class="form-table squeeze-form-table--card" role="presentation">
+                                        <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_thumbs' );
         ?>
-                            </table>
+                                        <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_limits' );
+        ?>
+                                    </table>
+                                </div>
+                                <div class="squeeze-card squeeze-card--settings">
+                                    <div class="squeeze-card-header">
+                                        <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'Exclusions', 'squeeze' );
+        ?></h2>
+                                        <p class="squeeze-card-desc"><?php 
+        esc_html_e( 'Skip matching files during bulk or upload squeeze.', 'squeeze' );
+        ?></p>
+                                    </div>
+                                    <table class="form-table squeeze-form-table--card" role="presentation">
+                                        <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_exclusions' );
+        ?>
+                                    </table>
+                                </div>
+                                <table class="form-table squeeze-form-table--hidden" role="presentation" aria-hidden="true">
+                                    <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_hidden' );
+        ?>
+                                </table>
+                            </div>
+                            <aside class="squeeze-settings-sidebar" aria-label="<?php 
+        esc_attr_e( 'Summary and help', 'squeeze' );
+        ?>">
+                                <?php 
+        $this->render_basic_settings_sidebar();
+        ?>
+                            </aside>
                         </div>
                     </section>
                     <section id="squeeze_jpeg">
@@ -566,12 +678,7 @@ class SqueezeSettings extends SqueezeInit {
                             </div>
                             <div class="squeeze-upgrade-features">
                                 <?php 
-        $features = [
-            ['icon-compare.svg', __( 'Image Comparison', 'squeeze' ), __( 'Compare original and Squeezed image directly in the Media Library.', 'squeeze' )],
-            ['icon-resize.svg', __( 'Resize Original Image', 'squeeze' ), __( 'Set maximum width and height for the original image.', 'squeeze' )],
-            ['icon-bulk-page.svg', __( 'Bulk Squeeze from a Page', 'squeeze' ), __( 'Compress all images from a specific page.', 'squeeze' )],
-            ['icon-exclude.svg', __( 'Image Exclusion', 'squeeze' ), __( 'Exclude specific images from bulk compression.', 'squeeze' )]
-        ];
+        $features = [['icon-compare.svg', __( 'Image Comparison', 'squeeze' ), __( 'Compare original and Squeezed image directly in the Media Library.', 'squeeze' )], ['icon-resize.svg', __( 'Resize Original Image', 'squeeze' ), __( 'Set maximum width and height for the original image.', 'squeeze' )], ['icon-bulk-page.svg', __( 'Bulk Squeeze from a Page', 'squeeze' ), __( 'Compress all images from a specific page.', 'squeeze' )]];
         foreach ( $features as $feature ) {
             ?>
                                     <div class="squeeze-box--fieldset">
@@ -606,7 +713,7 @@ class SqueezeSettings extends SqueezeInit {
                     <?php 
         ?>
 
-                    <p class="submit">
+                    <p class="submit squeeze-settings-submit">
                         <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php 
         esc_attr_e( 'Save Changes', 'squeeze' );
         ?>">
@@ -625,23 +732,20 @@ class SqueezeSettings extends SqueezeInit {
         $webp_lossless = self::$SqueezeHelpers->get_option( 'webp_lossless' );
         register_setting( 'squeeze_options', 'squeeze_options', [$this, 'options_validate'] );
         add_settings_section(
-            'squeeze_basic_settings',
-            __( 'Basic Settings', 'squeeze' ),
-            'squeeze_setting_basic_desc',
-            'squeeze_options',
-            array(
-                'section_class' => 'squeeze_basic',
-            )
+            'squeeze_basic_quick',
+            '',
+            '__return_false',
+            'squeeze_options'
         );
         add_settings_field(
             'squeeze_setting_auto_compress',
             __( 'Squeeze on upload', 'squeeze' ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_quick',
             array(
                 'label_for' => 'auto_compress',
-                'class'     => 'squeeze_setting_auto_compress',
+                'class'     => 'squeeze_setting_auto_compress squeeze-settings-row',
                 'type'      => 'checkbox',
             )
         );
@@ -650,10 +754,10 @@ class SqueezeSettings extends SqueezeInit {
             __( 'Backup original image', 'squeeze' ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_quick',
             array(
                 'label_for' => 'backup_original',
-                'class'     => 'squeeze_setting_backup_original',
+                'class'     => 'squeeze_setting_backup_original squeeze-settings-row',
                 'type'      => 'checkbox',
             )
         );
@@ -662,74 +766,52 @@ class SqueezeSettings extends SqueezeInit {
             __( 'Image formats', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Select which image formats you want to be squeezed.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_quick',
             array(
                 'label_for' => 'compress_formats',
-                'class'     => 'squeeze_setting_compress_formats',
+                'class'     => 'squeeze_setting_compress_formats squeeze-settings-row',
                 'type'      => 'formats_checkbox_group',
             )
         );
-        add_settings_field(
-            'squeeze_setting_direct_webp',
-            __( 'Direct WebP Conversion', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Convert all uploaded images to WEBP format and replace the originals. The original JPEG/PNG files are not stored on the server, which reduces disk usage.', 'squeeze' ) ),
-            [$this, 'options_callback'],
-            'squeeze_options',
-            'squeeze_basic_settings',
-            array(
-                'label_for'   => 'direct_webp',
-                'class'       => 'squeeze_setting_direct_webp',
-                'type'        => 'checkbox',
-                'has_example' => true,
-            )
+        add_settings_section(
+            'squeeze_basic_webp',
+            '',
+            '__return_false',
+            'squeeze_options'
         );
-        add_settings_field(
-            'squeeze_setting_auto_webp',
-            __( 'Generate WEBP', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Instead of the original image URL, the image will be served in WEBP format. WEBP images are stored in a separate directory: wp-content/squeeze-webp.', 'squeeze' ) . ' ' . __( 'This is the old method, in case you already have images being converted using this approach. Otherwise, it is recommended that you use the direct WEBP conversion method above.', 'squeeze' ) ),
-            [$this, 'options_callback'],
-            'squeeze_options',
-            'squeeze_basic_settings',
-            array(
-                'label_for'   => 'auto_webp',
-                'class'       => 'squeeze_setting_auto_webp',
-                'type'        => 'checkbox',
-                'has_example' => true,
-            )
-        );
-        add_settings_field(
-            'squeeze_setting_webp_replace_urls',
-            __( 'Replace images URLs', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'If the method above does not work, try this option. This method replaces the original URLs of the images with related WEBP images.', 'squeeze' ) ),
-            [$this, 'options_callback'],
-            'squeeze_options',
-            'squeeze_basic_settings',
-            array(
-                'label_for'   => 'webp_replace_urls',
-                'class'       => 'squeeze_setting_webp_replace_urls',
-                'type'        => 'checkbox',
-                'has_example' => true,
-                'hidden'      => ( $auto_webp ? '' : true ),
-            )
+        add_settings_section(
+            'squeeze_basic_thumbs',
+            '',
+            '__return_false',
+            'squeeze_options'
         );
         add_settings_field(
             'squeeze_setting_compress_thumbs',
             __( 'Squeeze thumbnails', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Choose which image thumbnail sizes you want to squeeze along with the original image.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_thumbs',
             array(
                 'label_for' => 'compress_thumbs',
-                'class'     => 'squeeze_setting_compress_thumbs',
+                'class'     => 'squeeze_setting_compress_thumbs squeeze-settings-row',
                 'type'      => 'thumbs_checkbox_group',
             )
+        );
+        add_settings_section(
+            'squeeze_basic_limits',
+            '',
+            '__return_false',
+            'squeeze_options'
         );
         add_settings_field(
             'squeeze_setting_max_width',
             __( 'Max. image width', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Limit a width of an original image. Leave this field empty if you do not want to crop the image by width.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_limits',
             array(
                 'label_for' => 'max_width',
-                'class'     => 'squeeze_setting_max_width',
+                'class'     => 'squeeze_setting_max_width squeeze-settings-row',
                 'type'      => 'placeholder',
             )
         );
@@ -738,22 +820,10 @@ class SqueezeSettings extends SqueezeInit {
             __( 'Max. image height', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Limit a height of an original image. Leave this field empty if you do not want to crop the image by height.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_limits',
             array(
                 'label_for' => 'max_height',
-                'class'     => 'squeeze_setting_max_height',
-                'type'      => 'placeholder',
-            )
-        );
-        add_settings_field(
-            'squeeze_setting_excluded_images',
-            __( 'Excluded images', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Enter a list of images that you want to exclude from squeezing. Both full URLs and partial strings can be used. One URL per line.', 'squeeze' ) ),
-            [$this, 'options_callback'],
-            'squeeze_options',
-            'squeeze_basic_settings',
-            array(
-                'label_for' => 'excluded_images',
-                'class'     => 'squeeze_setting_excluded_images',
+                'class'     => 'squeeze_setting_max_height squeeze-settings-row',
                 'type'      => 'placeholder',
             )
         );
@@ -762,21 +832,45 @@ class SqueezeSettings extends SqueezeInit {
             __( 'Squeeze timeout', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Time limit for squeezing an image. If you get an error during image squeezing, try to increase this value.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_limits',
             array(
                 'label_for' => 'timeout',
-                'class'     => 'squeeze_setting_timeout',
+                'class'     => 'squeeze_setting_timeout squeeze-settings-row squeeze-inline-limit',
                 'type'      => 'number',
                 'units'     => 'sec',
                 'min'       => 1,
             )
+        );
+        add_settings_section(
+            'squeeze_basic_exclusions',
+            '',
+            '__return_false',
+            'squeeze_options'
+        );
+        add_settings_field(
+            'squeeze_setting_excluded_images',
+            __( 'Excluded images', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Enter a list of images that you want to exclude from squeezing. Both full URLs and partial strings can be used. One URL per line.', 'squeeze' ) ),
+            [$this, 'options_callback'],
+            'squeeze_options',
+            'squeeze_basic_exclusions',
+            array(
+                'label_for' => 'excluded_images',
+                'class'     => 'squeeze_setting_excluded_images squeeze-settings-row',
+                'type'      => 'textarea',
+            )
+        );
+        add_settings_section(
+            'squeeze_basic_hidden',
+            '',
+            '__return_false',
+            'squeeze_options'
         );
         add_settings_field(
             'squeeze_setting_restore_defaults',
             '',
             [$this, 'options_callback'],
             'squeeze_options',
-            'squeeze_basic_settings',
+            'squeeze_basic_hidden',
             array(
                 'label_for' => 'restore_defaults',
                 'class'     => 'squeeze_setting_restore_defaults',
@@ -1107,7 +1201,272 @@ class SqueezeSettings extends SqueezeInit {
         );
     }
 
+    /**
+     * Map stored options to a single WebP delivery mode for the settings UI.
+     *
+     * @param array $options squeeze_options array.
+     * @return string direct|sidecar|sidecar_replace (internal keys; UI labels use "Separate WebP folder".)
+     */
+    protected function get_webp_delivery_mode( $options ) {
+        $direct = !empty( $options['direct_webp'] );
+        $auto = !empty( $options['auto_webp'] );
+        $replace = !empty( $options['webp_replace_urls'] );
+        if ( $direct ) {
+            return 'direct';
+        }
+        if ( $auto && $replace ) {
+            return 'sidecar_replace';
+        }
+        if ( $auto ) {
+            return 'sidecar';
+        }
+        return 'direct';
+    }
+
+    /**
+     * Unified WebP delivery control (radios + collapsible examples).
+     */
+    public function render_webp_delivery_field() {
+        $options = get_option( 'squeeze_options' );
+        if ( !is_array( $options ) ) {
+            $options = array();
+        }
+        $mode = $this->get_webp_delivery_mode( $options );
+        ?>
+        <div class="squeeze-webp-delivery-ui">
+            <fieldset class="squeeze-webp-modes" role="radiogroup">
+                <legend class="screen-reader-text"><?php 
+        esc_html_e( 'WebP delivery mode', 'squeeze' );
+        ?></legend>
+                <label class="squeeze-webp-mode-card<?php 
+        echo ( $mode === 'direct' ? ' is-selected' : '' );
+        ?>">
+                    <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="direct" <?php 
+        checked( $mode, 'direct' );
+        ?> />
+                    <span class="squeeze-webp-mode-badge"><?php 
+        esc_html_e( 'Recommended', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-title"><?php 
+        esc_html_e( 'Direct WebP', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-desc"><?php 
+        esc_html_e( 'Replace originals with .webp on disk. Lowest storage; URLs change to .webp.', 'squeeze' );
+        ?></span>
+                </label>
+                <label class="squeeze-webp-mode-card<?php 
+        echo ( $mode === 'sidecar_replace' ? ' is-selected' : '' );
+        ?>">
+                    <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar_replace" <?php 
+        checked( $mode, 'sidecar_replace' );
+        ?> />
+                    <span class="squeeze-webp-mode-badge"><?php 
+        esc_html_e( 'PHP / any host', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-title"><?php 
+        esc_html_e( 'Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-desc"><?php 
+        esc_html_e( 'Keeps JPEG/PNG in uploads and WebP copies under squeeze-webp. Squeeze changes src and srcset in the page HTML to the WebP path. Best when .htaccess rewrites are missing (Nginx, CDN, etc.).', 'squeeze' );
+        ?></span>
+                </label>
+                <label class="squeeze-webp-mode-card<?php 
+        echo ( $mode === 'sidecar' ? ' is-selected' : '' );
+        ?>">
+                    <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar" <?php 
+        checked( $mode, 'sidecar' );
+        ?> />
+                    <span class="squeeze-webp-mode-badge"><?php 
+        esc_html_e( 'Apache / .htaccess', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-title"><?php 
+        esc_html_e( 'Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
+        ?></span>
+                    <span class="squeeze-webp-mode-desc"><?php 
+        esc_html_e( 'Keeps originals in uploads; WebP files go to squeeze-webp. Page HTML still shows .jpg/.png URLs. The server rewrite rules send WebP bytes when the browser supports it — no HTML changes.', 'squeeze' );
+        ?></span>
+                </label>
+            </fieldset>
+            <details class="squeeze-webp-example">
+                <summary><?php 
+        esc_html_e( 'Show example: Direct WebP (file sizes)', 'squeeze' );
+        ?></summary>
+                <div class="squeeze-webp-example-inner">
+                    <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'Direct WebP: on disk, files use the .webp extension instead of .jpg / .png for the same attachment paths.', 'squeeze' ) );
+        ?></span>
+<span class="squeeze-webp-pre-heading"><?php 
+        echo esc_html( __( 'Before', 'squeeze' ) );
+        ?></span>
+/wp-content/uploads/2025/07/image.jpg           <span class="squeeze-webp-size squeeze-webp-size--before">~500 KB</span>
+/wp-content/uploads/2025/07/image-300x300.jpg   <span class="squeeze-webp-size squeeze-webp-size--before">~230 KB</span>
+
+<span class="squeeze-webp-pre-heading"><?php 
+        echo esc_html( __( 'After', 'squeeze' ) );
+        ?></span>
+/wp-content/uploads/2025/07/image.webp          <span class="squeeze-webp-size squeeze-webp-size--after">~50 KB</span>
+/wp-content/uploads/2025/07/image-300x300.webp  <span class="squeeze-webp-size squeeze-webp-size--after">~20 KB</span></pre>
+                </div>
+            </details>
+            <details class="squeeze-webp-example">
+                <summary><?php 
+        esc_html_e( 'Show example: Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
+        ?></summary>
+                <div class="squeeze-webp-example-inner">
+                    <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'Before: the page outputs a normal uploads URL for the JPEG.', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
+
+<span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'After: the same img tag in the markup, but PHP rewrites src to the WebP path under squeeze-webp when that file exists.', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/squeeze-webp/uploads/2025/07/photo.jpg.webp" alt="…" /&gt;</pre>
+                </div>
+            </details>
+            <details class="squeeze-webp-example">
+                <summary><?php 
+        esc_html_e( 'Show example: Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
+        ?></summary>
+                <div class="squeeze-webp-example-inner">
+                    <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'The published HTML keeps the usual uploads URL on the img (still ends in .jpg or .png).', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
+
+<span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'When the browser advertises WebP and your server rewrite rules apply, that same URL can be served as a WebP response from the file under squeeze-webp, without changing the markup.', 'squeeze' ) );
+        ?></span>
+
+<span class="squeeze-webp-pre-heading"><?php 
+        echo esc_html( __( 'On disk (after optimization)', 'squeeze' ) );
+        ?></span>
+/wp-content/uploads/2025/07/image.jpg                    <span class="squeeze-webp-size squeeze-webp-size--before">~500 KB</span>  <span class="squeeze-webp-pre-note"><?php 
+        echo esc_html( __( 'original', 'squeeze' ) );
+        ?></span>
+/wp-content/squeeze-webp/uploads/2025/07/image.jpg.webp    <span class="squeeze-webp-size squeeze-webp-size--after">~50 KB</span>  <span class="squeeze-webp-pre-note"><?php 
+        echo esc_html( __( 'sidecar WebP', 'squeeze' ) );
+        ?></span></pre>
+                </div>
+            </details>
+        </div>
+        <?php 
+    }
+
+    /**
+     * Sidebar summary on Basic settings (read-only hints).
+     */
+    public function render_basic_settings_sidebar() {
+        $options = get_option( 'squeeze_options' );
+        if ( !is_array( $options ) ) {
+            $options = array();
+        }
+        $mode = $this->get_webp_delivery_mode( $options );
+        $mode_label = __( 'Direct WebP', 'squeeze' );
+        if ( 'sidecar' === $mode ) {
+            $mode_label = __( 'Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
+        } elseif ( 'sidecar_replace' === $mode ) {
+            $mode_label = __( 'Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
+        }
+        $upload_on = !empty( $options['auto_compress'] );
+        $backup_on = !empty( $options['backup_original'] );
+        ?>
+        <div class="squeeze-card squeeze-card--aside">
+            <div class="squeeze-card-header">
+                <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'Current profile', 'squeeze' );
+        ?></h2>
+            </div>
+            <div class="squeeze-card-body">
+                <?php 
+        $profile_bits = array('<strong>' . esc_html( $mode_label ) . '</strong>');
+        if ( $upload_on ) {
+            $profile_bits[] = esc_html__( 'Squeeze on upload', 'squeeze' );
+        }
+        if ( $backup_on ) {
+            $profile_bits[] = esc_html__( 'Backup on', 'squeeze' );
+        }
+        echo '<p>' . wp_kses( implode( ' · ', $profile_bits ), array(
+            'strong' => array(),
+        ) ) . '</p>';
+        ?>
+                <ul class="squeeze-aside-list">
+                    <?php 
+        if ( 'direct' === $mode ) {
+            ?>
+                        <li><?php 
+            esc_html_e( 'Best for storage savings on new uploads.', 'squeeze' );
+            ?></li>
+                        <li><?php 
+            esc_html_e( 'If you deactivate the plugin, hard-coded .jpg/.png links may need updating.', 'squeeze' );
+            ?></li>
+                    <?php 
+        } elseif ( 'sidecar' === $mode ) {
+            ?>
+                        <li><?php 
+            esc_html_e( 'HTML keeps normal .jpg/.png URLs; WebP is chosen by the server when the browser supports it.', 'squeeze' );
+            ?></li>
+                        <li><?php 
+            esc_html_e( 'Needs working .htaccess rewrite rules (Apache mod_rewrite or equivalent).', 'squeeze' );
+            ?></li>
+                    <?php 
+        } elseif ( 'sidecar_replace' === $mode ) {
+            ?>
+                        <li><?php 
+            esc_html_e( 'Originals stay in uploads; page HTML points at WebP under squeeze-webp.', 'squeeze' );
+            ?></li>
+                        <li><?php 
+            esc_html_e( 'Works without .htaccess — PHP rewrites image URLs on each page load.', 'squeeze' );
+            ?></li>
+                    <?php 
+        }
+        ?>
+                </ul>
+            </div>
+        </div>
+        <div class="squeeze-card squeeze-card--aside">
+            <div class="squeeze-card-header">
+                <h2 class="squeeze-card-title"><?php 
+        esc_html_e( 'Documentation', 'squeeze' );
+        ?></h2>
+            </div>
+            <div class="squeeze-card-body">
+                <p>
+                    <a href="<?php 
+        echo esc_url( self::$DOCS_URL );
+        ?>" target="_blank" rel="noopener noreferrer"><?php 
+        esc_html_e( 'Squeeze documentation', 'squeeze' );
+        ?></a>
+                </p>
+            </div>
+        </div>
+        <?php 
+    }
+
     public function options_validate( $input ) {
+        if ( isset( $input['webp_delivery_mode'] ) && is_string( $input['webp_delivery_mode'] ) ) {
+            $mode = sanitize_text_field( wp_unslash( $input['webp_delivery_mode'] ) );
+            unset($input['webp_delivery_mode']);
+            switch ( $mode ) {
+                case 'sidecar':
+                case 'sidecar_picture':
+                    $input['direct_webp'] = false;
+                    $input['auto_webp'] = true;
+                    $input['webp_replace_urls'] = false;
+                    break;
+                case 'sidecar_replace':
+                    $input['direct_webp'] = false;
+                    $input['auto_webp'] = true;
+                    $input['webp_replace_urls'] = true;
+                    break;
+                case 'direct':
+                default:
+                    $input['direct_webp'] = true;
+                    $input['auto_webp'] = false;
+                    $input['webp_replace_urls'] = false;
+                    break;
+            }
+        }
         $input['jpeg_quality'] = absint( $input['jpeg_quality'] );
         $input['jpeg_smoothing'] = ( isset( $input['jpeg_smoothing'] ) ? absint( $input['jpeg_smoothing'] ) : self::$SqueezeHelpers->get_default_value( 'jpeg_smoothing' ) );
         $input['jpeg_color_space'] = ( isset( $input['jpeg_color_space'] ) ? absint( $input['jpeg_color_space'] ) : self::$SqueezeHelpers->get_default_value( 'jpeg_color_space' ) );
@@ -1137,7 +1496,12 @@ class SqueezeSettings extends SqueezeInit {
         $input['auto_webp'] = ( isset( $input['auto_webp'] ) ? boolval( $input['auto_webp'] ) : '0' );
         $input['webp_replace_urls'] = ( isset( $input['webp_replace_urls'] ) && $input['auto_webp'] ? boolval( $input['webp_replace_urls'] ) : '0' );
         $input['direct_webp'] = ( isset( $input['direct_webp'] ) ? boolval( $input['direct_webp'] ) : '0' );
-        $input['cdn_url'] = ( isset( $input['cdn_url'] ) && $input['auto_webp'] ? $input['cdn_url'] : '' );
+        if ( isset( $input['cdn_url'] ) ) {
+            $cdn_raw = trim( wp_unslash( (string) $input['cdn_url'] ) );
+            $input['cdn_url'] = ( $cdn_raw === '' ? '' : esc_url_raw( $cdn_raw ) );
+        } else {
+            $input['cdn_url'] = '';
+        }
         $input['backup_original'] = ( isset( $input['backup_original'] ) ? boolval( $input['backup_original'] ) : '0' );
         $input['compress_formats'] = ( isset( $input['compress_formats'] ) && is_array( $input['compress_formats'] ) ? $this->validate_image_formats( $input['compress_formats'], $input['direct_webp'] ) : array() );
         $input['compress_thumbs'] = ( isset( $input['compress_thumbs'] ) && is_array( $input['compress_thumbs'] ) ? $input['compress_thumbs'] : array() );
@@ -1154,6 +1518,7 @@ class SqueezeSettings extends SqueezeInit {
                 'success'
             );
         }
+        unset($input['webp_picture_markup']);
         return $input;
     }
 
@@ -1184,7 +1549,6 @@ class SqueezeSettings extends SqueezeInit {
         $default = self::$SqueezeHelpers->get_default_value( $label_for );
         $options = get_option( 'squeeze_options' );
         $is_hidden = ( isset( $args['hidden'] ) && $args['hidden'] ? 'hidden' : '' );
-        $has_example = ( isset( $args['has_example'] ) && $args['has_example'] ? true : false );
         $extra_classes = [];
         if ( $is_hidden ) {
             $extra_classes[] = 'squeeze-hidden';
@@ -1201,7 +1565,7 @@ class SqueezeSettings extends SqueezeInit {
                 $units = ( isset( $args['units'] ) ? $args['units'] : '' );
                 $min = ( isset( $args['min'] ) ? $args['min'] : '' );
                 $max = ( isset( $args['max'] ) ? $args['max'] : '' );
-                echo "<input class='" . esc_attr( $extra_classes ) . "' id='squeeze_setting_" . esc_attr( $label_for ) . "' name='squeeze_options[" . esc_attr( $label_for ) . "]' type='number' value='" . esc_attr( $value ) . "' " . (( $min ? "min='" . esc_attr( $min ) . "'" : "" )) . " " . (( $max ? "min='" . esc_attr( $max ) . "'" : "" )) . " />";
+                echo "<input class='" . esc_attr( $extra_classes ) . "' id='squeeze_setting_" . esc_attr( $label_for ) . "' name='squeeze_options[" . esc_attr( $label_for ) . "]' type='number' value='" . esc_attr( $value ) . "' " . (( $min !== '' && $min !== null ? "min='" . esc_attr( $min ) . "'" : "" )) . " " . (( $max !== '' && $max !== null ? "max='" . esc_attr( $max ) . "'" : "" )) . " />";
                 if ( $units ) {
                     echo "<span class='squeeze-setting-units'>" . esc_html( $units ) . "</span>";
                 }
@@ -1254,10 +1618,15 @@ class SqueezeSettings extends SqueezeInit {
                 // Add the scaled image size option
                 $big_image_size_threshold = apply_filters( 'big_image_size_threshold', 2560 );
                 $thumbs['full'] = 'Scaled (' . $big_image_size_threshold . 'x' . $big_image_size_threshold . ')';
-                echo '<div class="squeeze-box squeeze-box--fieldset">';
-                echo '<div class="squeeze-box-content">';
+                echo '<div class="squeeze-thumb-toolbar">';
+                echo '<button type="button" class="button button-small" id="squeeze-thumbs-select-all">' . esc_html__( 'Select all', 'squeeze' ) . '</button>';
+                echo '<button type="button" class="button button-small" id="squeeze-thumbs-clear-all">' . esc_html__( 'Clear all', 'squeeze' ) . '</button>';
+                echo '<button type="button" class="button button-small" id="squeeze-thumbs-wp-defaults">' . esc_html__( 'WordPress defaults', 'squeeze' ) . '</button>';
+                echo '</div>';
+                echo '<div class="squeeze-box squeeze-box--fieldset squeeze-thumb-grid-wrap">';
+                echo '<div class="squeeze-box-content squeeze-thumb-grid">';
                 foreach ( $thumbs as $key => $option ) {
-                    echo '<div class="squeeze-suboption">';
+                    echo '<div class="squeeze-suboption squeeze-thumb-grid-item">';
                     echo "<input class='squeeze-ios8-switch' id='squeeze_setting_" . esc_attr( $label_for ) . "_" . esc_attr( $key ) . "' name='squeeze_options[" . esc_attr( $label_for ) . "][" . esc_attr( $key ) . "]' type='checkbox' " . checked( array_key_exists( $key, $value ), true, false ) . " /> ";
                     echo "<label for='squeeze_setting_" . esc_attr( $label_for ) . "_" . esc_attr( $key ) . "'>" . esc_html( $option ) . "</label>";
                     echo '</div>';
@@ -1269,14 +1638,14 @@ class SqueezeSettings extends SqueezeInit {
                 $is_direct_webp = ( isset( $options['direct_webp'] ) ? (bool) $options['direct_webp'] : false );
                 $formats = self::ALLOWED_IMAGE_FORMATS;
                 $value = ( isset( $options[$label_for] ) ? (array) $options[$label_for] : $default );
-                echo '<div class="squeeze-box squeeze-box--fieldset">';
-                echo '<div class="squeeze-box-content">';
+                echo '<div class="squeeze-box squeeze-box--fieldset squeeze-format-chips-wrap">';
+                echo '<div class="squeeze-box-content squeeze-format-chips">';
                 foreach ( $formats as $key => $option ) {
-                    echo '<div class="squeeze-suboption ' . (( $is_direct_webp && $key === 'webp' ? 'squeeze-disabled' : '' )) . '">';
+                    echo '<div class="squeeze-suboption squeeze-format-chip ' . (( $is_direct_webp && $key === 'webp' ? 'squeeze-disabled' : '' )) . '">';
                     echo "<input class='squeeze-ios8-switch' id='squeeze_setting_" . esc_attr( $label_for ) . "_" . esc_attr( $key ) . "' name='squeeze_options[" . esc_attr( $label_for ) . "][" . esc_attr( $key ) . "]' type='checkbox' " . checked( array_key_exists( $key, $value ), true, false ) . " /> ";
                     echo "<label for='squeeze_setting_" . esc_attr( $label_for ) . "_" . esc_attr( $key ) . "'>" . esc_html( $key ) . "</label>";
                     if ( $is_direct_webp && $key === 'webp' ) {
-                        echo '<span class="squeeze-hint">' . __( '(mandatory when Direct WEBP is enabled)', 'squeeze' ) . '</span>';
+                        echo '<span class="squeeze-hint">' . __( '(mandatory when Direct WebP is enabled)', 'squeeze' ) . '</span>';
                     }
                     echo '</div>';
                 }
@@ -1294,166 +1663,6 @@ class SqueezeSettings extends SqueezeInit {
             case 'placeholder':
                 echo '<p>' . sprintf( __( 'This feature is available only in the <a href="%s">premium version</a>.', 'squeeze' ), esc_url( self::$UPGRADE_URL ) ) . '</p>';
                 break;
-        }
-        if ( $has_example ) {
-            $value = ( isset( $options[$label_for] ) ? (bool) $options[$label_for] : $default );
-            echo '<div class="squeeze-settings-example squeeze-settings-example--' . $label_for . (( $value ? ' enabled' : '' )) . '">';
-            switch ( $label_for ) {
-                case 'direct_webp':
-                    ?>
-                <span class="squeeze-hint"><?php 
-                    echo __( "Example:", 'squeeze' );
-                    ?></span>
-                <div class="squeeze-box squeeze-box--fieldset">
-                    <div class="squeeze-box-content">
-                        <p><strong><?php 
-                    echo __( 'Before', 'squeeze' );
-                    ?></strong></p>
-                        <p><span><?php 
-                    echo __( 'image.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '500 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span><?php 
-                    echo __( 'image-100x100.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '98 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span><?php 
-                    echo __( 'image-300x300.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '230 KB', 'squeeze' );
-                    ?></span></p>
-                    </div>
-                    <div class="squeeze-box-content">
-                        <p><strong><?php 
-                    echo __( 'After', 'squeeze' );
-                    ?></strong></p>
-                        <p><span class="striked"><?php 
-                    echo __( 'image.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '500 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="striked"><?php 
-                    echo __( 'image-100x100.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '98 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="striked"><?php 
-                    echo __( 'image-300x300.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '230 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '50 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-100x100.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '5 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-300x300.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '20 KB', 'squeeze' );
-                    ?></span></p>
-                    </div>
-                </div>
-                <?php 
-                    break;
-                case 'auto_webp':
-                    ?>
-                <span class="squeeze-hint"><?php 
-                    echo __( "Example:", 'squeeze' );
-                    ?></span>
-                <div class="squeeze-box squeeze-box--fieldset">
-                    <div class="squeeze-box-content">
-                        <p><strong><?php 
-                    echo __( 'Before', 'squeeze' );
-                    ?></strong></p>
-                        <code><?php 
-                    echo __( '/uploads/2025/07/', 'squeeze' );
-                    ?></code>
-                        <p><span><?php 
-                    echo __( 'image.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '500 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span><?php 
-                    echo __( 'image-100x100.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '98 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span><?php 
-                    echo __( 'image-300x300.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '230 KB', 'squeeze' );
-                    ?></span></p>
-                    </div>
-                    <div class="squeeze-box-content">
-                        <p><strong><?php 
-                    echo __( 'After', 'squeeze' );
-                    ?></strong></p>
-                        <code><?php 
-                    echo __( '/uploads/2025/07/', 'squeeze' );
-                    ?></code>
-                        <p><span class="greened"><?php 
-                    echo __( 'image.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '100 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-100x100.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '15 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-300x300.jpg', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '40 KB', 'squeeze' );
-                    ?></span></p>
-                        <code><?php 
-                    echo __( '/squeeze-webp/uploads/2025/07/', 'squeeze' );
-                    ?></code>
-                        <p><span class="greened"><?php 
-                    echo __( 'image.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '50 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-100x100.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '5 KB', 'squeeze' );
-                    ?></span></p>
-                        <p><span class="greened"><?php 
-                    echo __( 'image-300x300.webp', 'squeeze' );
-                    ?></span> <span><?php 
-                    echo __( '20 KB', 'squeeze' );
-                    ?></span></p>
-                    </div>
-                </div>
-                <?php 
-                    break;
-                case 'webp_replace_urls':
-                    ?>
-                <span class="squeeze-hint"><?php 
-                    echo __( "Example:", 'squeeze' );
-                    ?></span>
-                <div class="squeeze-box squeeze-box--fieldset">
-                    <div class="squeeze-box-content">
-                        <img src="<?php 
-                    echo esc_url( plugin_dir_url( __FILE__ ) . '../assets/images/replace_urls.jpg' );
-                    ?>" alt="<?php 
-                    echo esc_attr__( 'Example image', 'squeeze' );
-                    ?>">
-                    </div>
-                </div>
-                <?php 
-                    break;
-            }
-            echo '</div>';
         }
     }
 
@@ -1529,6 +1738,11 @@ class SqueezeSettings extends SqueezeInit {
             $is_compressed = get_post_meta( $post->ID, 'squeeze_is_compressed', true );
             $can_restore = self::$SqueezeHelpers->can_restore( $post->ID );
             $is_excluded = false;
+            $url = wp_get_original_image_url( $post->ID );
+            if ( $url ) {
+                $excluded_images = self::$SqueezeHelpers->get_excluded_images();
+                $is_excluded = self::$SqueezeHelpers->is_excluded_image( $url, $excluded_images );
+            }
             $form_fields['squeeze_is_compressed'] = array(
                 'label' => __( 'Squeeze', 'squeeze' ),
                 'input' => 'html',

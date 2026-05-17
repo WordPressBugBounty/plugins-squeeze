@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.8
+ * Version:     1.7.9
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -25,7 +25,7 @@ class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.8';
+    const VERSION = '1.7.9';
 
     const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/';
 
@@ -91,6 +91,7 @@ class SqueezeInit {
         add_action( 'init', [$this, 'prepare_localize_args'] );
         add_action( 'plugins_loaded', array($this, 'load_textdomain') );
         add_action( 'admin_enqueue_scripts', array($this, 'load_assets') );
+        add_action( 'wp_enqueue_scripts', array($this, 'load_voxel_frontend_assets'), 25 );
         add_filter(
             'plugin_action_links',
             array($this, 'plugin_action_links'),
@@ -176,6 +177,66 @@ class SqueezeInit {
     }
 
     /**
+     * Script dependencies: admin needs media/plupload; frontend (Voxel) only needs i18n + domReady.
+     *
+     * @return string[]
+     */
+    protected function get_squeeze_script_dependencies() {
+        if ( is_admin() ) {
+            return array(
+                'jquery',
+                'jquery-ui-core',
+                'wp-mediaelement',
+                'wp-i18n',
+                'wp-dom-ready'
+            );
+        }
+        return array('jquery', 'wp-i18n', 'wp-dom-ready');
+    }
+
+    /**
+     * Whether the active theme (or parent) is Voxel.
+     */
+    protected function is_voxel_theme_active() {
+        $theme = wp_get_theme();
+        $slug = $theme->get_template();
+        $active = is_string( $slug ) && strtolower( $slug ) === 'voxel';
+        /**
+         * @since 1.7.8
+         * @param bool   $active Whether the active parent theme is Voxel.
+         * @param string $slug   Parent theme directory slug (stylesheet template).
+         */
+        return (bool) apply_filters( 'squeeze_is_voxel_theme', $active, ( is_string( $slug ) ? $slug : '' ) );
+    }
+
+    /**
+     * Voxel create-post / file fields upload via multipart FormData to admin-ajax.php, not wp.Uploader.
+     * Load Squeeze on the frontend so client-side compression can run for logged-in users who can upload.
+     */
+    public function load_voxel_frontend_assets() {
+        static $voxel_squeeze_enqueued = false;
+        if ( $voxel_squeeze_enqueued ) {
+            return;
+        }
+        if ( !$this->is_voxel_theme_active() ) {
+            return;
+        }
+        if ( !is_user_logged_in() || !current_user_can( 'upload_files' ) ) {
+            return;
+        }
+        wp_enqueue_script(
+            'squeeze-script',
+            self::$PLUGIN_URL . 'assets/js/script.bundle.js',
+            $this->get_squeeze_script_dependencies(),
+            self::VERSION,
+            true
+        );
+        wp_localize_script( 'squeeze-script', 'squeezeOptions', self::$LOCALIZE_ARGS );
+        wp_set_script_translations( 'squeeze-script', 'squeeze', self::$PLUGIN_DIR . 'languages' );
+        $voxel_squeeze_enqueued = true;
+    }
+
+    /**
      * Enqueue assets
      */
     public function load_assets() {
@@ -187,7 +248,7 @@ class SqueezeInit {
         wp_enqueue_script(
             'squeeze-script',
             self::$PLUGIN_URL . 'assets/js/script.bundle.js',
-            array('jquery', 'jquery-ui-core', 'wp-mediaelement'),
+            $this->get_squeeze_script_dependencies(),
             self::VERSION,
             true
         );

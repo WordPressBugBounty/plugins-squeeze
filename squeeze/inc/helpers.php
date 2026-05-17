@@ -10,6 +10,9 @@ class SqueezeHelpers extends SqueezeInit {
 	// Cache squeeze_options array per request to avoid repeated database queries
 	private static $cached_squeeze_options = null;
 
+	/** @var string[]|null */
+	private static $cached_excluded_images = null;
+
 	public function __construct() {
 		//parent::__construct(); // will cause infinite loop in SquuezeInit
 
@@ -20,8 +23,12 @@ class SqueezeHelpers extends SqueezeInit {
 		if ($attach_id > 0) {
 			$upload_dir = str_replace($filename, "", wp_get_original_image_path($attach_id));
 		} else {
-			$upload_url = str_replace($filename, "", $url);
-			$upload_dir = str_replace(home_url('/'), ABSPATH, $upload_url);
+			$upload_url = str_replace($filename, '', $url);
+			if (strpos($upload_url, '//') === 0) {
+				$upload_url = (is_ssl() ? 'https:' : 'http:') . $upload_url;
+			}
+			$resolved = $this->resolve_media_url_to_abspath($upload_url);
+			$upload_dir = $resolved !== '' ? $resolved : str_replace(home_url('/'), ABSPATH, $upload_url);
 		}
 		return str_replace('/', DIRECTORY_SEPARATOR, $upload_dir);
 	}
@@ -229,6 +236,34 @@ class SqueezeHelpers extends SqueezeInit {
 
 		// Normalize backslashes to forward slashes and return
 		return str_replace( '\\', '/', $webp_path );
+	}
+
+	/**
+	 * Map a full media URL (scheme or protocol-relative) to a path under ABSPATH.
+	 * Strips the configured CDN base URL first when set, then home_url(), matching premium behavior.
+	 *
+	 * @param string $absolute_url Full URL, e.g. https://cdn.example.com/wp-content/uploads/...
+	 * @return string Absolute filesystem path, or empty string if the URL does not map to this site.
+	 */
+	public function resolve_media_url_to_abspath( $absolute_url ) {
+		if ( ! is_string( $absolute_url ) || $absolute_url === '' ) {
+			return '';
+		}
+		if ( strpos( $absolute_url, '//' ) === 0 ) {
+			$absolute_url = ( is_ssl() ? 'https:' : 'http:' ) . $absolute_url;
+		}
+		$cdn = trim( (string) $this->get_option( 'cdn_url' ) );
+		$bases = $cdn !== '' ? array( $cdn, home_url() ) : array( home_url() );
+		$rel = str_replace( $bases, '', $absolute_url );
+		$rel = ltrim( str_replace( '\\', '/', $rel ), '/' );
+		if ( $rel === '' || strpos( $rel, '..' ) !== false ) {
+			return '';
+		}
+		$content_folder = basename( WP_CONTENT_DIR );
+		if ( stripos( $rel, $content_folder . '/' ) !== 0 && stripos( $rel, $content_folder ) !== 0 ) {
+			return '';
+		}
+		return ABSPATH . $rel;
 	}
 
     public function can_restore($attach_id) {
@@ -531,6 +566,70 @@ class SqueezeHelpers extends SqueezeInit {
 		return '<span class="' . esc_attr($class) . '">' . esc_html($hint) . '</span>';
 	}
 
+	/**
+	 * Parsed list of exclusion patterns (one per line in settings). Cached per request.
+	 *
+	 * @return string[]
+	 */
+	public function get_excluded_images() {
+		if ( null !== self::$cached_excluded_images ) {
+			return self::$cached_excluded_images;
+		}
+
+		$raw = $this->get_option( 'excluded_images' );
+		if ( ! is_string( $raw ) || $raw === '' ) {
+			self::$cached_excluded_images = array();
+			return self::$cached_excluded_images;
+		}
+
+		$lines = explode( "\n", $raw );
+		$lines = array_filter(
+			array_map( 'trim', $lines ),
+			static function ( $line ) {
+				return $line !== '';
+			}
+		);
+
+		self::$cached_excluded_images = array_values( $lines );
+		return self::$cached_excluded_images;
+	}
+
+	/**
+	 * Whether a URL or path matches any exclusion pattern (substring match, case-insensitive).
+	 *
+	 * @param string|null $image_path URL or path fragment.
+	 * @param string[]|null $excluded_images Patterns from get_excluded_images(); null loads from options.
+	 * @return array{is_excluded: true, exclude_reason: string}|false
+	 */
+	public function is_excluded_image( $image_path, $excluded_images = null ) {
+		if ( ! $image_path ) {
+			return false;
+		}
+
+		if ( null === $excluded_images ) {
+			$excluded_images = $this->get_excluded_images();
+		}
+
+		if ( empty( $excluded_images ) ) {
+			return false;
+		}
+
+		foreach ( $excluded_images as $excluded_image ) {
+			$excluded_image = trim( $excluded_image );
+			if ( $excluded_image === '' ) {
+				continue;
+			}
+			if ( stripos( $image_path, $excluded_image ) !== false ) {
+				return array(
+					'is_excluded'      => true,
+					'exclude_reason'   => $excluded_image,
+				);
+			}
+		}
+
+		return false;
+	}
+
 	public function get_default_value ( $option, $all = false ) {
 		$options_defaults = apply_filters('squeeze_options_default', 
 		array(
@@ -618,5 +717,87 @@ class SqueezeHelpers extends SqueezeInit {
 			return false;
 		}
 		return apache_get_modules();
+	}
+
+	/**
+	 * Convert a filesystem directory under ABSPATH to site-root-relative form (/wp-content/foo/).
+	 *
+	 * @param string $filesystem_dir Absolute directory path.
+	 * @return string Leading slash, forward slashes, trailing slash (or '/' for site root).
+	 */
+	public function bulk_directory_uri_from_filesystem( $filesystem_dir ) {
+		$abs_base = wp_normalize_path( ABSPATH );
+		$full     = wp_normalize_path( rtrim( (string) $filesystem_dir, '/\\' ) );
+		if ( strpos( $full, $abs_base ) !== 0 ) {
+			$slash = preg_replace( '#/+#', '/', str_replace( '\\', '/', str_replace( ABSPATH, '/', (string) $filesystem_dir ) ) );
+			if ( '/' === $slash || '' === $slash ) {
+				return '/';
+			}
+			if ( '/' !== substr( $slash, 0, 1 ) ) {
+				$slash = '/' . ltrim( $slash, '/' );
+			}
+			return substr( $slash, -1 ) === '/' ? $slash : $slash . '/';
+		}
+		$rel = substr( $full, strlen( $abs_base ) );
+		$rel = trim( str_replace( '\\', '/', $rel ), '/' );
+		return '' === $rel ? '/' : '/' . $rel . '/';
+	}
+
+	/**
+	 * Turn browse API parentDir into a path relative to WP_CONTENT_DIR (uploads, themes/foo, or '').
+	 *
+	 * @param string $parent_directory Raw POST value (e.g. /wp-content/uploads/ or wp-content/uploads).
+	 * @return string No leading/trailing slashes.
+	 */
+	public function bulk_parent_relative_to_content_dir( $parent_directory ) {
+		$parent_directory = preg_replace( '#/+#', '/', str_replace( '\\', '/', (string) $parent_directory ) );
+		$parent_directory = trim( $parent_directory, '/' );
+		if ( '' === $parent_directory ) {
+			return '';
+		}
+		if ( 'wp-content' === $parent_directory ) {
+			return '';
+		}
+		if ( 0 === strpos( $parent_directory, 'wp-content/' ) ) {
+			return trim( substr( $parent_directory, strlen( 'wp-content/' ) ), '/' );
+		}
+		return $parent_directory;
+	}
+
+	/**
+	 * Normalize directory paths for bulk UI and JSON: never show filesystem absolute paths.
+	 *
+	 * @param string $path Raw path from transient, manual entry, etc.
+	 * @return string Site-relative path like /wp-content/uploads/.
+	 */
+	public function normalize_bulk_directory_storage_path( $path ) {
+		$path = trim( (string) $path );
+		if ( '' === $path ) {
+			return '/';
+		}
+		if ( preg_match( '#^https?://#i', $path ) ) {
+			$parsed = wp_parse_url( $path );
+			$path   = isset( $parsed['path'] ) ? $parsed['path'] : '/';
+			$site   = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+			if ( is_string( $site ) && strlen( $site ) > 1 ) {
+				$site = untrailingslashit( $site );
+				if ( $site && strpos( $path, $site . '/' ) === 0 ) {
+					$path = substr( $path, strlen( $site ) );
+				}
+			}
+		}
+		$clean = preg_replace( '#/+#', '/', str_replace( '\\', '/', $path ) );
+		$norm  = wp_normalize_path( $clean );
+		$base  = wp_normalize_path( ABSPATH );
+		if ( ( strlen( $norm ) >= 2 && ctype_alpha( $norm[0] ) && ':' === $norm[1] ) || ( strpos( $norm, $base ) === 0 ) ) {
+			return $this->bulk_directory_uri_from_filesystem( $clean );
+		}
+		if ( '/' !== substr( $clean, 0, 1 ) ) {
+			$clean = '/' . ltrim( $clean, '/' );
+		}
+		if ( '/' !== substr( $clean, -1 ) ) {
+			$clean .= '/';
+		}
+		return $clean;
 	}
 }
