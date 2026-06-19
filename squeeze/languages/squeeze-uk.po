@@ -2,10 +2,10 @@
 # This file is distributed under the GNU GPL v3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Squeeze 1.7.9\n"
+"Project-Id-Version: Squeeze 1.7.10\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/squeeze\n"
 "POT-Creation-Date: 2026-05-17T17:32:14+00:00\n"
-"PO-Revision-Date: 2026-05-17 19:05+0100\n"
+"PO-Revision-Date: 2026-06-19 14:49+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: uk\n"
@@ -298,10 +298,8 @@ msgstr ""
 "Працює з вкладеннями в медіатеці; резервні копії згідно з налаштуваннями плагіна."
 
 #: inc/settings.php:110
-#, fuzzy
-#| msgid "Direct WebP Conversion"
 msgid "Direct WebP conversion is on"
-msgstr "Пряме перетворення WebP"
+msgstr "Пряме перетворення WebP увімкнено"
 
 #: inc/settings.php:111
 msgid ""
@@ -313,22 +311,16 @@ msgstr ""
 "нічого не зламалося."
 
 #: inc/settings.php:120
-#, fuzzy
-#| msgid "Squeezing complete"
 msgid "complete"
 msgstr "Стискання завершено"
 
 #: inc/settings.php:123
-#, fuzzy
-#| msgid "Squeezed images: "
 msgid "Squeezed images"
-msgstr "Стиснуті зображення: "
+msgstr "Стиснуті зображення"
 
 #: inc/settings.php:135
-#, fuzzy
-#| msgid "Compressed successfully"
 msgid "Processed (success)"
-msgstr "Компресія успішна"
+msgstr "Оброблені (успішно)"
 
 #: inc/settings.php:139
 msgid "Remaining or needs attention"
@@ -1325,6 +1317,52 @@ msgstr ""
 #: assets/js/script.bundle.js:49 assets/js/squeeze.js:548
 msgid "Image conversion blocked by browser privacy setting"
 msgstr "Перетворення зображень заблоковано налаштуваннями конфіденційності браузера"
+
+#: inc/settings.php:733 inc/settings.php:744
+msgid "Not compatible with WP Offload Media"
+msgstr "Несумісно з WP Offload Media"
+
+#: inc/settings.php:734
+msgid ""
+"The \"Keep JPEG/PNG URLs — server serves WebP\" mode relies on Apache .htaccess "
+"rewrite rules that only work for requests reaching your origin server. When WP Offload "
+"Media is active, image URLs point to an external CDN (S3, GCS, DigitalOcean Spaces, "
+"etc.) and those requests never pass through your .htaccess — so WebP files will not be "
+"served."
+msgstr ""
+"Режим «Залишити URL JPEG/PNG — сервер віддає WebP» покладається на правила перезапису "
+"Apache .htaccess, які працюють лише для запитів, що надходять безпосередньо на ваш "
+"сервер. Коли активний WP Offload Media, URL-адреси зображень вказують на зовнішній CDN "
+"(S3, GCS, DigitalOcean Spaces тощо), а такі запити оминають .htaccess — тому WebP-"
+"файли не будуть відображатися."
+
+#: inc/settings.php:736 inc/settings.php:747
+msgid ""
+"Please switch to <strong>Direct WebP</strong> conversion — it converts images to WebP "
+"in-place and WP Offload Media handles uploading automatically."
+msgstr ""
+"Будь ласка, перейдіть на конвертацію <strong>Direct WebP</strong> — вона конвертує "
+"зображення у WebP на місці, а WP Offload Media автоматично завантажує їх."
+
+#: inc/settings.php:745
+msgid ""
+"The \"Rewrite <img> src to WebP URLs in HTML\" mode is not compatible with WP Offload "
+"Media. WebP sidecar files are stored in a local squeeze-webp/ folder and are never "
+"pushed to your external storage provider (S3, GCS, DigitalOcean Spaces, etc.), so they "
+"cannot be served from your CDN URL."
+msgstr ""
+"Режим «Переписати src <img> на WebP URL у HTML» несумісний з WP Offload Media. "
+"Супровідні WebP-файли зберігаються в локальній папці squeeze-webp/ і ніколи не "
+"завантажуються до вашого зовнішнього сховища (S3, GCS, DigitalOcean Spaces тощо), тому "
+"їх неможливо роздавати через URL CDN."
+
+#: inc/settings.php:1169
+msgid ""
+"Could not compress — result was larger than original. Try <a href=\"%s\" target="
+"\"_blank\">adjusting compression settings</a>, then re-squeeze."
+msgstr ""
+"Не вдалося стиснути — результат більший за оригінал. Спробуйте <a href=\"%s\" target="
+"\"_blank\">налаштувати параметри стиснення</a>, а потім стисніть повторно."
 
 #~ msgid "Heads up! Direct WebP conversion is enabled."
 #~ msgstr "Увага! Пряме перетворення у WebP увімкнено."

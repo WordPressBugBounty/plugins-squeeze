@@ -1287,6 +1287,48 @@ class SqueezeSettings extends SqueezeInit {
         ?></span>
                 </label>
             </fieldset>
+            <?php 
+        if ( \SqueezeFree\SqueezeOffloadMedia::is_active() ) {
+            ?>
+            <div class="squeeze-notice squeeze-notice--warning squeeze-offload-htaccess-warning<?php 
+            echo ( $mode !== 'sidecar' ? ' squeeze-notice--hidden' : '' );
+            ?>" role="alert">
+                <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
+                <div class="squeeze-notice-body">
+                    <strong><?php 
+            esc_html_e( 'Not compatible with WP Offload Media', 'squeeze' );
+            ?></strong>
+                    <p><?php 
+            esc_html_e( 'The "Keep JPEG/PNG URLs — server serves WebP" mode relies on Apache .htaccess rewrite rules that only work for requests reaching your origin server. When WP Offload Media is active, image URLs point to an external CDN (S3, GCS, DigitalOcean Spaces, etc.) and those requests never pass through your .htaccess — so WebP files will not be served.', 'squeeze' );
+            ?></p>
+                    <p><?php 
+            echo wp_kses( __( 'Please switch to <strong>Direct WebP</strong> conversion — it converts images to WebP in-place and WP Offload Media handles uploading automatically.', 'squeeze' ), array(
+                'strong' => array(),
+            ) );
+            ?></p>
+                </div>
+            </div>
+            <div class="squeeze-notice squeeze-notice--warning squeeze-offload-sidecar-warning<?php 
+            echo ( $mode !== 'sidecar_replace' ? ' squeeze-notice--hidden' : '' );
+            ?>" role="alert">
+                <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
+                <div class="squeeze-notice-body">
+                    <strong><?php 
+            esc_html_e( 'Not compatible with WP Offload Media', 'squeeze' );
+            ?></strong>
+                    <p><?php 
+            esc_html_e( 'The "Rewrite <img> src to WebP URLs in HTML" mode is not compatible with WP Offload Media. WebP sidecar files are stored in a local squeeze-webp/ folder and are never pushed to your external storage provider (S3, GCS, DigitalOcean Spaces, etc.), so they cannot be served from your CDN URL.', 'squeeze' );
+            ?></p>
+                    <p><?php 
+            echo wp_kses( __( 'Please switch to <strong>Direct WebP</strong> conversion — it converts images to WebP in-place and WP Offload Media handles uploading automatically.', 'squeeze' ), array(
+                'strong' => array(),
+            ) );
+            ?></p>
+                </div>
+            </div>
+            <?php 
+        }
+        ?>
             <details class="squeeze-webp-example">
                 <summary><?php 
         esc_html_e( 'Show example: Direct WebP (file sizes)', 'squeeze' );
@@ -1736,6 +1778,7 @@ class SqueezeSettings extends SqueezeInit {
         if ( in_array( $post->post_mime_type, $all_mimes ) ) {
             $selected_mimes = self::$SqueezeHelpers->get_image_formats( true );
             $is_compressed = get_post_meta( $post->ID, 'squeeze_is_compressed', true );
+            $compression_failed = get_post_meta( $post->ID, 'squeeze_compression_failed', true );
             $can_restore = self::$SqueezeHelpers->can_restore( $post->ID );
             $is_excluded = false;
             $url = wp_get_original_image_url( $post->ID );
@@ -1746,10 +1789,10 @@ class SqueezeSettings extends SqueezeInit {
             $form_fields['squeeze_is_compressed'] = array(
                 'label' => __( 'Squeeze', 'squeeze' ),
                 'input' => 'html',
-                'html'  => ( !in_array( $post->post_mime_type, $selected_mimes ) ? '<span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: gray;" class="dashicons dashicons-info"></span>&nbsp;' . __( 'Image format is not selected for compression in the plugin settings', 'squeeze' ) . '</span><br>' : (( $is_excluded ? '<span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #6c757d;" class="dashicons dashicons-hidden"></span>&nbsp;' . __( 'Image is excluded from compression', 'squeeze' ) . ' (' . esc_html__( 'found substring: ', 'squeeze' ) . $is_excluded['exclude_reason'] . ')</span>' : (( $is_compressed ? '<p><span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #6BCB77;" class="dashicons dashicons-performance"></span>&nbsp;' . __( 'Squeezed', 'squeeze' ) . '</span></p>' . (( $can_restore ? '
+                'html'  => ( !in_array( $post->post_mime_type, $selected_mimes ) ? '<span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: gray;" class="dashicons dashicons-info"></span>&nbsp;' . __( 'Image format is not selected for compression in the plugin settings', 'squeeze' ) . '</span><br>' : (( $is_excluded ? '<span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #6c757d;" class="dashicons dashicons-hidden"></span>&nbsp;' . __( 'Image is excluded from compression', 'squeeze' ) . ' (' . esc_html__( 'found substring: ', 'squeeze' ) . $is_excluded['exclude_reason'] . ')</span>' : (( $compression_failed === 'larger_than_original' ? '<p><span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #FFA500;" class="dashicons dashicons-warning"></span>&nbsp;' . sprintf( __( 'Could not compress — result was larger than original. Try <a href="%s" target="_blank">adjusting compression settings</a>, then re-squeeze.', 'squeeze' ), self::$SETTINGS_URL . '#squeeze_' . pathinfo( get_attached_file( $post->ID ), PATHINFO_EXTENSION ) ) . '</span></p>' . (( $can_restore ? '<p><button name="squeeze_restore" type="button" class="button button-secondary squeeze-restore-button" data-attachment="' . $post->ID . '">' . __( 'Restore original image', 'squeeze' ) . '</button></p>' : '' )) . '<p><button name="squeeze_compress_single" type="button" class="button button-secondary squeeze-compress-button" data-attachment="' . $post->ID . '">' . __( 'Re-Squeeze image', 'squeeze' ) . '</button></p>' : (( $is_compressed ? '<p><span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #6BCB77;" class="dashicons dashicons-performance"></span>&nbsp;' . __( 'Squeezed', 'squeeze' ) . '</span></p>' . (( $can_restore ? '
                     <p><button name="squeeze_restore" type="button" class="button button-secondary squeeze-restore-button" data-attachment="' . $post->ID . '">' . __( 'Restore original image', 'squeeze' ) . '</button></p>' : '' )) . '
                     <p><button name="squeeze_compress_again" type="button" class="button button-primary squeeze-compress-button" data-attachment="' . $post->ID . '">' . __( 'Re-Squeeze image', 'squeeze' ) . '</button></p>' : '<p><span class="squeeze_status"><span style="padding-top: 0; line-height: 1; color: #FFD93D; scale: -1 1;" class="dashicons dashicons-performance"></span>&nbsp;' . __( 'Not squeezed', 'squeeze' ) . '</span></p>
-                    <p><button name="squeeze_compress_single" type="button" class="button button-primary squeeze-compress-button" data-attachment="' . $post->ID . '">' . __( 'Squeeze Now', 'squeeze' ) . '</button></p>' )) )) ),
+                    <p><button name="squeeze_compress_single" type="button" class="button button-primary squeeze-compress-button" data-attachment="' . $post->ID . '">' . __( 'Squeeze Now', 'squeeze' ) . '</button></p>' )) )) )) ),
             );
         }
         return $form_fields;

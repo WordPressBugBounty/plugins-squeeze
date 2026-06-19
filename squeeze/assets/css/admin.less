@@ -956,6 +956,45 @@ body.settings_page_squeeze {
         color: var(--squeeze-text-secondary-color);
     }
 
+    .squeeze-offload-sidecar-warning,
+    .squeeze-offload-htaccess-warning {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-top: var(--squeeze-spacing-s);
+        padding: 12px 14px;
+        background: #fff8e1;
+        border: 1px solid #ffe082;
+        border-radius: var(--squeeze-border-radius-inner);
+        font-size: 13px;
+        line-height: 1.5;
+
+        &.squeeze-notice--hidden {
+            display: none;
+        }
+
+        .squeeze-notice-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .squeeze-notice-body {
+            flex: 1;
+
+            strong {
+                display: block;
+                margin-bottom: 4px;
+                font-size: 13px;
+            }
+
+            p {
+                margin: 4px 0 0;
+                color: var(--squeeze-text-color);
+            }
+        }
+    }
+
     .squeeze-webp-example {
         margin-top: var(--squeeze-spacing-s);
         border: 1px solid var(--squeeze-border-color);

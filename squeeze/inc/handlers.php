@@ -13,6 +13,7 @@ class SqueezeHandlers extends SqueezeInit {
 		add_action('wp_ajax_squeeze_update_attachment', [$this, 'update_attachment']);
 		add_action('wp_ajax_squeeze_restore_attachment', [$this, 'restore_attachment']);
 		add_action('wp_ajax_squeeze_get_attachment', [$this, 'get_attachment']);
+		add_action('wp_ajax_squeeze_fetch_image', [$this, 'fetch_image']);
 		add_action('wp_ajax_squeeze_get_attachment_by_path', [$this, 'get_attachment_by_path']);
 		add_action('wp_ajax_squeeze_get_next_attachments', [$this, 'get_next_attachments']);
 		add_action('wp_ajax_squeeze_get_directories', [$this, 'get_directories']);
@@ -161,6 +162,9 @@ class SqueezeHandlers extends SqueezeInit {
 
 		// check if compressed_size is greater than original_size
 		if ($sizes['original']['compressed_size'] > $sizes['original']['original_size']) {
+			if ($attach_id && $process !== 'path') {
+				update_post_meta($attach_id, 'squeeze_compression_failed', 'larger_than_original');
+			}
 			wp_send_json_error('❌ '.esc_html__('Compressed image size is greater than original size.', 'squeeze') . 
 			' ' . sprintf( __('Please try to change your <a href="%s" target="_blank">compression settings</a> by decreasing the quality or compression level.', 'squeeze'), self::$SETTINGS_URL . '#squeeze_' . $file_format ) );
 		}
@@ -244,6 +248,7 @@ class SqueezeHandlers extends SqueezeInit {
 			}
 
 			update_post_meta($attach_id, "squeeze_is_compressed", true);
+			delete_post_meta($attach_id, 'squeeze_compression_failed');
 
 			$response_msg = self::$SqueezeHelpers->get_comparison_table($sizes);
 			$response_msg = '<strong>✅ '.esc_html__('Squeezed successfully', 'squeeze') . '!</strong> ' . $response_msg;
@@ -252,17 +257,24 @@ class SqueezeHandlers extends SqueezeInit {
 			$uncompressed_images--;
 			update_option('squeeze_stats', array('uncompressed_images' => $uncompressed_images));
 
-			
-			//wp_send_json_error( print_r($sizes, true) );
+			/**
+			 * Fires after Squeeze has written all compressed/WebP files for an attachment.
+			 * Used by integrations such as WP Offload Media to push the new files to an
+			 * external storage provider (S3, GCS, DigitalOcean Spaces, etc.).
+			 *
+			 * @since 1.8.0
+			 * @param int $attach_id Attachment post ID.
+			 */
+			do_action( 'squeeze_after_update_attachment', $attach_id );
 
-			//wp_send_json_success($response_msg .  print_r($sizes['scaled']['url'], true) . ' | ' . $filename . ' | ' . pathinfo($filename, PATHINFO_FILENAME) );
-			//wp_send_json_success($response_msg);
-			wp_send_json_success(array(
-				'message' => $response_msg,
-				'sizes' => $sizes,
+			$response_data = array(
+				'message'  => $response_msg,
+				'sizes'    => $sizes,
 				'filename' => $filename,
-				'url' => $url,
-			));
+				'url'      => $url,
+			);
+
+		wp_send_json_success( $response_data );
 		} else {
 			wp_send_json_success('✅ '.esc_html__('Squeezed successfully', 'squeeze'));
 		}
@@ -501,6 +513,120 @@ class SqueezeHandlers extends SqueezeInit {
 				'is_excluded' => false,
 			)
 		);
+	}
+
+	/**
+	 * Proxy an attachment image through WordPress to avoid CORS errors in the Web Worker.
+	 *
+	 * When WP Offload Media (or any CDN plugin) serves images from an external provider
+	 * (e.g. Google Cloud Storage, Amazon S3), the image URLs are on a different origin than
+	 * the WordPress admin. The Web Worker uses fetch() to load images before compressing them.
+	 * Browsers block cross-origin fetch() calls that lack proper CORS headers (which GCS/S3
+	 * buckets typically do not emit for arbitrary origins).
+	 *
+	 * This endpoint fetches the image server-side — where there is no CORS restriction — and
+	 * streams it back from the same origin as the admin, so the worker can fetch it without errors.
+	 *
+	 * Accepts GET parameters:
+	 *   attachment_id  int     Attachment post ID.
+	 *   size           string  WP image size name: 'original', 'full', or any registered size
+	 *                          (e.g. 'thumbnail', 'medium', 'large').
+	 *   _ajax_nonce    string  squeeze-nonce value.
+	 *
+	 * @since 1.8.0
+	 */
+	public function fetch_image() {
+		// Nonce verification (accepts GET or POST).
+		$nonce = isset( $_GET['_ajax_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_ajax_nonce'] ) ) : '';
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'squeeze-nonce' ) ) {
+			http_response_code( 403 );
+			wp_die( 'Invalid nonce.' );
+		}
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			http_response_code( 403 );
+			wp_die( 'Unauthorized.' );
+		}
+
+		$attach_id = isset( $_GET['attachment_id'] ) ? (int) $_GET['attachment_id'] : 0;
+		$size      = isset( $_GET['size'] ) ? sanitize_text_field( wp_unslash( $_GET['size'] ) ) : 'original';
+
+		if ( ! $attach_id ) {
+			http_response_code( 404 );
+			wp_die( 'Attachment not found.' );
+		}
+
+		$mime = get_post_mime_type( $attach_id );
+		if ( ! $mime || strpos( $mime, 'image/' ) !== 0 ) {
+			http_response_code( 400 );
+			wp_die( 'Not an image attachment.' );
+		}
+
+		// Determine the local filesystem path for the requested size.
+		$file_path = '';
+		if ( $size === 'original' ) {
+			$file_path = wp_get_original_image_path( $attach_id );
+		} elseif ( $size === 'full' ) {
+			$file_path = get_attached_file( $attach_id );
+		} else {
+			$meta      = wp_get_attachment_metadata( $attach_id );
+			$base_dir  = dirname( (string) get_attached_file( $attach_id ) );
+			if ( ! empty( $meta['sizes'][ $size ]['file'] ) ) {
+				$file_path = trailingslashit( $base_dir ) . $meta['sizes'][ $size ]['file'];
+			}
+		}
+
+		// Serve directly from local filesystem when the file is present.
+		if ( $file_path && file_exists( $file_path ) ) {
+			$file_size = filesize( $file_path );
+			header( 'Content-Type: ' . $mime );
+			header( 'Content-Length: ' . $file_size );
+			header( 'Cache-Control: private, no-store' );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+			readfile( $file_path );
+			exit;
+		}
+
+		// Local file not found — the file may have been removed by WP Offload Media's
+		// "Remove Local Files" option.  Fetch it from the provider URL server-side
+		// (no CORS restriction on the server) and stream it back to the browser.
+		if ( $size === 'original' ) {
+			$provider_url = wp_get_original_image_url( $attach_id );
+		} elseif ( $size === 'full' ) {
+			$provider_url = wp_get_attachment_url( $attach_id );
+		} else {
+			$src          = wp_get_attachment_image_src( $attach_id, $size );
+			$provider_url = $src ? $src[0] : '';
+		}
+
+		if ( ! $provider_url ) {
+			http_response_code( 404 );
+			wp_die( 'Image not found.' );
+		}
+
+		$response = wp_remote_get( $provider_url, array(
+			'timeout'   => 60,
+			'sslverify' => true,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			http_response_code( 502 );
+			wp_die( 'Failed to fetch image from provider: ' . esc_html( $response->get_error_message() ) );
+		}
+
+		$http_status = wp_remote_retrieve_response_code( $response );
+		if ( $http_status !== 200 ) {
+			http_response_code( (int) $http_status );
+			wp_die( 'Provider returned HTTP ' . (int) $http_status );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		header( 'Content-Type: ' . $mime );
+		header( 'Content-Length: ' . strlen( $body ) );
+		header( 'Cache-Control: private, no-store' );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $body;
+		exit;
 	}
 
 	public function delete_backup_attachment($attach_id) {
@@ -864,18 +990,17 @@ class SqueezeHandlers extends SqueezeInit {
 			$abs_url = $protocol . $url_no_query;
 			$file_path = self::$SqueezeHelpers->resolve_media_url_to_abspath( $abs_url );
 
-			if ($is_replace_urls) {
-				$webp_url = self::$SqueezeHelpers->convert_image_path_to_webp_path($url_no_query) . '.webp'; // WebP URL like 'example.com/wp-content/squeeze-webp/uploads/2024/12/test.jpg.webp'
-		
-				// Check if the WEBP file exists on the server.
-				$webp_file_path = self::$SqueezeHelpers->resolve_media_url_to_abspath( $protocol . $webp_url );
-		
-				//return $webp_file_path.'::'.$webp_url;
-		
-				if ( $webp_file_path !== '' && file_exists( $webp_file_path ) ) {
-					return $webp_url; // Use WEBP version if it exists.
-				}
-			}
+		if ($is_replace_urls) {
+		$webp_url = self::$SqueezeHelpers->convert_image_path_to_webp_path($url_no_query) . '.webp'; // WebP URL like 'example.com/wp-content/squeeze-webp/uploads/2024/12/test.jpg.webp'
+
+		// Check if the WEBP file exists on the server (local disk check).
+		$webp_file_path = self::$SqueezeHelpers->resolve_media_url_to_abspath( $protocol . $webp_url );
+		$webp_exists    = $webp_file_path !== '' && file_exists( $webp_file_path );
+
+		if ( $webp_exists ) {
+			return $webp_url; // Use WEBP version if it exists.
+		}
+		}
 
 			if ( $is_direct_webp && ( $file_path === '' || ! file_exists( $file_path ) ) ) {
 				// try to find possible WEBP variants

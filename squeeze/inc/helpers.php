@@ -253,7 +253,26 @@ class SqueezeHelpers extends SqueezeInit {
 			$absolute_url = ( is_ssl() ? 'https:' : 'http:' ) . $absolute_url;
 		}
 		$cdn = trim( (string) $this->get_option( 'cdn_url' ) );
-		$bases = $cdn !== '' ? array( $cdn, home_url() ) : array( home_url() );
+
+		/**
+		 * Filter additional base URLs that should be stripped when resolving a media URL
+		 * to an absolute filesystem path.
+		 *
+		 * Integrations that serve images from an external domain (e.g. WP Offload Media
+		 * serving from an S3/GCS CDN) can add their provider URL(s) here so that Squeeze
+		 * can correctly map CDN URLs back to local paths.
+		 *
+		 * @since 1.8.0
+		 * @param string[] $urls Existing extra base URLs (empty by default).
+		 */
+		$additional_bases = (array) apply_filters( 'squeeze_additional_base_urls', array() );
+
+		$bases = array_values( array_filter( array_unique( array_merge(
+			$cdn !== '' ? array( $cdn ) : array(),
+			$additional_bases,
+			array( home_url() )
+		) ) ) );
+
 		$rel = str_replace( $bases, '', $absolute_url );
 		$rel = ltrim( str_replace( '\\', '/', $rel ), '/' );
 		if ( $rel === '' || strpos( $rel, '..' ) !== false ) {
@@ -384,9 +403,16 @@ class SqueezeHelpers extends SqueezeInit {
 		// Clear the cache when options are updated
 		if ($result) {
 			self::$cached_squeeze_options = $options;
+			// New settings may produce smaller output — let all previously-failed images be retried
+			$this->clear_compression_failed_meta();
 		}
 		
 		return $result;
+	}
+
+	private function clear_compression_failed_meta() {
+		global $wpdb;
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => 'squeeze_compression_failed' ) );
 	}
 
     public function get_comparison_table($sizes) {
@@ -489,15 +515,22 @@ class SqueezeHelpers extends SqueezeInit {
 			'posts_per_page' => -1,
 			'fields' => 'ids',
 			'meta_query' => array(
-				'relation' => 'OR',
+				'relation' => 'AND',
 				array(
-					'key' => 'squeeze_is_compressed',
-					'compare' => 'NOT EXISTS',
+					'relation' => 'OR',
+					array(
+						'key' => 'squeeze_is_compressed',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key' => 'squeeze_is_compressed',
+						'compare' => '!=',
+						'value' => '1',
+					),
 				),
 				array(
-					'key' => 'squeeze_is_compressed',
-					'compare' => '!=',
-					'value' => '1',
+					'key' => 'squeeze_compression_failed',
+					'compare' => 'NOT EXISTS',
 				),
 			),
 		));
@@ -530,15 +563,22 @@ class SqueezeHelpers extends SqueezeInit {
 			'orderby'        => 'ID',
         	'order'          => 'DESC',
 			'meta_query' => array(
-				'relation' => 'OR',
+				'relation' => 'AND',
 				array(
-					'key' => 'squeeze_is_compressed',
-					'compare' => 'NOT EXISTS',
+					'relation' => 'OR',
+					array(
+						'key' => 'squeeze_is_compressed',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key' => 'squeeze_is_compressed',
+						'compare' => '!=',
+						'value' => '1',
+					),
 				),
 				array(
-					'key' => 'squeeze_is_compressed',
-					'compare' => '!=',
-					'value' => '1',
+					'key' => 'squeeze_compression_failed',
+					'compare' => 'NOT EXISTS',
 				),
 			),
 			'squeeze_last_id' => $last_id,

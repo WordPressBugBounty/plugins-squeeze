@@ -706,7 +706,7 @@ body.settings_page_squeeze .squeeze-webp-modes {
 }
 @media (min-width: 1100px) {
   body.settings_page_squeeze .squeeze-webp-modes {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @media (max-width: 782px) {
@@ -804,6 +804,44 @@ body.settings_page_squeeze .squeeze-webp-code-sample .squeeze-webp-pre-note {
   font-size: 11px;
   font-weight: 500;
   color: var(--squeeze-text-secondary-color);
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: var(--squeeze-spacing-s);
+  padding: 12px 14px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: var(--squeeze-border-radius-inner);
+  font-size: 13px;
+  line-height: 1.5;
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning.squeeze-notice--hidden,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning.squeeze-notice--hidden {
+  display: none;
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning .squeeze-notice-icon,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning .squeeze-notice-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning .squeeze-notice-body,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning .squeeze-notice-body {
+  flex: 1;
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning .squeeze-notice-body strong,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning .squeeze-notice-body strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+body.settings_page_squeeze .squeeze-offload-sidecar-warning .squeeze-notice-body p,
+body.settings_page_squeeze .squeeze-offload-htaccess-warning .squeeze-notice-body p {
+  margin: 4px 0 0;
+  color: var(--squeeze-text-color);
 }
 body.settings_page_squeeze .squeeze-webp-example {
   margin-top: var(--squeeze-spacing-s);
@@ -1253,3 +1291,4 @@ body.media_page_squeeze-bulk .wrap .nav-tab-wrapper {
     animation: none;
   }
 }
+/*# sourceMappingURL=admin.css.map */

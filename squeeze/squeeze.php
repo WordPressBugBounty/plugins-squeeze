@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.9
+ * Version:     1.7.10
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -25,7 +25,7 @@ class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.9';
+    const VERSION = '1.7.10';
 
     const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/';
 
@@ -88,6 +88,11 @@ class SqueezeInit {
         self::$SqueezeHelpers = new SqueezeHelpers();
         self::$SqueezeSettings = new SqueezeSettings();
         self::$SqueezeHandlers = new SqueezeHandlers();
+        // Defer compat module loading until after all plugins have initialised.
+        // If load_compat() runs in __construct() the WP Offload Media class may not
+        // exist yet (plugins are loaded in file-system order), so is_active() returns
+        // false and none of the sync / URL-override hooks get registered.
+        add_action( 'plugins_loaded', array($this, 'load_compat'), 20 );
         add_action( 'init', [$this, 'prepare_localize_args'] );
         add_action( 'plugins_loaded', array($this, 'load_textdomain') );
         add_action( 'admin_enqueue_scripts', array($this, 'load_assets') );
@@ -174,6 +179,17 @@ class SqueezeInit {
 
     public function load_helpers() {
         require_once self::$PLUGIN_DIR . 'inc/helpers.php';
+    }
+
+    /**
+     * Load third-party plugin compatibility modules.
+     * Each module is self-contained and checks whether the target plugin is active
+     * before registering any hooks.
+     */
+    public function load_compat() {
+        // WP Offload Media (amazon-s3-and-cloudfront) — push WebP files to external storage.
+        require_once self::$PLUGIN_DIR . 'inc/compat/offload-media.php';
+        new SqueezeOffloadMedia();
     }
 
     /**

@@ -1,170 +1,223 @@
 === Squeeze – Image Optimization & Compression, WEBP Conversion ===
 Contributors: barb0ss
-Tags: image compression, convert webp, image optimization, compress images, optimize images
+Tags: image compression, webp converter, image optimization, compress images, optimize images
 Requires at least: 6.0
-Tested up to: 6.9
-Requires PHP: 7.3
-Stable tag: 1.7.9
+Tested up to: 7.0
+Requires PHP: 7.4
+Stable tag: 1.7.10
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Unlimited. Private. Instant.
-Squeeze compresses and converts your images directly in your browser — no external servers and no upload limits.
+Compress images in WordPress & convert to WebP — no API key, no quotas, no cloud. Unlimited local image optimizer; private browser-side compression.
 
 == Description ==
-Squeeze is a lightweight yet powerful image optimization plugin for WordPress.
-It compresses and converts your images directly in your browser, so no image ever leaves your site.
+Looking for a **WordPress image optimizer without an API key**? Squeeze is a **local WebP converter** that lets you **compress images in WordPress**, **convert uploads to WebP**, and **bulk compress your media library** without ShortPixel-, Imagify-, or Smush-style monthly caps. Processing runs in your admin browser—unlimited squeezes, full privacy, and no uploads to third-party compression servers.
 
-Unlike most competitors, Squeeze:
+If you need a **webp converter wordpress** plugin, a **shortpixel alternative** without recurring API fees, or an **image optimizer without api** keys, Squeeze keeps optimization on your server and in your browser instead of a SaaS queue.
 
-♾️ Has no image compression limits — you can squeeze as many images as you want.
-☁️ Doesn’t send your images to any external servers — all processing happens locally in your browser.
-⚡ Converts images to WEBP instantly and directly, replacing the original file (no duplicates, no clutter).
-🖼️ Optimizes images on the fly inside Gutenberg, Elementor, and GenerateBlocks — right when you upload or insert them.
+Unlike cloud-based plugins, Squeeze:
 
-It’s privacy-safe, lightning-fast, and storage-efficient.
+♾️ **No compression limits** — squeeze your entire Media Library, not just the first 100–500 images per month.
+☁️ **No third-party servers** — images never leave your site; processing happens locally in the browser (ideal for GDPR-sensitive and membership sites).
+⚡ **Direct WebP conversion** — convert JPG/PNG to WebP and replace the original file on disk (no duplicate copies cluttering storage).
+🖼️ **Optimize on upload** — compress in Gutenberg, GenerateBlocks, and the Voxel theme before files hit the server (Elementor on-upload squeeze is available in [Premium](https://pluginarium.com/squeeze/#premium)).
 
-[Squeeze official website](https://pluginarium.com/squeeze/) | [Plugin's documentation](https://pluginarium.com/squeeze/squeeze-documentation/)
+The result: smaller files, faster page loads, and lower hosting storage—without SaaS fees or API keys.
 
-== 🌟 New Features since version 1.7 🌟 == 
-* **Direct WEBP Conversion:** Convert JPG/PNG images into WEBP instantly and replace originals — saving tons of storage.
-* **Pre-Upload Compression:** Compress images before they even reach your server, reducing upload time and bandwidth usage.
+[Squeeze official website](https://pluginarium.com/squeeze/) | [Plugin documentation](https://pluginarium.com/squeeze/squeeze-documentation/)
 
-== ✨ Key Features ✨ == 
-* **Increase Page Speed:** Reduces image sizes to improve website loading speed and overall user experience.
-* **WEBP Conversion and Serving:** Convert images to the modern and efficient WEBP format and serve them seamlessly. The plugin adds .htaccess rules to serve WEBP images for supported browsers without changing URLs. Alternatively, enable the "Replace Image URLs" option to explicitly use WEBP versions on all pages.
-* **Client-Side Image Squeezing:** Compress images directly in the browser without sending files to external servers
-* **Upload Optimization:** Compresses images on-the-fly during the upload process, ensuring optimized images are added to your media library.
-* **Gutenberg and GenerateBlocks Support:** Squeeze images directly on upload in Gutenberg or GenerateBlocks builder.
-* **Bulk Compression:** Allows you to compress multiple images at once from your WordPress Media Library.
-* **Image Exclusion:** Exclude images by URL or filename pattern (one per line) from upload and bulk squeeze.
-* **Custom Directory Compression:** Select a directory on your site and compress all the images within it.
-* **Selective Compression:** Choose which images to compress based on your preferences and requirements.
-* **Custom Squeezing Settings:** Adjust compression parameters such as quality level to suit your specific needs.
-* **Backup Option:** Creates a backup file to restore a compressed image to the original image.
-* **Wide Format Support:** Squeezes images in popular formats, including JPEG, PNG, AVIF, and WEBP.
+== 🌟 New in 1.7.x ==
+* **Direct WebP conversion:** Convert JPG/PNG to WebP and replace originals—save storage without duplicate files.
+* **Pre-upload compression:** Shrink images in the browser before upload (Gutenberg, GenerateBlocks, Voxel create-post and gallery fields).
+* **Three WebP delivery modes:** Direct WebP, separate squeeze-webp folder with URL rewrite, or server-side delivery via .htaccess.
+* **Voxel theme support:** Pre-upload squeeze on multipart AJAX uploads in create-post and file/gallery fields.
 
-== ⚜️ Premium Features ⚜️ == 
-* **Image Comparison:** Compare original and Squeezed images directly in the Media Library.
-* **Resize Original Image:** Set maximum width and height for the original image.
-* **Bulk Squeeze from a Page:** Compress all images from a specific page.
-* **Elementor Integration:** Squeeze images directly while editing in Elementor.
-* **Priority support & updates!**
+== ✨ Key Features ==
+* **Faster pages:** Smaller images improve load time, Core Web Vitals, and mobile bandwidth use.
+* **WebP conversion & serving:** Convert to WebP and serve efficiently—choose Direct WebP, HTML URL rewrite, or .htaccess delivery for supported browsers.
+* **Client-side squeezing:** Compress in the browser; nothing is uploaded to external optimization servers.
+* **Upload optimization:** Compress on the fly during upload so optimized files land in your Media Library.
+* **Gutenberg & GenerateBlocks:** Squeeze images as you add them in the block editor.
+* **Voxel theme:** Compress before upload on Voxel create-post and file/gallery fields.
+* **Bulk compression:** Compress hundreds of Media Library images in one run (pause/resume supported).
+* **Custom directory squeeze:** Pick any folder under your site root and optimize all images inside it.
+* **Exclusions:** Skip images by URL or filename pattern (one per line).
+* **Fine-tuned quality:** Per-format tabs for JPEG, PNG, WebP, and AVIF (MozJPEG, OxiPNG-style PNG, and more).
+* **Backup option:** Keep a `.bak` copy to restore the original after squeezing.
+* **Formats:** JPEG, PNG, WebP, and AVIF.
 
-Don't settle for limitations—upgrade now and supercharge your experience!
+== ⚜️ Premium Features ==
+* **Image comparison** in the Media Library (before/after sizes).
+* **Resize originals** to max width/height before squeeze.
+* **Bulk squeeze from a page** — all images used on one post or page.
+* **Elementor integration** — squeeze on upload while editing in Elementor.
+* **CDN URL** — map CDN image URLs to local files for all WebP delivery modes.
+* **Priority support & updates**
 
-**[Explore the Premium version here.](https://pluginarium.com/squeeze/#premium)**
+**[Explore Premium](https://pluginarium.com/squeeze/#premium)**
 
-== How does the Squeeze plugin work? == 
-Squeeze plugin compresses images directly from your WordPress Media Library or during the image upload process. All the work is handled directly inside your browser using advanced compression algorithms. That means there’s no third party service for compression images. Thus, you can be sure with the privacy of your images, ensuring data privacy and faster processing.
+== How does Squeeze work? ==
+Open the Media Library, run Bulk Squeeze, or upload a new image — Squeeze runs Google Chrome team–backed codecs (the same family as Squoosh.app) inside your browser via Web Workers. No account, no API key, no off-site upload queue.
 
-[Plugin's documentation is available here.](https://pluginarium.com/squeeze/squeeze-documentation/)
+[Full documentation](https://pluginarium.com/squeeze/squeeze-documentation/)
 
 == Installation ==
-1. Download the plugin ZIP file from the WordPress Plugin Directory, or install the plugin via the WordPress plugin installer.
-2. Extract the ZIP file (if downloaded from WordPress Plugin Directory).
-3. Upload the plugin directory to the wp-content/plugins/ directory of your WordPress installation.
-4. Activate the Squeeze plugin from the WordPress plugins dashboard.
+1. Install **Squeeze** from the WordPress Plugin Directory (Plugins → Add New → search “Squeeze image” or “webp converter wordpress”).
+2. Activate the plugin.
+3. Go to **Settings → Squeeze** and enable **Squeeze on upload** and **Direct WebP conversion** if you want automatic WebP for new uploads.
+4. **First squeeze:** open **Media Library**, click any image, and use **Squeeze** on the attachment screen—or run **Bulk Squeeze** under Settings → Squeeze for existing library images.
+5. Optional: test **Direct WebP** on a staging copy before enabling on a live site with hard-coded image URLs.
 
 == Frequently Asked Questions ==
 = How does the plugin work? =
 
-The plugin uses client-side compression algorithms and provides you with the ability to compress images in your WordPress media library or during the image upload process.
+Squeeze compresses images in your browser using Web Workers and open-source codecs (MozJPEG for JPEG, Browser Image Compression for PNG, WebP and AVIF encoders). You can squeeze from the Media Library, bulk tools, custom folders, or during upload in supported editors.
 
-= What does the speed of image compression depend on? =
+= Do I need an API key or cloud account? =
 
-Because the compression process happens directly into your browser - it depends on your device’s performance. 
+No. Squeeze does not require ShortPixel, Imagify, or any third-party API. There are no per-month image caps imposed by the plugin.
 
-= How are the images processed? Are they sent to an external server? =
+= What makes Squeeze different from ShortPixel, Imagify, or Smush? =
 
-The images compressed directly in your browser – means no external server used. Squeeze does all the work locally. So you should not worry about privacy.
+* **Unlimited** squeezes (no SaaS quota).
+* **Privacy:** files stay on your server; compression runs in the admin browser.
+* **Direct WebP** can replace originals instead of keeping parallel JPG + WebP copies.
+* **No recurring API cost** for compression itself.
+* **Niche integrations:** Voxel pre-upload, Gutenberg/GenerateBlocks on upload; Elementor in Premium.
 
-= What makes Squeeze different from other image optimizers? =
+= How fast is compression? =
 
-* No compression limits.
-* No cloud servers or API keys.
-* Direct, local WEBP conversion for the newly uploaded images (no extra copies).
-* Works instantly in Gutenberg and Elementor.
+Speed depends on your computer and image size. Large PNGs can take longer; increase **Squeeze timeout** under Settings → Squeeze → Basic Settings if needed.
 
-= Can this plugin convert images to the WEBP format? =
+= Are images sent to an external server? =
 
-Yes! The Squeeze plugin supports converting images to the WEBP format during the compression process. WEBP is a modern image format that provides superior compression while maintaining high quality, resulting in faster loading times and reduced bandwidth usage. To enable this feature, check the "Direct WEBP Conversion" option under the Basic Settings tab to convert images in WEBP format.
+No. Processing is client-side in wp-admin (and in supported front-end upload flows). Your image bytes are not sent to Squeeze’s servers for compression.
 
-= Is it safe to replace images with WEBP? =
+= Can Squeeze convert images to WebP? =
 
-Yes! It’s perfectly safe, especially for new uploads.
-For existing images, the Squeeze plugin can automatically update JPG/PNG image URLs to their WebP versions when available.
+Yes. Enable **Direct WebP conversion** under Basic Settings to convert new uploads to WebP and replace the original file. You can also use legacy modes that keep JPG/PNG and store WebP in `wp-content/squeeze-webp/` with URL rewrite or .htaccess delivery.
 
-Just a quick note — this replacement happens only when the page loads, so your database isn’t changed.
-If you deactivate the Squeeze plugin, some images may stop showing. To fix that, simply reselect those images from the Media Library.
+= Is it safe to replace images with WebP? =
 
-= Will my images break if I deactivate the plugin? =
+Yes for new uploads when you understand URL changes. For existing sites, test on a staging copy first. **Replace Image URLs** rewrites `src` in page HTML at render time (database URLs unchanged). If you deactivate the plugin while Direct WebP is on, some hard-coded `.jpg` links may break — reselect images from the Media Library or restore from `.bak` backups.
 
-If you deactivate Squeeze while the Direct WebP option is enabled, some images may stop showing because their JPG/PNG versions were converted to WebP.
-To fix that, simply reselect those images in your posts or pages to restore the correct URLs.
+= Will images break if I deactivate the plugin? =
 
-= How are WEBP images served? =
+If **Direct WebP** replaced originals, some content may still reference old `.jpg`/`.png` URLs. Reselect images in the editor or restore backups. HTML-only URL rewrite modes stop rewriting when the plugin is off, but original files remain on disk.
 
-Squeeze plugin converts your JPG/PNG images into WEBP format replacing the original images.
-To enable this feature, check the "Direct WEBP Conversion" option under the Basic Settings tab to convert images in WEBP format.
+= How are WebP images served? =
 
-That means if you have an image in JPG format like `image.jpg`, after conversion to WEBP format it becomes `image.webp`.
+Choose one of three modes in **WebP delivery**:
 
-Previously, the generated WEBP images were stored in the wp-content/squeeze-webp directory within your WordPress installation.
-That method is not very optimal, because it creates extra images which reduce your server's storage space.
-However, if you already used that approach, you can keep it enabled for backwards compatibility.
+1. **Direct WebP (recommended)** — file on disk becomes `.webp`; lowest storage.
+2. **Rewrite `<img>` src** — keeps originals; serves WebP URLs in HTML output.
+3. **Server delivery** — keeps URLs; `.htaccess` serves WebP bytes to supporting browsers.
 
-= Why am I seeing an alert "Image conversion blocked by browser privacy setting"?  =
+Premium **CDN URL** helps map CDN paths to local files for all modes.
 
-That means your browser is blocking access to canvas image data (this prevents image conversion).
-The **privacy.resistFingerprinting** setting (or similar privacy features) is enabled.
+= Does Squeeze work with WP Offload Media (WP Offload S3 / AS3CF)? =
 
-**What you can do**:
+Yes, with one important caveat about the WebP delivery mode you choose.
 
-* Open `about:config` in Firefox and set `privacy.resistFingerprinting` to `false`, then restart Firefox.
-* Use a different browser (Chrome, Edge) or a browser profile without this setting.
+**Supported — Rewrite `<img>` src to WebP URLs in HTML:** Squeeze pushes WebP sidecar files to your external storage provider (S3, GCS, DigitalOcean Spaces, etc.) alongside the compressed originals. The PHP-based URL rewriting rewrites image `src` and `srcset` attributes in the page HTML to the WebP path, and this works correctly whether files are served from your origin or a CDN — even when WP Offload Media's "Remove Local Files" option is on.
 
-= Which scripts are used for compressing and converting images?
+**Not compatible — Keep JPEG/PNG URLs — server serves WebP (.htaccess):** This mode adds Apache `mod_rewrite` rules to `.htaccess` that intercept requests for `.jpg`/`.png` files and serve the WebP equivalent. When WP Offload Media is active, image URLs point to a CDN domain (e.g. `storage.googleapis.com`). Those requests never reach your origin server and therefore never pass through `.htaccess` — WebP files will not be served. If you use WP Offload Media, always choose the **Rewrite `<img>` src to WebP URLs in HTML** mode instead.
 
-The Squeeze plugin utilizes the same scripts and libraries that power the Squoosh.app, an open-source project by the Google Chrome team. These include highly efficient image processing libraries such as:
+= Why do I see "Image conversion blocked by browser privacy setting"? =
 
-* MozJPEG: Used for compressing JPEG images.
-* Browser Image Compression: Used for compressing PNG images. This does not come from the Squoosh.app, as its OxiPNG takes quite a long time to compress images.
-* WEBP: Used for converting and compressing images to the modern WEBP format.
-* AVIF: An advanced codec for creating lightweight and high-quality AVIF images.
+Your browser blocked canvas access (common with Firefox `privacy.resistFingerprinting`). Set `privacy.resistFingerprinting` to `false` in `about:config`, use Chrome/Edge, or a profile without strict fingerprinting resistance.
 
-= Why should I use image compression on my website? =
+= Does Squeeze work with the Voxel theme? =
 
-Image compression helps improve your website's performance by reducing the file size of images without significantly impacting their quality. Smaller image files load faster, resulting in faster page load times and a better user experience. Additionally, compressed images consume less bandwidth, which can be beneficial for websites with limited hosting resources or mobile users with limited data plans.
+Yes (free). Pre-upload compression runs on Voxel create-post and file/gallery AJAX uploads so images are smaller before they reach the server.
 
-= Which image formats does the Squeeze plugin work with? =
+= Does Squeeze work with Elementor? =
 
-Squeeze plugin supports JPG, PNG, WEBP and AVIF image formats.
+On-upload squeeze in Elementor is a **Premium** feature. Free version supports Gutenberg, GenerateBlocks, and Voxel.
 
-= Can I compress multiple images at once? =
+= Does Squeeze work with GenerateBlocks? =
 
-Yes, the plugin provides a bulk compression feature. This saves time and effort compared to compressing images individually.
+Yes. GenerateBlocks media blocks support the same on-upload squeeze as the core Image block when **Squeeze on upload** is enabled under Basic Settings.
 
-= Can I compress images NOT from the Media Library, but from a custom directory? =
+= What if the squeezed file is larger than the original? =
 
-Yes, you can compress images from any directory within your WordPress installation.
+Squeeze can skip replacing an upload when the compressed file would be larger (common with already-optimized PNGs). Lower JPEG/WebP quality in the format tabs, exclude the asset under **Excluded images**, or squeeze a smaller registered thumbnail size.
 
-= Can I customize the compression settings? =
+= How do .bak backup files work? =
 
-Yes, the plugin allows you to customize various compression settings according to your preferences. The Settings page is located at Settings -> Squeeze.
+Enable **Create backup** in Basic Settings before squeezing. Squeeze saves a `.bak` copy next to the file so you can **Restore Original Image** from the Media Library list or attachment screen. Remove unneeded backups with **Delete Backup Image**.
 
-= Image compression process seems to be stuck. The browser doesn't respond. =
+= Does WebP server delivery need Apache mod_rewrite? =
 
-It may happen if you are trying to compress a PNG image with a high resolution. In that case, you should wait a while, until the image finishes its compression or a “Request timed out.” error message occurs.
+The **separate folder + server-side delivery** mode writes `.htaccess` rules and needs **mod_rewrite** on Apache. If mod_rewrite is unavailable, use **Direct WebP** or **Rewrite `<img>` src** instead. On Nginx or other stacks without Apache rules, prefer Direct WebP or HTML rewrite unless you add equivalent server rewrites yourself.
 
-= How to fix a “Request timed out” error =
+= Does Squeeze work on WordPress multisite? =
 
-Go to the plugin’s setting page (Settings -> Squeeze).
-At the “Basic Settings” tab increase the value of the field “Squeeze timeout”. By default it equals 60 seconds, try to make it bigger. If the error still persists, that means the script cannot process your image. 
+Yes on standard multisite installs—each site has its own Squeeze settings and Media Library. Test **Direct WebP** on a staging subsite before bulk conversion across a large network.
 
-= Where can I read the full documentation for this plugin? =
+= Which codecs does Squeeze use? =
 
-The full documentation is available here: [https://pluginarium.com/squeeze/squeeze-documentation/](https://pluginarium.com/squeeze/squeeze-documentation/)
+MozJPEG (JPEG), Browser Image Compression (PNG), plus WebP and AVIF encoders—the same technology family as [Squoosh.app](https://squoosh.app) by the Chrome team.
+
+= Why use image compression on WordPress? =
+
+Smaller images improve LCP and overall speed, reduce bandwidth bills, and free disk space—especially when combined with WebP.
+
+= Which formats are supported? =
+
+JPEG, PNG, WebP, and AVIF.
+
+= Can I compress many images at once? =
+
+Yes. Use **Bulk Squeeze** (Media Library attachments) or **Directory Squeeze** for any folder under your site root. Directory mode does not create automatic backups—back up first.
+
+= Can I exclude images? =
+
+Yes. List URL or filename patterns (one per line) under **Excluded images** in Basic Settings.
+
+= Can I customize compression quality? =
+
+Yes. Settings → Squeeze has tabs for JPEG, PNG, WebP, and AVIF quality and advanced options.
+
+= Bulk squeeze seems stuck on a large PNG — what should I do? =
+
+Wait for completion or a timeout message. Increase **Squeeze timeout** (default 60 seconds). Very large PNGs may exceed browser memory on low-end devices.
+
+= How do I fix "Request timed out"? =
+
+Go to Settings → Squeeze → Basic Settings and raise **Squeeze timeout**. If it still fails, resize the source image or squeeze a smaller derivative.
+
+= Is Squeeze a good ShortPixel or Imagify alternative? =
+
+Yes, if you want **unlimited local compression** without API keys or per-month image quotas. Cloud optimizers upload files to their servers; Squeeze processes images in your browser and stores results on your WordPress site. You trade SaaS convenience for privacy, predictable cost, and no upload caps.
+
+= How does Squeeze compare to EWWW Image Optimizer? =
+
+Both can optimize on your server. Squeeze focuses on **client-side codecs in the browser** (Squoosh-family encoders), **Direct WebP replacement** on disk, and **pre-upload squeeze** in Gutenberg, GenerateBlocks, and Voxel. EWWW often relies on server-side tools or paid cloud tiers. Choose Squeeze when you want no external compression queue and strong WebP storage savings.
+
+= How do I compress my first image after installing? =
+
+Activate the plugin, open **Media Library →** any image → **Squeeze** on the attachment screen. For many images at once, go to **Settings → Squeeze → Bulk Squeeze** and run **Bulk Media Library Squeeze**. Enable **Squeeze on upload** under Basic Settings for automatic optimization on new uploads.
+
+= Does Squeeze work with FileBird? =
+
+Yes. Squeeze is compatible with the FileBird media folder plugin; bulk and attachment squeeze work with FileBird-organized libraries.
+
+= Can I use Squeeze on a staging site first? =
+
+Recommended—especially before **Direct WebP conversion** on an existing site. Test themes, page builders, and any hard-coded `.jpg`/`.png` URLs on staging, then enable on production.
+
+= Does bulk squeeze include WooCommerce images? =
+
+Yes, when images are normal Media Library attachments (product galleries, thumbnails registered in WordPress). Select the thumbnail sizes you want under **Squeeze thumbnails** in Basic Settings, including WooCommerce sizes when listed.
+
+= Is browser-side compression suitable for GDPR or membership sites? =
+
+Yes. Image bytes are not sent to Squeeze’s servers for compression—processing runs locally in the administrator’s browser (and supported front-end upload flows). This helps sites that must avoid third-party image processing services.
+
+= Where is the full documentation? =
+
+[https://pluginarium.com/squeeze/squeeze-documentation/](https://pluginarium.com/squeeze/squeeze-documentation/)
 
 == Screenshots ==
 1. Compressed image with Squeeze Plugin
@@ -184,10 +237,17 @@ The full documentation is available here: [https://pluginarium.com/squeeze/squee
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.10 =
+* WP Offload Media: added incompatibility notices in the WebP delivery settings — the "Keep JPEG/PNG URLs — server serves WebP" and "Rewrite <img> src to WebP URLs in HTML" modes do not work with WP Offload Media; the Direct WebP mode is recommended and works automatically
+* WP Offload Media: provider/CDN base URL is now auto-detected so Squeeze can download images from external storage for compression (no CORS issues)
+* Fixed: "Restore original image" button was missing after a failed compression (result larger than original) when a backup exists — button is now always shown when a backup is available
+* Fixed: clicking "Restore original image" no longer throws a JS error when the image was in the "larger than original" failed state
+* Combined the two-line "Could not compress" error into a single message with an inline link to compression settings
 = 1.7.9 =
 * Redesigned WebP delivery settings with three clear modes: Direct WebP, separate squeeze-webp folder with URL rewrite, and separate folder with server-side delivery (.htaccess)
-* CDN URL option is kept for all WebP delivery modes, including Direct WebP
-* Improved URL-to-filesystem resolution when checking WebP files (CDN-aware)
+* Voxel theme: pre-upload compression for create-post and file/gallery field uploads
+* CDN URL setting (Premium): works with all WebP delivery modes, including Direct WebP
+* Improved URL-to-filesystem resolution when checking WebP files (CDN-aware, Premium CDN URL)
 * Bulk directory browser returns site-relative paths only (no absolute server paths in API responses)
 * Fixed Media Library bulk squeeze completion popup (missing JavaScript helper import)
 * PHPUnit and bulk browse path handling improvements
@@ -288,8 +348,10 @@ The full documentation is available here: [https://pluginarium.com/squeeze/squee
 * First release.
 
 == Upgrade Notice ==
+= 1.8.0 =
+* WP Offload Media compatibility: WebP files are now automatically pushed to external storage (S3, GCS, etc.) and served from the CDN.
 = 1.7.9 =
-* WebP delivery settings updated: three modes, CDN works with Direct WebP.
+* WebP delivery settings updated (three modes), Voxel upload support, Premium CDN URL for all WebP modes.
 = 1.7.5 =
 * Updated notifications texts and icons
 * Upgraded the Freemius version
