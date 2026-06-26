@@ -331,20 +331,44 @@ msgstr ""
 msgid "Remaining or needs attention"
 msgstr ""
 
-#: inc/settings.php:149
-#: assets/js/admin.bundle.js:39
-#: assets/js/editor.bundle.js:39
-#: assets/js/helpers.js:206
-#: assets/js/script.bundle.js:29
-msgid "Run Bulk Squeeze"
+#: inc/settings.php:156
+#: assets/js/helpers.js
+msgid "Bulk squeezing paused"
 msgstr ""
 
-#: inc/settings.php:155
-#: assets/js/admin.bundle.js:39
-#: assets/js/editor.bundle.js:39
-#: assets/js/helpers.js:207
-#: assets/js/script.bundle.js:29
-msgid "Repeat Bulk Squeeze"
+#: inc/settings.php:166
+#: inc/settings.php:162
+#: assets/js/helpers.js
+msgid "Squeeze new images"
+msgstr ""
+
+#: inc/settings.php:168
+#: inc/settings.php:162
+msgid "Compress only images that have not been squeezed yet. Click again while running to pause."
+msgstr ""
+
+#: inc/settings.php:175
+#: inc/settings.php:171
+#: assets/js/helpers.js
+msgid "Re-squeeze all images"
+msgstr ""
+
+#: inc/settings.php:177
+#: inc/settings.php:171
+msgid "Run compression again on every library image, including ones already squeezed. Use after changing quality or WebP settings."
+msgstr ""
+
+#: assets/js/helpers.js
+msgid "Paused. Click Resume to continue."
+msgstr ""
+
+#: assets/js/helpers.js
+#: assets/js/handlers.js
+msgid "Skipped — continuing with next image."
+msgstr ""
+
+#: assets/js/helpers.js
+msgid "Still processing %s… Large images can take several minutes."
 msgstr ""
 
 #: inc/settings.php:162

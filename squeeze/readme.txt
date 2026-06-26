@@ -4,7 +4,7 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.10
+Stable tag: 1.7.11
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -237,6 +237,15 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.11 =
+* WP Offload Media: added a same-origin image proxy so the Web Worker can fetch CDN-hosted images for compression without CORS errors (works even when "Remove Local Files" is enabled)
+* WP Offload Media: thumbnail sizes with no local original on disk (offloaded) are now compressed and uploaded correctly
+* Failed compression state is tracked per attachment — "larger than original" images show a warning with Restore and Re-Squeeze options; changing compression settings clears failed state so images can be retried
+* Excluded images are now omitted from Bulk Squeeze and the Media Library "Non Squeezed Images" filter
+* Bulk Squeeze skips a failed image and continues with the rest instead of retrying the same failure
+* Security: upload format validation now uses a hardcoded allowlist; settings saves require manage_options; unknown option keys are stripped on save
+* Fixed: upload errors now show readable messages (including HTTP 413 payload-too-large guidance) instead of [object Object]
+* Fixed: compression comparison table no longer breaks when an original size is missing from disk
 = 1.7.10 =
 * WP Offload Media: added incompatibility notices in the WebP delivery settings — the "Keep JPEG/PNG URLs — server serves WebP" and "Rewrite <img> src to WebP URLs in HTML" modes do not work with WP Offload Media; the Direct WebP mode is recommended and works automatically
 * WP Offload Media: provider/CDN base URL is now auto-detected so Squeeze can download images from external storage for compression (no CORS issues)
@@ -348,6 +357,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.7.11 =
+* CORS proxy for CDN-hosted images, offloaded thumbnail compression, compression failure tracking, excluded-image filtering, and security hardening.
 = 1.8.0 =
 * WP Offload Media compatibility: WebP files are now automatically pushed to external storage (S3, GCS, etc.) and served from the CDN.
 = 1.7.9 =

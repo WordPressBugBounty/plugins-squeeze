@@ -46,6 +46,18 @@ class SqueezeSettings extends SqueezeInit {
             10,
             1
         );
+        add_filter(
+            'posts_results',
+            [$this, 'media_filter_exclude_excluded'],
+            10,
+            2
+        );
+        add_action(
+            'update_option_squeeze_options',
+            [$this, 'handle_excluded_images_option_change'],
+            10,
+            2
+        );
         add_action( 'admin_footer', [$this, 'svg_sprite_output'] );
         add_action( 'admin_notices', [$this, 'incompatibility_notices'] );
         add_action( 'edit_form_after_title', [$this, 'add_preview_button_placeholder'], 10 );
@@ -135,7 +147,7 @@ class SqueezeSettings extends SqueezeInit {
                                 </svg>
                                 <div class="squeeze-banner__content">
                                     <p class="squeeze-banner__title"><?php 
-                esc_html_e( 'Direct WebP conversion is on', 'squeeze' );
+                printf( __( 'Direct WebP conversion is on <a href="%s" target="_blank">(change)</a>', 'squeeze' ), esc_url( admin_url( 'options-general.php?page=squeeze#squeeze_basic' ) ) );
                 ?></p>
                                     <p><?php 
                 esc_html_e( 'After conversion, image URLs may change. Check themes and content for hard-coded .jpg / .png links (image blocks, custom HTML, CSS, or shortcodes) so nothing breaks.', 'squeeze' );
@@ -190,25 +202,50 @@ class SqueezeSettings extends SqueezeInit {
                                 </div>
                             </div>
                         </div>
+                        <div id="squeeze-bulk-paused-banner" class="squeeze-banner squeeze-banner--notice squeeze-bulk-paused-banner" hidden aria-live="polite">
+                            <svg class="squeeze-icon" aria-hidden="true">
+                                <use xlink:href="#pause-button-icon"></use>
+                            </svg>
+                            <div class="squeeze-banner__content">
+                                <p class="squeeze-banner__title"><?php 
+            esc_html_e( 'Bulk squeezing paused', 'squeeze' );
+            ?></p>
+                                <p id="squeeze-bulk-paused-banner-text"></p>
+                            </div>
+                        </div>
                         <div class="squeeze-bulk-section__actions squeeze-bulk-media-actions">
-                            <button name="squeeze_bulk" class="button button-primary button-hero" type="button" <?php 
-            echo ( $uncompressed_count === 0 ? 'hidden disabled' : '' );
+                            <div class="squeeze-bulk-media-actions__item">
+                                <button name="squeeze_bulk" class="button button-primary button-hero" type="button" title="<?php 
+            esc_attr_e( 'Compress only images that have not been squeezed yet. Click again while running to pause.', 'squeeze' );
+            ?>" <?php 
+            echo ( $uncompressed_count === 0 ? 'hidden disabled data-default-hidden="true"' : '' );
             ?>>
-                                <svg class="squeeze-icon" aria-hidden="true">
-                                    <use xlink:href="#play-button-round-icon"></use>
-                                </svg>
-                                <?php 
-            esc_attr_e( 'Run Bulk Squeeze', 'squeeze' );
+                                    <svg class="squeeze-icon" aria-hidden="true">
+                                        <use xlink:href="#play-button-round-icon"></use>
+                                    </svg>
+                                    <?php 
+            esc_html_e( 'Squeeze new images', 'squeeze' );
             ?>
-                            </button>
-                            <button name="squeeze_bulk_again" class="button button-secondary button-large" type="button">
-                                <svg class="squeeze-icon" aria-hidden="true">
-                                    <use xlink:href="#repeat-icon"></use>
-                                </svg>
-                                <?php 
-            esc_attr_e( 'Repeat Bulk Squeeze', 'squeeze' );
+                                </button>
+                                <p class="squeeze-bulk-field-hint squeeze-bulk-field-hint--tight"><?php 
+            esc_html_e( 'Compress only images that have not been squeezed yet. Click again while running to pause.', 'squeeze' );
+            ?></p>
+                            </div>
+                            <div class="squeeze-bulk-media-actions__item">
+                                <button name="squeeze_bulk_again" class="button button-secondary button-large" type="button" title="<?php 
+            esc_attr_e( 'Run compression again on every library image, including ones already squeezed. Use after changing quality or WebP settings.', 'squeeze' );
+            ?>">
+                                    <svg class="squeeze-icon" aria-hidden="true">
+                                        <use xlink:href="#repeat-icon"></use>
+                                    </svg>
+                                    <?php 
+            esc_html_e( 'Re-squeeze all images', 'squeeze' );
             ?>
-                            </button>
+                                </button>
+                                <p class="squeeze-bulk-field-hint squeeze-bulk-field-hint--tight"><?php 
+            esc_html_e( 'Run compression again on every library image, including ones already squeezed. Use after changing quality or WebP settings.', 'squeeze' );
+            ?></p>
+                            </div>
                         </div>
                     </section>
 
@@ -1878,18 +1915,8 @@ class SqueezeSettings extends SqueezeInit {
         if ( isset( $_GET['squeeze_filter'] ) ) {
             $squeeze_filter = sanitize_text_field( wp_unslash( $_GET['squeeze_filter'] ) );
             if ( 'non-squeezed' === $squeeze_filter ) {
-                $query->set( 'meta_query', array(
-                    'relation' => 'OR',
-                    array(
-                        'key'     => 'squeeze_is_compressed',
-                        'compare' => '!=',
-                        'value'   => '1',
-                    ),
-                    array(
-                        'key'     => 'squeeze_is_compressed',
-                        'compare' => 'NOT EXISTS',
-                    ),
-                ) );
+                $query->set( 'meta_query', self::$SqueezeHelpers->get_non_squeezed_media_meta_query() );
+                $query->set( 'squeeze_exclude_excluded', true );
                 $query->set( 'orderby', 'meta_value' );
                 $query->set( 'post_mime_type', self::$SqueezeHelpers->get_image_formats( true ) );
             }
@@ -1903,22 +1930,38 @@ class SqueezeSettings extends SqueezeInit {
         }
         $squeeze_filter = sanitize_text_field( wp_unslash( $_POST['query']['squeeze_filter'] ) );
         if ( 'non-squeezed' === $squeeze_filter ) {
-            $query['meta_query'] = array(
-                'relation' => 'OR',
-                array(
-                    'key'     => 'squeeze_is_compressed',
-                    'compare' => '!=',
-                    'value'   => '1',
-                ),
-                array(
-                    'key'     => 'squeeze_is_compressed',
-                    'compare' => 'NOT EXISTS',
-                ),
-            );
+            $query['meta_query'] = self::$SqueezeHelpers->get_non_squeezed_media_meta_query();
+            $query['squeeze_exclude_excluded'] = true;
             $query['orderby'] = 'meta_value';
             $query['post_mime_type'] = self::$SqueezeHelpers->get_image_formats( true );
         }
         return $query;
+    }
+
+    public function media_filter_exclude_excluded( $posts, $query ) {
+        if ( empty( $posts ) || !$query instanceof \WP_Query ) {
+            return $posts;
+        }
+        if ( !$query->get( 'squeeze_exclude_excluded' ) ) {
+            return $posts;
+        }
+        if ( empty( self::$SqueezeHelpers->get_excluded_images() ) ) {
+            return $posts;
+        }
+        return array_values( array_filter( $posts, function ( $post ) {
+            return !self::$SqueezeHelpers->is_attachment_excluded( $post->ID );
+        } ) );
+    }
+
+    public function handle_excluded_images_option_change( $old_value, $new_value ) {
+        $old_excluded = ( isset( $old_value['excluded_images'] ) ? $old_value['excluded_images'] : '' );
+        $new_excluded = ( isset( $new_value['excluded_images'] ) ? $new_value['excluded_images'] : '' );
+        if ( $old_excluded === $new_excluded ) {
+            return;
+        }
+        self::$SqueezeHelpers->clear_excluded_images_cache();
+        self::$SqueezeHelpers->clear_options_cache();
+        self::$SqueezeHelpers->invalidate_uncompressed_stats_cache();
     }
 
     public function svg_sprite_output() {

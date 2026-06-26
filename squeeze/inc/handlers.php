@@ -93,16 +93,17 @@ class SqueezeHandlers extends SqueezeInit {
 		$base64_webp = isset( $_POST["base64Webp"] ) ? sanitize_text_field( wp_unslash ( $_POST["base64Webp"] ) ) : '';
 		$sizes_webp = isset($_POST["base64SizesWebp"]) ? (array) $_POST["base64SizesWebp"] : array();
 		$file_format = isset( $_POST["format"] ) ? sanitize_text_field(wp_unslash($_POST["format"])) : '';
-		$filename = isset( $_POST["filename"] ) ? sanitize_text_field(wp_unslash($_POST["filename"])) : '';
-		$extension = pathinfo($filename, PATHINFO_EXTENSION);
+		$filename = isset( $_POST["filename"] ) ? sanitize_file_name(wp_unslash($_POST["filename"])) : '';
+		$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 		// handle jpg/jpeg extension
 		if ($extension === 'jpeg') {
 			$extension = 'jpg';
 		}
-		$image_formats = self::$SqueezeHelpers->get_image_formats();
 		$original_file = isset($_FILES['originalFile']) ? $_FILES['originalFile'] : null;
 
-		if (!in_array($extension, $image_formats) || empty($file_format)) {
+		// Validate against the hardcoded constant — never trust user-writable options for security decisions.
+		$allowed_extensions = array_keys( self::ALLOWED_IMAGE_FORMATS );
+		if ( ! in_array( $extension, $allowed_extensions, true ) || ! in_array( $file_format, $allowed_extensions, true ) || empty( $file_format ) ) {
 			wp_send_json_error('❌ '.esc_html__('Invalid image format', 'squeeze'));
 		}
 
@@ -221,6 +222,9 @@ class SqueezeHandlers extends SqueezeInit {
 			//wp_send_json_error( print_r($sizes, true) );
 
 			if (is_wp_error( $sizes )) {
+				if ( $attach_id ) {
+					update_post_meta( $attach_id, 'squeeze_compression_failed', 'thumb_upload_failed' );
+				}
 				wp_send_json_error( $sizes->get_error_message() );
 			}
 
@@ -247,10 +251,18 @@ class SqueezeHandlers extends SqueezeInit {
 				}
 			}
 
+			try {
+				$response_msg = self::$SqueezeHelpers->get_comparison_table($sizes);
+			} catch ( \Throwable $e ) {
+				if ( $attach_id ) {
+					update_post_meta( $attach_id, 'squeeze_compression_failed', 'comparison_table_error' );
+				}
+				wp_send_json_error( '❌ ' . esc_html__( 'Failed to build compression comparison.', 'squeeze' ) );
+			}
+
 			update_post_meta($attach_id, "squeeze_is_compressed", true);
 			delete_post_meta($attach_id, 'squeeze_compression_failed');
 
-			$response_msg = self::$SqueezeHelpers->get_comparison_table($sizes);
 			$response_msg = '<strong>✅ '.esc_html__('Squeezed successfully', 'squeeze') . '!</strong> ' . $response_msg;
 
 			$uncompressed_images = self::$SqueezeHelpers->get_stats_option('uncompressed_images');
@@ -1065,8 +1077,8 @@ class SqueezeHandlers extends SqueezeInit {
 	public function set_options() {
 		check_ajax_referer( 'squeeze-nonce', '_ajax_nonce' );
 
-		if (!current_user_can('upload_files')) {
-			wp_send_json_error('❌ '.esc_html__('You do not have permission to upload files', 'squeeze'));
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( '❌ ' . esc_html__( 'You do not have permission to change plugin settings', 'squeeze' ) );
 		}
 
 		$options = isset($_POST['options']) ? $_POST['options'] : array();

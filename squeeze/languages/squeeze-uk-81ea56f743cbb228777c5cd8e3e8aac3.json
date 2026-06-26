@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-06-19 14:49+0100",
+    "translation-revision-date": "2026-06-25 11:36+0100",
     "generator": "WP-CLI\/2.6.0",
     "source": "assets\/js\/admin.bundle.js",
     "domain": "messages",
@@ -12,12 +12,6 @@
             },
             "Bulk Squeeze": [
                 "\u041c\u0430\u0441\u043e\u0432\u0435 \u0441\u0442\u0438\u0441\u043d\u0435\u043d\u043d\u044f"
-            ],
-            "Run Bulk Squeeze": [
-                "\u041c\u0430\u0441\u043e\u0432\u0435 \u0441\u0442\u0438\u0441\u043d\u0435\u043d\u043d\u044f"
-            ],
-            "Repeat Bulk Squeeze": [
-                "\u041f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u0438 \u043c\u0430\u0441\u043e\u0432\u0435 \u0441\u0442\u0438\u0441\u043d\u0435\u043d\u043d\u044f"
             ],
             "Clear the path field": [
                 "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u0438 \u043f\u043e\u043b\u0435 \u0448\u043b\u044f\u0445\u0443"

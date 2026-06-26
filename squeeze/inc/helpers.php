@@ -162,9 +162,19 @@ class SqueezeHelpers extends SqueezeInit {
 			$original_size = file_exists($upload_path . $size_filename) ? wp_filesize($upload_path . $size_filename) : 0;
 			$compressed_size = strlen($size_decoded);
 			$sizes[$size_name]['original_size'] = $original_size;
+			$sizes[$size_name]['compressed_size'] = $compressed_size;
+
+			// Missing or zero-byte original on disk (e.g. offloaded thumb) — upload compressed file, skip comparison.
+			if ($original_size <= 0) {
+				$upload_size_file = $wp_filesystem->put_contents($upload_path . $size_filename, $size_decoded);
+				if (!$upload_size_file) {
+					return new \WP_Error('squeeze_upload_image_thumbs_failed', '❌ '.esc_html__('Upload image failed', 'squeeze') . ': <br>upload_path: ' . $upload_path . '<br>filename: ' . $size_filename);
+				}
+				continue;
+			}
 
 			// if compressed size is larger than original, skip uploading and keep original
-			if ($original_size > 0 && $compressed_size > $original_size) {
+			if ($compressed_size > $original_size) {
 				$sizes[$size_name]['compressed_size'] = $original_size;
 				continue;
 			}
@@ -398,6 +408,22 @@ class SqueezeHelpers extends SqueezeInit {
 	public function set_options($options) {
 		$default_options = $this->get_default_value('all', true);
 		$options = wp_parse_args($options, $default_options);
+
+		// Strip any keys not present in the known defaults — prevents option-injection attacks.
+		$options = array_intersect_key( $options, $default_options );
+
+		// Constrain compress_formats to the hardcoded constant so callers cannot introduce
+		// arbitrary extensions (e.g. 'php') that would later be accepted as upload targets.
+		if ( isset( $options['compress_formats'] ) && is_array( $options['compress_formats'] ) ) {
+			$options['compress_formats'] = array_intersect_key(
+				$options['compress_formats'],
+				self::ALLOWED_IMAGE_FORMATS
+			);
+			if ( empty( $options['compress_formats'] ) ) {
+				$options['compress_formats'] = self::ALLOWED_IMAGE_FORMATS;
+			}
+		}
+
 		$result = update_option('squeeze_options', $options);
 		
 		// Clear the cache when options are updated
@@ -433,15 +459,21 @@ class SqueezeHelpers extends SqueezeInit {
 			//$size_filename = basename(sanitize_url($size_data['url']));
 			$original_size = $size_data['original_size'];
 			$compressed_size = $size_data['compressed_size'];
-			$savings = $original_size - $compressed_size;
-			$savings_percent = round(($savings / $original_size) * 100, 2);
-			$savings_class = $savings > 0 ? 'squeeze-savings-positive' : 'squeeze-savings-negative';
+
+			if ($original_size <= 0) {
+				$savings_percent = esc_html__('N/A', 'squeeze');
+				$savings_class = '';
+			} else {
+				$savings = $original_size - $compressed_size;
+				$savings_percent = round(($savings / $original_size) * 100, 2) . '%';
+				$savings_class = $savings > 0 ? 'squeeze-savings-positive' : 'squeeze-savings-negative';
+			}
 
 			$table .= '<tr>';
 			$table .= '<td><strong>'.$size_name.'</strong></td>';
-			$table .= '<td>'.size_format($original_size, 0).'</td>';
+			$table .= '<td>'.($original_size > 0 ? size_format($original_size, 0) : esc_html__('N/A', 'squeeze')).'</td>';
 			$table .= '<td>'.size_format($compressed_size, 0).'</td>';
-			$table .= '<td><span class="squeeze-savings-label '.$savings_class.'">'.$savings_percent.'%</span></td>';
+			$table .= '<td><span class="squeeze-savings-label '.$savings_class.'">'.$savings_percent.'</span></td>';
 			$table .= '</tr>';
 		}
 
@@ -463,6 +495,16 @@ class SqueezeHelpers extends SqueezeInit {
 
     public function get_image_formats($return_mimes = false, $custom_formats = []) {
 		$allowed_image_formats = empty($custom_formats) ? $this->get_option('compress_formats') : $custom_formats;
+
+		// Intersect with the hardcoded constant so a polluted option can never introduce
+		// non-image extensions (e.g. 'php') into the upload allowlist.
+		if ( is_array( $allowed_image_formats ) ) {
+			$allowed_image_formats = array_intersect_key( $allowed_image_formats, self::ALLOWED_IMAGE_FORMATS );
+		}
+		if ( empty( $allowed_image_formats ) ) {
+			$allowed_image_formats = self::ALLOWED_IMAGE_FORMATS;
+		}
+
 		$allowed_image_formats = array_keys($allowed_image_formats);
 
 		// make values the same as keys
@@ -501,6 +543,85 @@ class SqueezeHelpers extends SqueezeInit {
 		return $total_images;
 	}
 
+	/**
+	 * Meta query for the Media Library "Non Squeezed Images" filter (list and grid).
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function get_non_squeezed_media_meta_query() {
+		return array(
+			'relation' => 'AND',
+			array(
+				'relation' => 'OR',
+				array(
+					'key' => 'squeeze_is_compressed',
+					'compare' => '!=',
+					'value' => '1',
+				),
+				array(
+					'key' => 'squeeze_is_compressed',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+			array(
+				'relation' => 'OR',
+				array(
+					'key' => 'squeeze_compression_failed',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key' => 'squeeze_compression_failed',
+					'value' => 'larger_than_original',
+					'compare' => '!=',
+				),
+			),
+		);
+	}
+
+	/**
+	 * Meta query shared by bulk uncompressed image queries.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function get_uncompressed_meta_query() {
+		return array(
+			'relation' => 'AND',
+			array(
+				'relation' => 'OR',
+				array(
+					'key' => 'squeeze_is_compressed',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key' => 'squeeze_is_compressed',
+					'compare' => '!=',
+					'value' => '1',
+				),
+			),
+			array(
+				'key' => 'squeeze_compression_failed',
+				'compare' => 'NOT EXISTS',
+			),
+		);
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function get_uncompressed_images_query_args( $last_id = 0 ) {
+		return array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'post_mime_type' => $this->get_image_formats( true ),
+			'posts_per_page' => self::$MEDIA_PER_PAGE,
+			'fields'         => 'ids',
+			'orderby'        => 'ID',
+			'order'          => 'DESC',
+			'meta_query'     => $this->get_uncompressed_meta_query(),
+			'squeeze_last_id' => $last_id,
+		);
+	}
+
     public function get_uncompressed_images_count() {
 		$uncompressed_images = $this->get_stats_option('uncompressed_images');
 
@@ -508,34 +629,11 @@ class SqueezeHelpers extends SqueezeInit {
 			return $uncompressed_images;
 		}
 
-		$query_uncompressed = new \WP_Query(array(
-			'post_type' => 'attachment',
-			'post_status' => 'inherit',
-			'post_mime_type' => $this->get_image_formats(true),
-			'posts_per_page' => -1,
-			'fields' => 'ids',
-			'meta_query' => array(
-				'relation' => 'AND',
-				array(
-					'relation' => 'OR',
-					array(
-						'key' => 'squeeze_is_compressed',
-						'compare' => 'NOT EXISTS',
-					),
-					array(
-						'key' => 'squeeze_is_compressed',
-						'compare' => '!=',
-						'value' => '1',
-					),
-				),
-				array(
-					'key' => 'squeeze_compression_failed',
-					'compare' => 'NOT EXISTS',
-				),
-			),
-		));
+		$args = $this->get_uncompressed_images_query_args();
+		$args['posts_per_page'] = -1;
+		$query_uncompressed = new \WP_Query( $args );
 
-		$uncompressed_images = $query_uncompressed->found_posts;
+		$uncompressed_images = count( $this->filter_excluded_attachment_ids( $query_uncompressed->posts ) );
 
 		$stats['uncompressed_images'] = $uncompressed_images;
 		update_option('squeeze_stats', $stats);
@@ -552,39 +650,35 @@ class SqueezeHelpers extends SqueezeInit {
 		return $where;
 	}
 
-    public function get_uncompressed_images($last_id = 0) {
+    public function get_uncompressed_images( $last_id = 0 ) {
+		$excluded_images = $this->get_excluded_images();
+		$results         = array();
+		$current_last_id = $last_id;
+		// Cap how many batches we scan while backfilling after exclusions (~20 default pages of candidates).
+		$max_iterations  = max( 2, (int) ceil( 1000 / self::$MEDIA_PER_PAGE ) );
 
-		$query_uncompressed = new \WP_Query(array(
-			'post_type' => 'attachment',
-			'post_status' => 'inherit',
-			'post_mime_type' => $this->get_image_formats(true),
-            'posts_per_page' => self::$MEDIA_PER_PAGE,
-			'fields' => 'ids',
-			'orderby'        => 'ID',
-        	'order'          => 'DESC',
-			'meta_query' => array(
-				'relation' => 'AND',
-				array(
-					'relation' => 'OR',
-					array(
-						'key' => 'squeeze_is_compressed',
-						'compare' => 'NOT EXISTS',
-					),
-					array(
-						'key' => 'squeeze_is_compressed',
-						'compare' => '!=',
-						'value' => '1',
-					),
-				),
-				array(
-					'key' => 'squeeze_compression_failed',
-					'compare' => 'NOT EXISTS',
-				),
-			),
-			'squeeze_last_id' => $last_id,
-		));
-	
-		return $query_uncompressed->posts;
+		while ( count( $results ) < self::$MEDIA_PER_PAGE && $max_iterations-- > 0 ) {
+			$query = new \WP_Query( $this->get_uncompressed_images_query_args( $current_last_id ) );
+			$posts = $query->posts;
+
+			if ( empty( $posts ) ) {
+				break;
+			}
+
+			$batch = empty( $excluded_images )
+				? $posts
+				: $this->filter_excluded_attachment_ids( $posts, $excluded_images );
+
+			$results = array_merge( $results, $batch );
+
+			if ( count( $posts ) < self::$MEDIA_PER_PAGE ) {
+				break;
+			}
+
+			$current_last_id = (int) end( $posts );
+		}
+
+		return array_slice( array_values( array_unique( array_map( 'intval', $results ) ) ), 0, self::$MEDIA_PER_PAGE );
 	}
 
 	public function get_total_images($paged = 1) {
@@ -668,6 +762,91 @@ class SqueezeHelpers extends SqueezeInit {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether a media-library attachment matches excluded-images settings.
+	 *
+	 * @param int $attachment_id Attachment post ID.
+	 * @param string[]|null $excluded_images Patterns from get_excluded_images(); null loads from options.
+	 */
+	public function is_attachment_excluded( $attachment_id, $excluded_images = null ) {
+		if ( ! $attachment_id || 'attachment' !== get_post_type( $attachment_id ) ) {
+			return false;
+		}
+
+		if ( null === $excluded_images ) {
+			$excluded_images = $this->get_excluded_images();
+		}
+
+		if ( empty( $excluded_images ) ) {
+			return false;
+		}
+
+		$candidates = array_filter(
+			array(
+				wp_get_attachment_url( $attachment_id ),
+				wp_get_original_image_url( $attachment_id ),
+				get_attached_file( $attachment_id ),
+			)
+		);
+
+		$full_image = wp_get_attachment_image_src( $attachment_id, 'full' );
+		if ( ! empty( $full_image[0] ) ) {
+			$candidates[] = $full_image[0];
+		}
+
+		foreach ( array_unique( $candidates ) as $candidate ) {
+			if ( $this->is_excluded_image( $candidate, $excluded_images ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param int[] $attachment_ids
+	 * @param string[]|null $excluded_images
+	 * @return int[]
+	 */
+	public function filter_excluded_attachment_ids( array $attachment_ids, $excluded_images = null ) {
+		if ( empty( $attachment_ids ) ) {
+			return $attachment_ids;
+		}
+
+		if ( null === $excluded_images ) {
+			$excluded_images = $this->get_excluded_images();
+		}
+
+		if ( empty( $excluded_images ) ) {
+			return $attachment_ids;
+		}
+
+		return array_values(
+			array_filter(
+				$attachment_ids,
+				function ( $attachment_id ) use ( $excluded_images ) {
+					return ! $this->is_attachment_excluded( (int) $attachment_id, $excluded_images );
+				}
+			)
+		);
+	}
+
+	public function clear_excluded_images_cache() {
+		self::$cached_excluded_images = null;
+	}
+
+	public function clear_options_cache() {
+		self::$cached_squeeze_options = null;
+	}
+
+	public function invalidate_uncompressed_stats_cache() {
+		$stats = get_option( 'squeeze_stats', array() );
+		if ( isset( $stats['uncompressed_images'] ) ) {
+			unset( $stats['uncompressed_images'] );
+			update_option( 'squeeze_stats', $stats );
+		}
 	}
 
 	public function get_default_value ( $option, $all = false ) {
