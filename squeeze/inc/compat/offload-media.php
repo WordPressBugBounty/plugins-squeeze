@@ -83,16 +83,28 @@ class SqueezeOffloadMedia {
 		}
 
 		$provider_urls = array();
+		// AS3CF "domain" setting is a delivery *mode* enum (path|cloudfront|...), not a hostname.
+		$delivery_mode_enums = array( 'path', 'cloudfront', 'amazon', 'aws', 'storage', 'cdn' );
 
-		// Attempt 1: read domain from AS3CF settings (works across many versions).
+		// Attempt 1: real custom/CDN hostname (CloudFront or delivery-domain), never the mode enum.
 		if ( method_exists( $as3cf, 'get_setting' ) ) {
-			// CloudFront or custom domain.
-			$domain = (string) $as3cf->get_setting( 'cloudfront' );
-			if ( '' === $domain ) {
-				$domain = (string) $as3cf->get_setting( 'domain' );
-			}
-			if ( '' !== trim( $domain ) ) {
-				$domain = trim( $domain, '/' );
+			$candidates = array(
+				(string) $as3cf->get_setting( 'cloudfront' ),
+				(string) $as3cf->get_setting( 'delivery-domain' ),
+			);
+			foreach ( $candidates as $domain ) {
+				$domain = trim( $domain, " \t\n\r\0\x0B/" );
+				if ( $domain === '' || in_array( strtolower( $domain ), $delivery_mode_enums, true ) ) {
+					continue;
+				}
+				// Require a hostname-like value (must contain a dot) to avoid mode strings.
+				$host = $domain;
+				if ( strpos( $domain, '//' ) !== false ) {
+					$host = (string) wp_parse_url( $domain, PHP_URL_HOST );
+				}
+				if ( $host === '' || strpos( $host, '.' ) === false ) {
+					continue;
+				}
 				if ( strpos( $domain, '//' ) === false ) {
 					$domain = 'https://' . $domain;
 				}
@@ -100,11 +112,32 @@ class SqueezeOffloadMedia {
 			}
 		}
 
-		// Attempt 2: get_provider_url_prefix (v3.x).
-		if ( empty( $provider_urls ) && method_exists( $as3cf, 'get_provider_url_prefix' ) ) {
+		// Attempt 2: get_provider_url_prefix (v3.x) — merge when available (path-style delivery).
+		if ( method_exists( $as3cf, 'get_provider_url_prefix' ) ) {
 			$prefix = rtrim( (string) $as3cf->get_provider_url_prefix(), '/' );
-			if ( '' !== $prefix ) {
+			if ( '' !== $prefix && strpos( $prefix, '.' ) !== false ) {
 				$provider_urls[] = $prefix;
+			}
+		}
+
+		// Attempt 3: derive provider URL prefixes from bucket.
+		// Staging evidence: delivery host was {bucket}.storage.googleapis.com while we only
+		// emitted S3 amazonaws hosts — add both GCS and S3 shapes so either provider matches.
+		if ( method_exists( $as3cf, 'get_setting' ) ) {
+			$bucket = trim( (string) $as3cf->get_setting( 'bucket' ) );
+			$region = trim( (string) $as3cf->get_setting( 'region' ) );
+			if ( $bucket !== '' ) {
+				// Google Cloud Storage (virtual-hosted + path-style).
+				$provider_urls[] = 'https://' . $bucket . '.storage.googleapis.com';
+				$provider_urls[] = 'https://storage.googleapis.com/' . $bucket;
+
+				// Amazon S3 (virtual-hosted + path-style).
+				if ( $region !== '' && $region !== 'us-east-1' ) {
+					$provider_urls[] = 'https://' . $bucket . '.s3.' . $region . '.amazonaws.com';
+					$provider_urls[] = 'https://s3.' . $region . '.amazonaws.com/' . $bucket;
+				}
+				$provider_urls[] = 'https://' . $bucket . '.s3.amazonaws.com';
+				$provider_urls[] = 'https://s3.amazonaws.com/' . $bucket;
 			}
 		}
 

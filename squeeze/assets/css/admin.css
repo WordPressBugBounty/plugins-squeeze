@@ -722,20 +722,61 @@ body.settings_page_squeeze .squeeze-form-table--hidden {
   display: none !important;
 }
 body.settings_page_squeeze .squeeze-webp-modes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--squeeze-spacing-s);
   border: none;
   margin: 0;
   padding: 0;
 }
-@media (min-width: 1100px) {
-  body.settings_page_squeeze .squeeze-webp-modes {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+body.settings_page_squeeze .squeeze-webp-modes > .squeeze-webp-mode-card {
+  max-width: 28rem;
+}
+body.settings_page_squeeze .squeeze-webp-advanced {
+  margin: 0;
+  border: 1px solid var(--squeeze-border-color);
+  border-radius: var(--squeeze-border-radius-inner);
+  background: #fafafa;
+}
+body.settings_page_squeeze .squeeze-webp-advanced-summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--squeeze-text-color);
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+}
+body.settings_page_squeeze .squeeze-webp-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+body.settings_page_squeeze .squeeze-webp-advanced-summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--squeeze-primary-color);
+  transition: transform 0.15s ease;
+}
+body.settings_page_squeeze .squeeze-webp-advanced[open] > .squeeze-webp-advanced-summary::before {
+  transform: rotate(90deg);
+}
+body.settings_page_squeeze .squeeze-webp-advanced[open] > .squeeze-webp-advanced-summary {
+  border-bottom: 1px solid var(--squeeze-border-color);
+}
+body.settings_page_squeeze .squeeze-webp-advanced-body {
+  padding: var(--squeeze-spacing-s) var(--squeeze-spacing-m) var(--squeeze-spacing-m);
+}
+body.settings_page_squeeze .squeeze-webp-advanced-intro {
+  margin: 0 0 var(--squeeze-spacing-s);
+  font-size: 13px;
+  color: var(--squeeze-text-secondary-color);
+}
+body.settings_page_squeeze .squeeze-webp-advanced-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--squeeze-spacing-s);
 }
 @media (max-width: 782px) {
-  body.settings_page_squeeze .squeeze-webp-modes {
+  body.settings_page_squeeze .squeeze-webp-advanced-modes {
     grid-template-columns: 1fr;
   }
 }

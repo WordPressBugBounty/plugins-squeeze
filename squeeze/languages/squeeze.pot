@@ -287,11 +287,15 @@ msgid "Squeeze Settings"
 msgstr ""
 
 #: inc/settings.php:48
-#: inc/settings.php:49
-#: squeeze.php:496
+#: inc/settings.php:50
+#: inc/settings.php:51
+#: squeeze.php:536
+msgid "Bulk / Directory Squeeze"
+msgstr ""
+
 #: assets/js/admin.bundle.js:19
-#: assets/js/admin.js:247
-#: assets/js/admin.js:323
+#: assets/js/admin.js:283
+#: assets/js/admin.js:359
 msgid "Bulk Squeeze"
 msgstr ""
 
@@ -1406,4 +1410,24 @@ msgstr ""
 #: assets/js/script.bundle.js:49
 #: assets/js/squeeze.js:548
 msgid "Image conversion blocked by browser privacy setting"
+msgstr ""
+
+#: inc/review-notice.php:129
+msgid "Enjoying Squeeze?"
+msgstr ""
+
+#: inc/review-notice.php:130
+msgid "If the plugin helped you shrink your images, would you mind leaving a quick 5-star review? It really helps other WordPress users find it."
+msgstr ""
+
+#: inc/review-notice.php:134
+msgid "Leave a review"
+msgstr ""
+
+#: inc/review-notice.php:138
+msgid "Maybe later"
+msgstr ""
+
+#: inc/review-notice.php:142
+msgid "Already did / Don't show again"
 msgstr ""

@@ -77,8 +77,8 @@ class SqueezeSettings extends SqueezeInit {
     public function options_bulk_page() {
         add_submenu_page(
             'upload.php',
-            __( 'Bulk Squeeze', 'squeeze' ),
-            __( 'Bulk Squeeze', 'squeeze' ),
+            __( 'Bulk / Directory Squeeze', 'squeeze' ),
+            __( 'Bulk / Directory Squeeze', 'squeeze' ),
             'manage_options',
             'squeeze-bulk',
             [$this, 'options_bulk_page_html']
@@ -799,6 +799,18 @@ class SqueezeSettings extends SqueezeInit {
             )
         );
         add_settings_field(
+            'squeeze_setting_clear_data_on_uninstall',
+            __( 'Delete plugin data on uninstall', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'When enabled, uninstalling Squeeze removes its settings, stats, and compression status metadata. Image files are never deleted.', 'squeeze' ) ),
+            [$this, 'options_callback'],
+            'squeeze_options',
+            'squeeze_basic_quick',
+            array(
+                'label_for' => 'clear_data_on_uninstall',
+                'class'     => 'squeeze_setting_clear_data_on_uninstall squeeze-settings-row',
+                'type'      => 'checkbox',
+            )
+        );
+        add_settings_field(
             'squeeze_setting_compress_formats',
             __( 'Image formats', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Select which image formats you want to be squeezed.', 'squeeze' ) ),
             [$this, 'options_callback'],
@@ -1269,6 +1281,7 @@ class SqueezeSettings extends SqueezeInit {
             $options = array();
         }
         $mode = $this->get_webp_delivery_mode( $options );
+        $advanced_open = 'direct' !== $mode;
         ?>
         <div class="squeeze-webp-delivery-ui">
             <fieldset class="squeeze-webp-modes" role="radiogroup">
@@ -1291,81 +1304,136 @@ class SqueezeSettings extends SqueezeInit {
         esc_html_e( 'Replace originals with .webp on disk. Lowest storage; URLs change to .webp.', 'squeeze' );
         ?></span>
                 </label>
-                <label class="squeeze-webp-mode-card<?php 
+                <details class="squeeze-webp-advanced"<?php 
+        echo ( $advanced_open ? ' open' : '' );
+        ?>>
+                    <summary class="squeeze-webp-advanced-summary"><?php 
+        esc_html_e( 'Advanced delivery methods', 'squeeze' );
+        ?></summary>
+                    <div class="squeeze-webp-advanced-body">
+                        <p class="squeeze-webp-advanced-intro"><?php 
+        esc_html_e( 'Keep JPEG/PNG originals and serve WebP via a separate folder. Prefer Direct WebP unless you have a specific hosting constraint.', 'squeeze' );
+        ?></p>
+                        <div class="squeeze-webp-advanced-modes">
+                            <label class="squeeze-webp-mode-card<?php 
         echo ( $mode === 'sidecar_replace' ? ' is-selected' : '' );
         ?>">
-                    <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar_replace" <?php 
+                                <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar_replace" <?php 
         checked( $mode, 'sidecar_replace' );
         ?> />
-                    <span class="squeeze-webp-mode-badge"><?php 
+                                <span class="squeeze-webp-mode-badge"><?php 
         esc_html_e( 'PHP / any host', 'squeeze' );
         ?></span>
-                    <span class="squeeze-webp-mode-title"><?php 
+                                <span class="squeeze-webp-mode-title"><?php 
         esc_html_e( 'Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
         ?></span>
-                    <span class="squeeze-webp-mode-desc"><?php 
+                                <span class="squeeze-webp-mode-desc"><?php 
         esc_html_e( 'Keeps JPEG/PNG in uploads and WebP copies under squeeze-webp. Squeeze changes src and srcset in the page HTML to the WebP path. Best when .htaccess rewrites are missing (Nginx, CDN, etc.).', 'squeeze' );
         ?></span>
-                </label>
-                <label class="squeeze-webp-mode-card<?php 
+                            </label>
+                            <label class="squeeze-webp-mode-card<?php 
         echo ( $mode === 'sidecar' ? ' is-selected' : '' );
         ?>">
-                    <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar" <?php 
+                                <input type="radio" class="squeeze-webp-mode-input" name="squeeze_options[webp_delivery_mode]" value="sidecar" <?php 
         checked( $mode, 'sidecar' );
         ?> />
-                    <span class="squeeze-webp-mode-badge"><?php 
+                                <span class="squeeze-webp-mode-badge"><?php 
         esc_html_e( 'Apache / .htaccess', 'squeeze' );
         ?></span>
-                    <span class="squeeze-webp-mode-title"><?php 
+                                <span class="squeeze-webp-mode-title"><?php 
         esc_html_e( 'Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
         ?></span>
-                    <span class="squeeze-webp-mode-desc"><?php 
+                                <span class="squeeze-webp-mode-desc"><?php 
         esc_html_e( 'Keeps originals in uploads; WebP files go to squeeze-webp. Page HTML still shows .jpg/.png URLs. The server rewrite rules send WebP bytes when the browser supports it — no HTML changes.', 'squeeze' );
         ?></span>
-                </label>
-            </fieldset>
-            <?php 
-        if ( \SqueezeFree\SqueezeOffloadMedia::is_active() ) {
+                            </label>
+                        </div>
+                        <?php 
+        if ( \Squeeze\SqueezeOffloadMedia::is_active() ) {
             ?>
-            <div class="squeeze-notice squeeze-notice--warning squeeze-offload-htaccess-warning<?php 
+                        <div class="squeeze-notice squeeze-notice--warning squeeze-offload-htaccess-warning<?php 
             echo ( $mode !== 'sidecar' ? ' squeeze-notice--hidden' : '' );
             ?>" role="alert">
-                <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
-                <div class="squeeze-notice-body">
-                    <strong><?php 
+                            <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
+                            <div class="squeeze-notice-body">
+                                <strong><?php 
             esc_html_e( 'Not compatible with WP Offload Media', 'squeeze' );
             ?></strong>
-                    <p><?php 
+                                <p><?php 
             esc_html_e( 'The "Keep JPEG/PNG URLs — server serves WebP" mode relies on Apache .htaccess rewrite rules that only work for requests reaching your origin server. When WP Offload Media is active, image URLs point to an external CDN (S3, GCS, DigitalOcean Spaces, etc.) and those requests never pass through your .htaccess — so WebP files will not be served.', 'squeeze' );
             ?></p>
-                    <p><?php 
+                                <p><?php 
             echo wp_kses( __( 'Please switch to <strong>Direct WebP</strong> conversion — it converts images to WebP in-place and WP Offload Media handles uploading automatically.', 'squeeze' ), array(
                 'strong' => array(),
             ) );
             ?></p>
-                </div>
-            </div>
-            <div class="squeeze-notice squeeze-notice--warning squeeze-offload-sidecar-warning<?php 
+                            </div>
+                        </div>
+                        <div class="squeeze-notice squeeze-notice--warning squeeze-offload-sidecar-warning<?php 
             echo ( $mode !== 'sidecar_replace' ? ' squeeze-notice--hidden' : '' );
             ?>" role="alert">
-                <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
-                <div class="squeeze-notice-body">
-                    <strong><?php 
+                            <span class="squeeze-notice-icon" aria-hidden="true">⚠️</span>
+                            <div class="squeeze-notice-body">
+                                <strong><?php 
             esc_html_e( 'Not compatible with WP Offload Media', 'squeeze' );
             ?></strong>
-                    <p><?php 
+                                <p><?php 
             esc_html_e( 'The "Rewrite <img> src to WebP URLs in HTML" mode is not compatible with WP Offload Media. WebP sidecar files are stored in a local squeeze-webp/ folder and are never pushed to your external storage provider (S3, GCS, DigitalOcean Spaces, etc.), so they cannot be served from your CDN URL.', 'squeeze' );
             ?></p>
-                    <p><?php 
+                                <p><?php 
             echo wp_kses( __( 'Please switch to <strong>Direct WebP</strong> conversion — it converts images to WebP in-place and WP Offload Media handles uploading automatically.', 'squeeze' ), array(
                 'strong' => array(),
             ) );
             ?></p>
-                </div>
-            </div>
-            <?php 
+                            </div>
+                        </div>
+                        <?php 
         }
         ?>
+                        <details class="squeeze-webp-example">
+                            <summary><?php 
+        esc_html_e( 'Show example: Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
+        ?></summary>
+                            <div class="squeeze-webp-example-inner">
+                                <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'Before: the page outputs a normal uploads URL for the JPEG.', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
+
+<span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'After: the same img tag in the markup, but PHP rewrites src to the WebP path under squeeze-webp when that file exists.', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/squeeze-webp/uploads/2025/07/photo.jpg.webp" alt="…" /&gt;</pre>
+                            </div>
+                        </details>
+                        <details class="squeeze-webp-example">
+                            <summary><?php 
+        esc_html_e( 'Show example: Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
+        ?></summary>
+                            <div class="squeeze-webp-example-inner">
+                                <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'The published HTML keeps the usual uploads URL on the img (still ends in .jpg or .png).', 'squeeze' ) );
+        ?></span>
+&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
+
+<span class="squeeze-webp-pre-callout"><?php 
+        echo esc_html( __( 'When the browser advertises WebP and your server rewrite rules apply, that same URL can be served as a WebP response from the file under squeeze-webp, without changing the markup.', 'squeeze' ) );
+        ?></span>
+
+<span class="squeeze-webp-pre-heading"><?php 
+        echo esc_html( __( 'On disk (after optimization)', 'squeeze' ) );
+        ?></span>
+/wp-content/uploads/2025/07/image.jpg                    <span class="squeeze-webp-size squeeze-webp-size--before">~500 KB</span>  <span class="squeeze-webp-pre-note"><?php 
+        echo esc_html( __( 'original', 'squeeze' ) );
+        ?></span>
+/wp-content/squeeze-webp/uploads/2025/07/image.jpg.webp    <span class="squeeze-webp-size squeeze-webp-size--after">~50 KB</span>  <span class="squeeze-webp-pre-note"><?php 
+        echo esc_html( __( 'sidecar WebP', 'squeeze' ) );
+        ?></span></pre>
+                            </div>
+                        </details>
+                    </div>
+                </details>
+            </fieldset>
             <details class="squeeze-webp-example">
                 <summary><?php 
         esc_html_e( 'Show example: Direct WebP (file sizes)', 'squeeze' );
@@ -1385,47 +1453,6 @@ class SqueezeSettings extends SqueezeInit {
         ?></span>
 /wp-content/uploads/2025/07/image.webp          <span class="squeeze-webp-size squeeze-webp-size--after">~50 KB</span>
 /wp-content/uploads/2025/07/image-300x300.webp  <span class="squeeze-webp-size squeeze-webp-size--after">~20 KB</span></pre>
-                </div>
-            </details>
-            <details class="squeeze-webp-example">
-                <summary><?php 
-        esc_html_e( 'Show example: Rewrite <img> src to WebP URLs in HTML', 'squeeze' );
-        ?></summary>
-                <div class="squeeze-webp-example-inner">
-                    <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
-        echo esc_html( __( 'Before: the page outputs a normal uploads URL for the JPEG.', 'squeeze' ) );
-        ?></span>
-&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
-
-<span class="squeeze-webp-pre-callout"><?php 
-        echo esc_html( __( 'After: the same img tag in the markup, but PHP rewrites src to the WebP path under squeeze-webp when that file exists.', 'squeeze' ) );
-        ?></span>
-&lt;img src="//yoursite.example/wp-content/squeeze-webp/uploads/2025/07/photo.jpg.webp" alt="…" /&gt;</pre>
-                </div>
-            </details>
-            <details class="squeeze-webp-example">
-                <summary><?php 
-        esc_html_e( 'Show example: Keep JPEG/PNG URLs — server serves WebP', 'squeeze' );
-        ?></summary>
-                <div class="squeeze-webp-example-inner">
-                    <pre class="squeeze-webp-code-sample"><span class="squeeze-webp-pre-callout"><?php 
-        echo esc_html( __( 'The published HTML keeps the usual uploads URL on the img (still ends in .jpg or .png).', 'squeeze' ) );
-        ?></span>
-&lt;img src="//yoursite.example/wp-content/uploads/2025/07/photo.jpg" alt="…" /&gt;
-
-<span class="squeeze-webp-pre-callout"><?php 
-        echo esc_html( __( 'When the browser advertises WebP and your server rewrite rules apply, that same URL can be served as a WebP response from the file under squeeze-webp, without changing the markup.', 'squeeze' ) );
-        ?></span>
-
-<span class="squeeze-webp-pre-heading"><?php 
-        echo esc_html( __( 'On disk (after optimization)', 'squeeze' ) );
-        ?></span>
-/wp-content/uploads/2025/07/image.jpg                    <span class="squeeze-webp-size squeeze-webp-size--before">~500 KB</span>  <span class="squeeze-webp-pre-note"><?php 
-        echo esc_html( __( 'original', 'squeeze' ) );
-        ?></span>
-/wp-content/squeeze-webp/uploads/2025/07/image.jpg.webp    <span class="squeeze-webp-size squeeze-webp-size--after">~50 KB</span>  <span class="squeeze-webp-pre-note"><?php 
-        echo esc_html( __( 'sidecar WebP', 'squeeze' ) );
-        ?></span></pre>
                 </div>
             </details>
         </div>
@@ -1523,6 +1550,11 @@ class SqueezeSettings extends SqueezeInit {
     }
 
     public function options_validate( $input ) {
+        $previous_options = get_option( 'squeeze_options' );
+        if ( !is_array( $previous_options ) ) {
+            $previous_options = array();
+        }
+        $previous_webp_mode = $this->get_webp_delivery_mode( $previous_options );
         if ( isset( $input['webp_delivery_mode'] ) && is_string( $input['webp_delivery_mode'] ) ) {
             $mode = sanitize_text_field( wp_unslash( $input['webp_delivery_mode'] ) );
             unset($input['webp_delivery_mode']);
@@ -1575,6 +1607,15 @@ class SqueezeSettings extends SqueezeInit {
         $input['auto_webp'] = ( isset( $input['auto_webp'] ) ? boolval( $input['auto_webp'] ) : '0' );
         $input['webp_replace_urls'] = ( isset( $input['webp_replace_urls'] ) && $input['auto_webp'] ? boolval( $input['webp_replace_urls'] ) : '0' );
         $input['direct_webp'] = ( isset( $input['direct_webp'] ) ? boolval( $input['direct_webp'] ) : '0' );
+        $new_webp_mode = $this->get_webp_delivery_mode( $input );
+        if ( $previous_webp_mode !== $new_webp_mode ) {
+            add_settings_error(
+                'squeeze_notices',
+                'webp_delivery_mode_changed',
+                __( 'WebP delivery mode changed. Existing files are not migrated automatically — re-squeeze images after switching. Leftover JPEG/PNG + WebP pairs or orphaned files under squeeze-webp may remain until cleaned up.', 'squeeze' ),
+                'warning'
+            );
+        }
         if ( isset( $input['cdn_url'] ) ) {
             $cdn_raw = trim( wp_unslash( (string) $input['cdn_url'] ) );
             $input['cdn_url'] = ( $cdn_raw === '' ? '' : esc_url_raw( $cdn_raw ) );
@@ -1582,6 +1623,7 @@ class SqueezeSettings extends SqueezeInit {
             $input['cdn_url'] = '';
         }
         $input['backup_original'] = ( isset( $input['backup_original'] ) ? boolval( $input['backup_original'] ) : '0' );
+        $input['clear_data_on_uninstall'] = ( isset( $input['clear_data_on_uninstall'] ) ? boolval( $input['clear_data_on_uninstall'] ) : '0' );
         $input['compress_formats'] = ( isset( $input['compress_formats'] ) && is_array( $input['compress_formats'] ) ? $this->validate_image_formats( $input['compress_formats'], $input['direct_webp'] ) : array() );
         $input['compress_thumbs'] = ( isset( $input['compress_thumbs'] ) && is_array( $input['compress_thumbs'] ) ? $input['compress_thumbs'] : array() );
         $input['max_width'] = ( isset( $input['max_width'] ) && $input['max_width'] > 0 ? absint( $input['max_width'] ) : '' );
@@ -1999,7 +2041,7 @@ class SqueezeSettings extends SqueezeInit {
             // the core Media → Add New
             'plugins',
         );
-        if ( !in_array( $screen->id, $target_screens ) ) {
+        if ( !$screen || !in_array( $screen->id, $target_screens, true ) ) {
             return;
         }
         // check if webp-express/webp-express.php plugin is active and show a notice

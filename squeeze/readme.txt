@@ -4,7 +4,7 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.11
+Stable tag: 1.7.12
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -31,6 +31,7 @@ The result: smaller files, faster page loads, and lower hosting storage—withou
 * **Pre-upload compression:** Shrink images in the browser before upload (Gutenberg, GenerateBlocks, Voxel create-post and gallery fields).
 * **Three WebP delivery modes:** Direct WebP, separate squeeze-webp folder with URL rewrite, or server-side delivery via .htaccess.
 * **Voxel theme support:** Pre-upload squeeze on multipart AJAX uploads in create-post and file/gallery fields.
+* **WP Offload Media support:** Compress CDN-hosted images (including when local files are removed), auto-detect provider/CDN URLs, and push compressed/WebP files back to S3, GCS, DigitalOcean Spaces, and similar — **Direct WebP** recommended.
 
 == ✨ Key Features ==
 * **Faster pages:** Smaller images improve load time, Core Web Vitals, and mobile bandwidth use.
@@ -237,6 +238,13 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.12 =
+* Fixed: after resizing an original image to max width/height, thumbnail sizes that are now larger than the resized original are deleted instead of being left on disk
+* Added optional "Delete plugin data on uninstall" setting (off by default) to clear Squeeze options, stats, and related postmeta when the plugin is removed
+* Fixed: "Bulk Squeeze from a Page" now recognizes offloaded/CDN-hosted images via the shared media URL resolver (WP Offload Media and related filters)
+* Fixed: background images and other page images at a specific size are compressed in place when not found in the Media Library, instead of only attempting a guessed original filename
+* Fixed: "Rewrite <img> src to WebP URLs in HTML" falls back to the base WebP sidecar when a sized WebP file is missing
+* Security: reject non-image extensions in per-size AJAX thumbnail uploads
 = 1.7.11 =
 * WP Offload Media: added a same-origin image proxy so the Web Worker can fetch CDN-hosted images for compression without CORS errors (works even when "Remove Local Files" is enabled)
 * WP Offload Media: thumbnail sizes with no local original on disk (offloaded) are now compressed and uploaded correctly
@@ -357,6 +365,9 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.7.12 =
+* Deletes oversized thumbnails after original resize, optional uninstall data cleanup, Bulk Squeeze from a Page offload fixes, and sized background-image / WebP URL rewrite fixes.
+* Security fix: per-size thumbnail uploads now allowlist image extensions only.
 = 1.7.11 =
 * CORS proxy for CDN-hosted images, offloaded thumbnail compression, compression failure tracking, excluded-image filtering, and security hardening.
 = 1.8.0 =

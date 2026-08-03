@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.11
+ * Version:     1.7.12
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -21,14 +21,13 @@ namespace SqueezeFree;
 if ( !defined( 'ABSPATH' ) ) {
     exit;
 }
-
 class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.11';
+    const VERSION = '1.7.12';
 
-    const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/';
+    const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/?utm_source=wordpress_plugin&utm_medium=admin&utm_campaign=squeeze_upgrade&utm_content=settings_upgrade_tab';
 
     /**
      * Allowed image formats
@@ -53,6 +52,8 @@ class SqueezeInit {
 
     public static $SqueezePremium;
 
+    public static $SqueezeReviewNotice;
+
     public static $UPGRADE_URL;
 
     public static $SETTINGS_URL;
@@ -72,7 +73,7 @@ class SqueezeInit {
      */
     public static $PLUGIN_URL;
 
-    public static $DOCS_URL = 'https://pluginarium.com/squeeze/squeeze-documentation/';
+    public static $DOCS_URL = 'https://pluginarium.com/squeeze/squeeze-documentation/?utm_source=wordpress_plugin&utm_medium=admin&utm_campaign=squeeze_docs&utm_content=docs_tab';
 
     /**
      * Initialize the plugin
@@ -86,9 +87,11 @@ class SqueezeInit {
         $this->load_helpers();
         $this->load_handlers();
         $this->load_settings();
+        $this->load_review_notice();
         self::$SqueezeHelpers = new SqueezeHelpers();
         self::$SqueezeSettings = new SqueezeSettings();
         self::$SqueezeHandlers = new SqueezeHandlers();
+        self::$SqueezeReviewNotice = new SqueezeReviewNotice();
         // Defer compat module loading until after all plugins have initialised.
         // If load_compat() runs in __construct() the WP Offload Media class may not
         // exist yet (plugins are loaded in file-system order), so is_active() returns
@@ -108,6 +111,21 @@ class SqueezeInit {
         add_action( 'squeeze_freemius_loaded', array($this, 'load_freemius') );
         register_activation_hook( __FILE__, array($this, 'activation_actions') );
         add_action( 'admin_init', array($this, 'maybe_redirect_to_bulk_page') );
+        $this->register_uninstall_cleanup();
+    }
+
+    /**
+     * Register a single uninstall cleanup entry point.
+     * Freemius owns register_uninstall_hook when present, so premium uses fs_after_uninstall_squeeze.
+     * Free builds without Freemius use the native WordPress uninstall hook.
+     */
+    private function register_uninstall_cleanup() {
+        $callback = array(__NAMESPACE__ . '\\SqueezeHelpers', 'uninstall_cleanup');
+        if ( file_exists( self::$PLUGIN_DIR . 'freemius/start.php' ) ) {
+            add_action( 'fs_after_uninstall_squeeze', $callback );
+            return;
+        }
+        register_uninstall_hook( __FILE__, $callback );
     }
 
     /**
@@ -180,6 +198,10 @@ class SqueezeInit {
 
     public function load_helpers() {
         require_once self::$PLUGIN_DIR . 'inc/helpers.php';
+    }
+
+    public function load_review_notice() {
+        require_once self::$PLUGIN_DIR . 'inc/review-notice.php';
     }
 
     /**
@@ -346,10 +368,10 @@ class SqueezeInit {
                 'settings' => '<a href="' . admin_url( 'options-general.php?page=squeeze' ) . '">' . __( 'Settings', 'squeeze' ) . '</a>',
             );
             $bulk_link = array(
-                'bulk' => '<a href="' . admin_url( 'upload.php?page=squeeze-bulk' ) . '">' . __( 'Bulk Squeeze', 'squeeze' ) . '</a>',
+                'bulk' => '<a href="' . admin_url( 'upload.php?page=squeeze-bulk' ) . '">' . __( 'Bulk / Directory Squeeze', 'squeeze' ) . '</a>',
             );
             $docs_link = array(
-                'docs' => '<a target="_blank" href="https://pluginarium.com/squeeze/squeeze-documentation/">' . __( 'Documentation', 'squeeze' ) . '</a>',
+                'docs' => '<a target="_blank" href="' . esc_url( self::$DOCS_URL ) . '">' . __( 'Documentation', 'squeeze' ) . '</a>',
             );
             $actions['upgrade'] = '<a href="' . esc_url( self::$UPGRADE_URL ) . '">' . esc_html__( 'Go Premium', 'squeeze' ) . '</a>';
             $actions = array_merge( $docs_link, $actions );
