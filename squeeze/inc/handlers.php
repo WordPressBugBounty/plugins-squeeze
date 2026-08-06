@@ -130,6 +130,11 @@ class SqueezeHandlers extends SqueezeInit {
         // sanitize_url() replaces spaces with %20, so we use sanitize_text_field() instead
         $process = ( isset( $_POST["process"] ) ? sanitize_text_field( $_POST["process"] ) : '' );
         // process: all, uncompressed, path
+        // Single Page Squeeze posts process=path for the whole queue, including
+        // Media Library attachments. Those need the library pipeline.
+        if ( $process === 'path' && $attach_id > 0 ) {
+            $process = 'all';
+        }
         if ( empty( $attach_id ) && $process !== 'path' || empty( $url ) ) {
             wp_send_json_error( '❌ ' . esc_html__( 'Attachment not found', 'squeeze' ) );
         }

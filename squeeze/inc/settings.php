@@ -1349,7 +1349,7 @@ class SqueezeSettings extends SqueezeInit {
                             </label>
                         </div>
                         <?php 
-        if ( \Squeeze\SqueezeOffloadMedia::is_active() ) {
+        if ( class_exists( __NAMESPACE__ . '\\SqueezeOffloadMedia', false ) && SqueezeOffloadMedia::is_active() ) {
             ?>
                         <div class="squeeze-notice squeeze-notice--warning squeeze-offload-htaccess-warning<?php 
             echo ( $mode !== 'sidecar' ? ' squeeze-notice--hidden' : '' );

@@ -4,7 +4,7 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.12
+Stable tag: 1.7.13
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -31,7 +31,7 @@ The result: smaller files, faster page loads, and lower hosting storage—withou
 * **Pre-upload compression:** Shrink images in the browser before upload (Gutenberg, GenerateBlocks, Voxel create-post and gallery fields).
 * **Three WebP delivery modes:** Direct WebP, separate squeeze-webp folder with URL rewrite, or server-side delivery via .htaccess.
 * **Voxel theme support:** Pre-upload squeeze on multipart AJAX uploads in create-post and file/gallery fields.
-* **WP Offload Media support:** Compress CDN-hosted images (including when local files are removed), auto-detect provider/CDN URLs, and push compressed/WebP files back to S3, GCS, DigitalOcean Spaces, and similar — **Direct WebP** recommended.
+* **WP Offload Media support:** Compress CDN-hosted images (including when local files are removed), auto-detect provider/CDN URLs, and sync compressed/Direct WebP files to S3, GCS, DigitalOcean Spaces, and similar—**Direct WebP** recommended (sidecar WebP modes are not compatible with Offload).
 
 == ✨ Key Features ==
 * **Faster pages:** Smaller images improve load time, Core Web Vitals, and mobile bandwidth use.
@@ -118,11 +118,15 @@ Premium **CDN URL** helps map CDN paths to local files for all modes.
 
 = Does Squeeze work with WP Offload Media (WP Offload S3 / AS3CF)? =
 
-Yes, with one important caveat about the WebP delivery mode you choose.
+Yes. Squeeze can compress CDN-hosted images (including when local files are removed), and **Direct WebP** works with WP Offload Media: converted `.webp` files are uploaded to your bucket/CDN automatically.
 
-**Supported — Rewrite `<img>` src to WebP URLs in HTML:** Squeeze pushes WebP sidecar files to your external storage provider (S3, GCS, DigitalOcean Spaces, etc.) alongside the compressed originals. The PHP-based URL rewriting rewrites image `src` and `srcset` attributes in the page HTML to the WebP path, and this works correctly whether files are served from your origin or a CDN — even when WP Offload Media's "Remove Local Files" option is on.
+**Recommended — Direct WebP:** Converts the file in place to `.webp`. WP Offload Media then syncs it to S3, GCS, DigitalOcean Spaces, and similar providers.
 
-**Not compatible — Keep JPEG/PNG URLs — server serves WebP (.htaccess):** This mode adds Apache `mod_rewrite` rules to `.htaccess` that intercept requests for `.jpg`/`.png` files and serve the WebP equivalent. When WP Offload Media is active, image URLs point to a CDN domain (e.g. `storage.googleapis.com`). Those requests never reach your origin server and therefore never pass through `.htaccess` — WebP files will not be served. If you use WP Offload Media, always choose the **Rewrite `<img>` src to WebP URLs in HTML** mode instead.
+**Not compatible — Rewrite `<img>` src to WebP URLs in HTML:** WebP sidecars live in a local `squeeze-webp/` folder and are not pushed to external storage, so they cannot be served from your CDN URL.
+
+**Not compatible — Keep JPEG/PNG URLs — server serves WebP (.htaccess):** Apache rewrite rules only apply to requests that hit your origin. Offloaded image URLs point at the CDN and never pass through `.htaccess`.
+
+When WP Offload Media is active, Squeeze shows these warnings in **WebP delivery** settings and recommends **Direct WebP**.
 
 = Why do I see "Image conversion blocked by browser privacy setting"? =
 
@@ -238,6 +242,9 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.13 =
+* Fixed: "Bulk Squeeze from a Page" now compresses Media Library thumbnail sizes and marks attachments as squeezed (previously only the original was written when process=path)
+* Fixed: fatal error on the Settings page when checking WP Offload Media compatibility (SqueezeOffloadMedia class not loaded yet)
 = 1.7.12 =
 * Fixed: after resizing an original image to max width/height, thumbnail sizes that are now larger than the resized original are deleted instead of being left on disk
 * Added optional "Delete plugin data on uninstall" setting (off by default) to clear Squeeze options, stats, and related postmeta when the plugin is removed
@@ -371,7 +378,7 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 = 1.7.11 =
 * CORS proxy for CDN-hosted images, offloaded thumbnail compression, compression failure tracking, excluded-image filtering, and security hardening.
 = 1.8.0 =
-* WP Offload Media compatibility: WebP files are now automatically pushed to external storage (S3, GCS, etc.) and served from the CDN.
+* WP Offload Media compatibility: Direct WebP files sync to external storage (S3, GCS, etc.) and are served from the CDN.
 = 1.7.9 =
 * WebP delivery settings updated (three modes), Voxel upload support, Premium CDN URL for all WebP modes.
 = 1.7.5 =
