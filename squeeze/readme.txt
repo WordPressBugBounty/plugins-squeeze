@@ -2,9 +2,9 @@
 Contributors: barb0ss
 Tags: image compression, webp converter, image optimization, compress images, optimize images
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.13
+Stable tag: 1.7.14
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -32,6 +32,7 @@ The result: smaller files, faster page loads, and lower hosting storage—withou
 * **Three WebP delivery modes:** Direct WebP, separate squeeze-webp folder with URL rewrite, or server-side delivery via .htaccess.
 * **Voxel theme support:** Pre-upload squeeze on multipart AJAX uploads in create-post and file/gallery fields.
 * **WP Offload Media support:** Compress CDN-hosted images (including when local files are removed), auto-detect provider/CDN URLs, and sync compressed/Direct WebP files to S3, GCS, DigitalOcean Spaces, and similar—**Direct WebP** recommended (sidecar WebP modes are not compatible with Offload).
+* **WordPress 7.1:** While **Squeeze on upload** is on, core’s built-in browser image processing is turned off so Gutenberg uploads keep Squeeze quality, Direct WebP, and backups. Turn on-upload off to use WordPress HEIC conversion and HDR thumbnails.
 
 == ✨ Key Features ==
 * **Faster pages:** Smaller images improve load time, Core Web Vitals, and mobile bandwidth use.
@@ -170,7 +171,13 @@ Smaller images improve LCP and overall speed, reduce bandwidth bills, and free d
 
 = Which formats are supported? =
 
-JPEG, PNG, WebP, and AVIF.
+JPEG, PNG, WebP, and AVIF. HEIC/HEIF and GIF files are not squeezed.
+
+= Does Squeeze work with WordPress 7.1 client-side media processing? =
+
+Yes. While **Squeeze on upload** is enabled, Squeeze turns off WordPress 7.1’s built-in browser image processing so Gutenberg uploads use Squeeze quality, Direct WebP, backups, and thumbnail overwrite. Firefox and Safari already use the server upload path.
+
+To use core’s browser pipeline instead (HEIC “just works”, HDR thumbnail gain maps), turn **Squeeze on upload** off. Bulk and manual squeeze still work. HEIC/HEIF stay unsqueezed either way.
 
 = Can I compress many images at once? =
 
@@ -242,6 +249,11 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.14 =
+* Fixed admin UI layout in RTL languages (logical CSS insets instead of left/right)
+* WordPress 7.1: disable core client-side media processing while Squeeze on upload is enabled, so Gutenberg uploads keep Squeeze quality, Direct WebP, backups, and thumbnail overwrite
+* Gutenberg: intercept only create uploads to `/wp/v2/media` (skip sideload/finalize)
+* HEIC/HEIF remain unsqueezed; turn Squeeze on upload off to use WordPress 7.1 browser HEIC conversion and HDR thumbnails
 = 1.7.13 =
 * Fixed: "Bulk Squeeze from a Page" now compresses Media Library thumbnail sizes and marks attachments as squeezed (previously only the original was written when process=path)
 * Fixed: fatal error on the Settings page when checking WP Offload Media compatibility (SqueezeOffloadMedia class not loaded yet)

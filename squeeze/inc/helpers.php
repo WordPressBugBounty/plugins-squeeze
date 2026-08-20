@@ -916,9 +916,14 @@ class SqueezeHelpers extends SqueezeInit {
         return (bool) apply_filters( 'rest_enabled', true );
     }
 
+    /**
+     * List Apache modules when PHP can report them (typically mod_php only).
+     *
+     * @return array|null Module list, or null when undetectable (CGI/FPM/nginx/etc.).
+     */
     public function apache_get_modules() {
-        if ( !function_exists( 'apache_get_modules' ) || !in_array( 'mod_rewrite', apache_get_modules() ) ) {
-            return false;
+        if ( !function_exists( 'apache_get_modules' ) ) {
+            return null;
         }
         return apache_get_modules();
     }

@@ -634,9 +634,13 @@ msgstr "Зберегти зміни"
 msgid "Restore defaults"
 msgstr "Відновлення налаштувань за замовчуванням"
 
-#: inc/settings.php:600 inc/settings.php:795
+#: inc/settings.php:624 inc/settings.php:853
 msgid "Squeeze on upload"
 msgstr "Стискати при завантаженні"
+
+#: inc/settings.php:624
+msgid "Compresses images in the browser before they are uploaded."
+msgstr "Стискає зображення у браузері перед їх завантаженням."
 
 #: inc/settings.php:601
 msgid "Backup original image"

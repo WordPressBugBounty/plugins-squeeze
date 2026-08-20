@@ -854,8 +854,11 @@ class SqueezeHandlers extends SqueezeInit {
             $rules = preg_replace( '/# Serve WebP images from the wp-content\\/squeeze-webp folder if available.*?# END Serve WebP images from the wp-content\\/squeeze-webp folder if available\\n/s', '', $rules );
             return $rules;
         }
-        // Check if the server is Apache and htaccess is writable
-        if ( !is_array( $modules ) || !in_array( 'mod_rewrite', $modules ) ) {
+        // Skip only when we can positively detect that mod_rewrite is absent.
+        // Under CGI/FPM, apache_get_modules() is unavailable even when Apache has
+        // mod_rewrite — same situation WordPress still writes permalink rules for.
+        // Rules sit inside WP's <IfModule mod_rewrite.c> block.
+        if ( is_array( $modules ) && !in_array( 'mod_rewrite', $modules, true ) ) {
             return $rules;
         }
         return $webp_rules . $rules;

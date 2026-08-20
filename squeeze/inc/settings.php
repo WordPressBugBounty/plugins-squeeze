@@ -60,6 +60,7 @@ class SqueezeSettings extends SqueezeInit {
         );
         add_action( 'admin_footer', [$this, 'svg_sprite_output'] );
         add_action( 'admin_notices', [$this, 'incompatibility_notices'] );
+        add_action( 'load-settings_page_squeeze', [$this, 'maybe_mod_rewrite_notice'] );
         add_action( 'edit_form_after_title', [$this, 'add_preview_button_placeholder'], 10 );
     }
 
@@ -434,13 +435,14 @@ class SqueezeSettings extends SqueezeInit {
         <?php 
     }
 
-    public function options_page_html() {
-        // check user capabilities
-        if ( !current_user_can( 'manage_options' ) ) {
-            return;
-        }
+    /**
+     * Queue the mod_rewrite warning before options-head.php prints settings errors.
+     */
+    public function maybe_mod_rewrite_notice() {
         $modules = self::$SqueezeHelpers->apache_get_modules();
-        if ( !is_array( $modules ) || !in_array( 'mod_rewrite', $modules ) ) {
+        // Only warn when PHP can list modules and mod_rewrite is missing. null means
+        // undetectable (CGI/FPM) — do not treat that as "mod_rewrite off".
+        if ( is_array( $modules ) && !in_array( 'mod_rewrite', $modules, true ) ) {
             $is_auto_webp = self::$SqueezeHelpers->get_option( 'auto_webp' );
             $is_webp_replace_urls = self::$SqueezeHelpers->get_option( 'webp_replace_urls' );
             if ( $is_auto_webp && !$is_webp_replace_urls ) {
@@ -451,6 +453,13 @@ class SqueezeSettings extends SqueezeInit {
                     'warning'
                 );
             }
+        }
+    }
+
+    public function options_page_html() {
+        // check user capabilities
+        if ( !current_user_can( 'manage_options' ) ) {
+            return;
         }
         ?>
         <div class="wrap">
@@ -491,7 +500,6 @@ class SqueezeSettings extends SqueezeInit {
             <div class="tab-content">
                 <form action="options.php" method="post" class="squeeze-settings-form">
                     <?php 
-        settings_errors( 'squeeze_notices' );
         settings_fields( 'squeeze_options' );
         //do_settings_sections( 'squeeze_options' );
         ?>
@@ -776,7 +784,7 @@ class SqueezeSettings extends SqueezeInit {
         );
         add_settings_field(
             'squeeze_setting_auto_compress',
-            __( 'Squeeze on upload', 'squeeze' ),
+            __( 'Squeeze on upload', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Compresses images in the browser before they are uploaded.', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
             'squeeze_basic_quick',

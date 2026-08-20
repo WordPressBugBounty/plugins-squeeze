@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.13
+ * Version:     1.7.14
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -25,7 +25,7 @@ class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.13';
+    const VERSION = '1.7.14';
 
     const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/?utm_source=wordpress_plugin&utm_medium=admin&utm_campaign=squeeze_upgrade&utm_content=settings_upgrade_tab';
 
@@ -92,6 +92,7 @@ class SqueezeInit {
         self::$SqueezeSettings = new SqueezeSettings();
         self::$SqueezeHandlers = new SqueezeHandlers();
         self::$SqueezeReviewNotice = new SqueezeReviewNotice();
+        $this->maybe_disable_client_side_media_processing();
         // Defer compat module loading until after all plugins have initialised.
         // If load_compat() runs in __construct() the WP Offload Media class may not
         // exist yet (plugins are loaded in file-system order), so is_active() returns
@@ -126,6 +127,23 @@ class SqueezeInit {
             return;
         }
         register_uninstall_hook( __FILE__, $callback );
+    }
+
+    /**
+     * Turn off WordPress 7.1+ client-side media processing while Squeeze on-upload is enabled.
+     *
+     * Core CSMP encodes in the browser then sideloads thumbs and finalize — that double-encodes
+     * Squeeze uploads and races thumbnail overwrite. Users who want HEIC conversion / HDR thumbs
+     * from core can disable Squeeze on upload; bulk and manual squeeze still work.
+     */
+    public function maybe_disable_client_side_media_processing() {
+        if ( !function_exists( 'wp_is_client_side_media_processing_enabled' ) ) {
+            return;
+        }
+        if ( !self::$SqueezeHelpers->get_option( 'auto_compress' ) ) {
+            return;
+        }
+        add_filter( 'wp_client_side_media_processing_enabled', '__return_false' );
     }
 
     /**
