@@ -4,16 +4,14 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.14
+Stable tag: 1.7.15
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Compress images in WordPress & convert to WebP — no API key, no quotas, no cloud. Unlimited local image optimizer; private browser-side compression.
 
 == Description ==
-Looking for a **WordPress image optimizer without an API key**? Squeeze is a **local WebP converter** that lets you **compress images in WordPress**, **convert uploads to WebP**, and **bulk compress your media library** without ShortPixel-, Imagify-, or Smush-style monthly caps. Processing runs in your admin browser—unlimited squeezes, full privacy, and no uploads to third-party compression servers.
-
-If you need a **webp converter wordpress** plugin, a **shortpixel alternative** without recurring API fees, or an **image optimizer without api** keys, Squeeze keeps optimization on your server and in your browser instead of a SaaS queue.
+Unlimited image compression. No API keys. No quotas. Squeeze compresses images and converts them to WebP locally in your browser—no monthly caps, no third-party uploads.
 
 Unlike cloud-based plugins, Squeeze:
 
@@ -249,6 +247,12 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.15 =
+* Cap bulk concurrency by device memory (not raw CPU cores) to reduce WebAssembly OutOfMemory errors on low-RAM devices
+* Lazy-load image codecs in the worker so JPEG-only jobs do not load AVIF/WebP/PNG WASM up front
+* Reuse a small worker pool instead of creating a new Worker per image
+* Force single-threaded AVIF encoding on low-memory devices; add megapixel guard and clearer OOM error messages
+* When max width/height resize is set, downscale during decode (createImageBitmap) and apply the megapixel guard to post-resize size
 = 1.7.14 =
 * Fixed admin UI layout in RTL languages (logical CSS insets instead of left/right)
 * WordPress 7.1: disable core client-side media processing while Squeeze on upload is enabled, so Gutenberg uploads keep Squeeze quality, Direct WebP, backups, and thumbnail overwrite
@@ -384,6 +388,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.7.15 =
+* Reduces WebAssembly OutOfMemory risk: memory-aware bulk concurrency, reusable worker pool, lazy codec loading, single-thread AVIF on low-RAM devices, and clearer OOM errors.
 = 1.7.12 =
 * Deletes oversized thumbnails after original resize, optional uninstall data cleanup, Bulk Squeeze from a Page offload fixes, and sized background-image / WebP URL rewrite fixes.
 * Security fix: per-size thumbnail uploads now allowlist image extensions only.

@@ -251,10 +251,11 @@ class SqueezeHelpers extends SqueezeInit {
 
     /**
      * Pick a Direct WebP filename, reclaiming an unreferenced orphan instead of minting photo-1.webp.
+     * Existing files referenced via _wp_attached_file, metadata file, or original_image (big-image -scaled) are kept unique.
      *
      * @param string $dirname Absolute directory (uploads year/month folder).
      * @param string $desired_filename e.g. photo.webp
-     * @param int    $exclude_attach_id Attachment being converted; its own _wp_attached_file is ignored.
+     * @param int    $exclude_attach_id Attachment being converted; its own references are ignored.
      * @return string Filename to write (desired name, or wp_unique_filename result if the path is owned).
      */
     public function get_direct_webp_filename( $dirname, $desired_filename, $exclude_attach_id = 0 ) {
@@ -271,7 +272,8 @@ class SqueezeHelpers extends SqueezeInit {
     }
 
     /**
-     * True when another attachment's _wp_attached_file points at this uploads path.
+     * True when another attachment references this uploads path via _wp_attached_file,
+     * metadata file, or original_image (big-image -scaled twin).
      *
      * @param string $absolute_path Absolute filesystem path under uploads.
      * @param int    $exclude_attach_id Attachment ID to ignore.
@@ -290,7 +292,35 @@ class SqueezeHelpers extends SqueezeInit {
         $relative = ltrim( substr( $path, strlen( $basedir ) ), '/' );
         global $wpdb;
         $post_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s LIMIT 1", $relative ) );
-        return $post_id > 0 && $post_id !== (int) $exclude_attach_id;
+        if ( $post_id > 0 && $post_id !== (int) $exclude_attach_id ) {
+            return true;
+        }
+        // Big images: _wp_attached_file is …-scaled.webp while the full file lives as original_image.
+        $basename = wp_basename( $path );
+        $dir_rel = str_replace( '\\', '/', dirname( $relative ) );
+        if ( $dir_rel === '.' || $dir_rel === '' ) {
+            $like = $wpdb->esc_like( $basename );
+            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\r\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\r\n\t\t\t\t\t   AND ( meta_value = %s OR meta_value LIKE %s )", $basename, '%/' . $like ) );
+        } else {
+            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\r\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\r\n\t\t\t\t\t   AND meta_value LIKE %s", $wpdb->esc_like( $dir_rel . '/' ) . '%' ) );
+        }
+        foreach ( (array) $candidates as $candidate_id ) {
+            $candidate_id = (int) $candidate_id;
+            if ( $candidate_id <= 0 || $candidate_id === (int) $exclude_attach_id ) {
+                continue;
+            }
+            $meta = wp_get_attachment_metadata( $candidate_id );
+            if ( !is_array( $meta ) ) {
+                continue;
+            }
+            if ( !empty( $meta['original_image'] ) && $meta['original_image'] === $basename ) {
+                return true;
+            }
+            if ( !empty( $meta['file'] ) && wp_basename( $meta['file'] ) === $basename ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function convert_image_path_to_webp_path( $image_path ) {

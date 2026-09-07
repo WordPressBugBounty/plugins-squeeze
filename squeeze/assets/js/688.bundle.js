@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[688],{688:(e,s,l)=>{l.r(s),l.d(s,{defaultOptions:()=>n,extension:()=>t,label:()=>a,mimeType:()=>i});const a="AVIF",i="image/avif",t="avif",n={cqLevel:33,cqAlphaLevel:-1,denoiseLevel:0,tileColsLog2:0,tileRowsLog2:0,speed:6,subsample:1,chromaDeltaQ:!1,sharpness:0,tune:0}}}]);

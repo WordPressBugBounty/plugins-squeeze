@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[569],{149:(n,e,t)=>{function s(n,e,t={}){let s;return e&&(s=(n,t)=>{const s=new WebAssembly.Instance(e,n);return t(s),s.exports}),n({noInitialRun:!0,instantiateWasm:s,...t})}t.r(e),t.d(e,{initEmscriptenModule:()=>s})}}]);
