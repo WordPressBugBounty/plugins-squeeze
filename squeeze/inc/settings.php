@@ -101,7 +101,7 @@ class SqueezeSettings extends SqueezeInit {
         //$total_count = array_sum((array)wp_count_attachments("image"));
         $not_compressed_posts = implode( ",", self::$SqueezeHelpers->get_uncompressed_images() );
         $all_posts = implode( ",", self::$SqueezeHelpers->get_total_images() );
-        $directory_path = ( get_transient( 'squeeze_bulk_path' ) ? get_transient( 'squeeze_bulk_path' ) : array('/wp-content/uploads/') );
+        $directory_path = ( get_transient( 'squeeze_bulk_path' ) ? get_transient( 'squeeze_bulk_path' ) : array(self::$SqueezeHelpers->get_uploads_directory_uri()) );
         $directory_path = array_map( array(self::$SqueezeHelpers, 'normalize_bulk_directory_storage_path'), (array) $directory_path );
         $directory_path_json = wp_json_encode( $directory_path );
         $is_direct_webp = self::$SqueezeHelpers->get_option( 'direct_webp' );
@@ -135,7 +135,7 @@ class SqueezeSettings extends SqueezeInit {
             esc_html_e( 'Bulk Media Library Squeeze', 'squeeze' );
             ?></h2>
                             <p class="squeeze-bulk-section__meta"><?php 
-            esc_html_e( 'Uses attachments in the library; backups follow your plugin settings.', 'squeeze' );
+            esc_html_e( 'Uses attachments in the library; backups follow your plugin settings. With Direct WebP and Backup original on, backups are saved as .bak.webp.', 'squeeze' );
             ?></p>
                         </header>
                         <div class="squeeze-bulk-section__body">
@@ -152,6 +152,9 @@ class SqueezeSettings extends SqueezeInit {
                 ?></p>
                                     <p><?php 
                 esc_html_e( 'After conversion, image URLs may change. Check themes and content for hard-coded .jpg / .png links (image blocks, custom HTML, CSS, or shortcodes) so nothing breaks.', 'squeeze' );
+                ?></p>
+                                    <p><?php 
+                esc_html_e( 'If Backup original is enabled, the .bak copy is converted to WebP as well (e.g. photo.bak.webp).', 'squeeze' );
                 ?></p>
                                 </div>
                             </div>
@@ -256,32 +259,10 @@ class SqueezeSettings extends SqueezeInit {
             esc_html_e( 'Directory Squeeze', 'squeeze' );
             ?></h2>
                             <p class="squeeze-bulk-section__meta"><?php 
-            esc_html_e( 'Filesystem folder — not limited to Media Library. No automatic backup in this mode.', 'squeeze' );
+            esc_html_e( 'Filesystem folder — not limited to Media Library. When Backup original is on, .bak files are written beside images; with Direct WebP on, those backups are WebP too (e.g. photo.bak.webp). Restore backups with the button below (in-place; .bak is removed after success). Media Library year/month folders are blocked; use Bulk Media Library Squeeze for those.', 'squeeze' );
             ?></p>
                         </header>
                         <div class="squeeze-bulk-section__body">
-                            <div class="squeeze-banner squeeze-banner--warning">
-                                <svg class="squeeze-icon" aria-hidden="true">
-                                    <use xlink:href="#info-icon"></use>
-                                </svg>
-                                <div class="squeeze-banner__content">
-                                    <p class="squeeze-banner__title"><?php 
-            esc_html_e( 'Back up before you run', 'squeeze' );
-            ?></p>
-                                    <p><?php 
-            esc_html_e( 'Automatic backup from the plugin is not available here. Manually back up the folder or your site before squeezing.', 'squeeze' );
-            ?></p>
-                                    <ul>
-                                        <li><?php 
-            esc_html_e( 'Use your host snapshot or a backup plugin.', 'squeeze' );
-            ?></li>
-                                        <li><?php 
-            esc_html_e( 'Test on a copy first if you are unsure.', 'squeeze' );
-            ?></li>
-                                    </ul>
-                                </div>
-                            </div>
-
                             <input type="hidden" name="squeeze_bulk_path" value="<?php 
             echo esc_attr( $directory_path_json );
             ?>" />
@@ -375,6 +356,14 @@ class SqueezeSettings extends SqueezeInit {
                                 </svg>
                                 <?php 
             esc_attr_e( 'Run Directory Squeeze', 'squeeze' );
+            ?>
+                            </button>
+                            <button name="squeeze_bulk_path_restore_button" class="button button-secondary button-hero" type="button">
+                                <svg class="squeeze-icon" aria-hidden="true">
+                                    <use xlink:href="#repeat-icon"></use>
+                                </svg>
+                                <?php 
+            esc_attr_e( 'Restore backups in selected folders', 'squeeze' );
             ?>
                             </button>
                         </div>
@@ -796,7 +785,7 @@ class SqueezeSettings extends SqueezeInit {
         );
         add_settings_field(
             'squeeze_setting_backup_original',
-            __( 'Backup original image', 'squeeze' ),
+            __( 'Backup original image', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Saves a .bak copy beside the file before squeezing. With Direct WebP on, that backup is also WebP (e.g. photo.bak.webp).', 'squeeze' ) ),
             [$this, 'options_callback'],
             'squeeze_options',
             'squeeze_basic_quick',
@@ -1615,6 +1604,10 @@ class SqueezeSettings extends SqueezeInit {
         $input['auto_webp'] = ( isset( $input['auto_webp'] ) ? boolval( $input['auto_webp'] ) : '0' );
         $input['webp_replace_urls'] = ( isset( $input['webp_replace_urls'] ) && $input['auto_webp'] ? boolval( $input['webp_replace_urls'] ) : '0' );
         $input['direct_webp'] = ( isset( $input['direct_webp'] ) ? boolval( $input['direct_webp'] ) : '0' );
+        // Product / UI default is Direct WebP when no delivery mode is active (both flags off).
+        // Without this, options_validate used to persist direct_webp=0 while the settings UI still
+        // showed Direct selected — so Directory Squeeze would not convert to .webp.
+        $input = self::$SqueezeHelpers->normalize_webp_delivery_options( $input );
         $new_webp_mode = $this->get_webp_delivery_mode( $input );
         if ( $previous_webp_mode !== $new_webp_mode ) {
             add_settings_error(
@@ -2052,8 +2045,8 @@ class SqueezeSettings extends SqueezeInit {
         if ( !$screen || !in_array( $screen->id, $target_screens, true ) ) {
             return;
         }
-        // check if webp-express/webp-express.php plugin is active and show a notice
-        if ( is_plugin_active( 'webp-express/webp-express.php' ) ) {
+        // WebP Express conflicts with Squeeze rewrite/replace serving; Direct WebP does not need that path.
+        if ( is_plugin_active( 'webp-express/webp-express.php' ) && !self::$SqueezeHelpers->get_option( 'direct_webp' ) ) {
             ?>
             <div class="notice notice-warning is-dismissible">
                 <p>

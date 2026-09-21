@@ -4,7 +4,7 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.15
+Stable tag: 1.7.16
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -18,7 +18,7 @@ Unlike cloud-based plugins, Squeeze:
 ♾️ **No compression limits** — squeeze your entire Media Library, not just the first 100–500 images per month.
 ☁️ **No third-party servers** — images never leave your site; processing happens locally in the browser (ideal for GDPR-sensitive and membership sites).
 ⚡ **Direct WebP conversion** — convert JPG/PNG to WebP and replace the original file on disk (no duplicate copies cluttering storage).
-🖼️ **Optimize on upload** — compress in Gutenberg, GenerateBlocks, and the Voxel theme before files hit the server (Elementor on-upload squeeze is available in [Premium](https://pluginarium.com/squeeze/#premium)).
+🖼️ **Optimize on upload** — compress in Gutenberg, GenerateBlocks, Instant Images imports, and the Voxel theme before (or right after) files hit the Media Library (Elementor on-upload squeeze is available in [Premium](https://pluginarium.com/squeeze/#premium)).
 
 The result: smaller files, faster page loads, and lower hosting storage—without SaaS fees or API keys.
 
@@ -149,7 +149,11 @@ Squeeze can skip replacing an upload when the compressed file would be larger (c
 
 = How do .bak backup files work? =
 
-Enable **Create backup** in Basic Settings before squeezing. Squeeze saves a `.bak` copy next to the file so you can **Restore Original Image** from the Media Library list or attachment screen. Remove unneeded backups with **Delete Backup Image**.
+Enable **Create backup** in Basic Settings before squeezing. Squeeze saves a `.bak` copy next to the file. For Media Library images you can **Restore Original Image** from the list or attachment screen. For Directory Squeeze, use **Restore backups in selected folders** (in-place restore; `.bak` is removed after success). With Direct WebP, backups are WebP as well (e.g. `image.bak.webp`). Remove unneeded library backups with **Delete Backup Image**.
+
+= Does Squeeze work with Instant Images? =
+
+Yes. When **Squeeze on upload** is enabled, images imported via Instant Images (Media Library page, media modal, or editor sidebar) are squeezed after they land in the Media Library—including backups, Direct WebP, and thumbnail rules from your Squeeze settings.
 
 = Does WebP server delivery need Apache mod_rewrite? =
 
@@ -179,7 +183,7 @@ To use core’s browser pipeline instead (HEIC “just works”, HDR thumbnail g
 
 = Can I compress many images at once? =
 
-Yes. Use **Bulk Squeeze** (Media Library attachments) or **Directory Squeeze** for any folder under your site root. Directory mode does not create automatic backups—back up first.
+Yes. Use **Bulk Squeeze** (Media Library attachments) or **Directory Squeeze** for any folder under your site root. When **Backup original** is enabled, Directory Squeeze also writes `.bak` files beside images. Use **Restore backups in selected folders** to restore in place (live file overwritten, `.bak` deleted). Media Library images still use **Restore Original Image** on the attachment. Still take a site backup before a large run.
 
 = Can I exclude images? =
 
@@ -247,6 +251,15 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.16 =
+* Directory Squeeze: write `.bak` backups when Backup original is on; restore in place via “Restore backups in selected folders”; skip `*.bak.*` when scanning; block Media Library year/month folders (use Bulk Media Library Squeeze instead)
+* Direct WebP (Directory Squeeze): backups are `.bak.webp` beside the live WebP (same as Media Library); original JPG/PNG twins are removed more reliably after conversion
+* Direct WebP defaults: align stored options with the Direct WebP UI on fresh installs / when both delivery flags were off so bulk Directory Squeeze actually writes WebP
+* Settings / bulk UI: note that with Direct WebP and Backup original on, backups are WebP (e.g. `photo.bak.webp`)
+* Instant Images: squeeze imported stock photos after attach when Squeeze on upload is enabled (Media Library page, media modal, editor sidebar)
+* Media Library / attachment modal: refresh file-size labels after Squeeze, Re-Squeeze, or Restore (including Premium comparison)
+* WebP Express incompatibility notice is skipped when Direct WebP is already on
+* Admin assets: cache-bust script `?ver=` with filemtime after rebuilds; load `media-views` on the Bulk Squeeze page so hooks attach reliably
 = 1.7.15 =
 * Cap bulk concurrency by device memory (not raw CPU cores) to reduce WebAssembly OutOfMemory errors on low-RAM devices
 * Lazy-load image codecs in the worker so JPEG-only jobs do not load AVIF/WebP/PNG WASM up front
@@ -388,6 +401,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.7.16 =
+* Directory Squeeze backups/restore and Direct WebP bak alignment; Instant Images on-upload squeeze; fresher file-size labels; Direct WebP option normalization for fresh installs.
 = 1.7.15 =
 * Reduces WebAssembly OutOfMemory risk: memory-aware bulk concurrency, reusable worker pool, lazy codec loading, single-thread AVIF on low-RAM devices, and clearer OOM errors.
 = 1.7.12 =
@@ -395,8 +410,6 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * Security fix: per-size thumbnail uploads now allowlist image extensions only.
 = 1.7.11 =
 * CORS proxy for CDN-hosted images, offloaded thumbnail compression, compression failure tracking, excluded-image filtering, and security hardening.
-= 1.8.0 =
-* WP Offload Media compatibility: Direct WebP files sync to external storage (S3, GCS, etc.) and are served from the CDN.
 = 1.7.9 =
 * WebP delivery settings updated (three modes), Voxel upload support, Premium CDN URL for all WebP modes.
 = 1.7.5 =

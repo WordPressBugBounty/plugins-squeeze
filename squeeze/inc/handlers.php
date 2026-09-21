@@ -13,6 +13,7 @@ class SqueezeHandlers extends SqueezeInit {
         add_action( 'wp_ajax_squeeze_get_attachment', [$this, 'get_attachment'] );
         add_action( 'wp_ajax_squeeze_fetch_image', [$this, 'fetch_image'] );
         add_action( 'wp_ajax_squeeze_get_attachment_by_path', [$this, 'get_attachment_by_path'] );
+        add_action( 'wp_ajax_squeeze_restore_path_backups', [$this, 'restore_path_backups'] );
         add_action( 'wp_ajax_squeeze_get_next_attachments', [$this, 'get_next_attachments'] );
         add_action( 'wp_ajax_squeeze_get_directories', [$this, 'get_directories'] );
         add_action( 'wp_ajax_squeeze_set_options', [$this, 'set_options'] );
@@ -182,11 +183,18 @@ class SqueezeHandlers extends SqueezeInit {
             }
             wp_send_json_error( '❌ ' . esc_html__( 'Compressed image size is greater than original size.', 'squeeze' ) . ' ' . sprintf( __( 'Please try to change your <a href="%s" target="_blank">compression settings</a> by decreasing the quality or compression level.', 'squeeze' ), self::$SETTINGS_URL . '#squeeze_' . $file_format ) );
         }
-        if ( $is_backup_original && $process !== 'path' ) {
-            // do not backup for non library images
-            // backup original
+        if ( $is_backup_original ) {
+            // backup original (Media Library and Directory Squeeze / path)
             if ( $original_file ) {
+                // Client sent pre-squeeze original (often WebP for Direct WebP) → bak beside new live name.
                 $backup_original_image = self::$SqueezeHelpers->backup_original_image( $upload_path, $filename, $original_file['tmp_name'] );
+            } elseif ( $did_direct_rename && $old_filename !== $filename ) {
+                // Fallback when the client did not send originalFile: copy the on-disk JPG/PNG twin.
+                // Prefer .bak.webp via client convertFileToWebp (branch above) — same as Media Library.
+                $backup_source = ( is_string( $source_abspath ) && $source_abspath !== '' && file_exists( $source_abspath ) ? $source_abspath : $upload_path . $old_filename );
+                $backup_dir = trailingslashit( dirname( $backup_source ) );
+                $backup_name = wp_basename( $backup_source );
+                $backup_original_image = self::$SqueezeHelpers->backup_original_image( $backup_dir, $backup_name );
             } else {
                 $backup_original_image = self::$SqueezeHelpers->backup_original_image( $upload_path, $filename );
             }
@@ -237,12 +245,18 @@ class SqueezeHandlers extends SqueezeInit {
                 // remove webp images from the squeeze-webp directory
                 $this->delete_webp_images( $attach_id, $old_metadata );
                 // remove original JPG/PNG file if it exists
-                foreach ( $old_metadata['sizes'] as $size_name => $size_data ) {
-                    $old_size_filename = $size_data['file'];
-                    wp_delete_file( $upload_path . $old_size_filename );
+                if ( is_array( $old_metadata ) ) {
+                    if ( !empty( $old_metadata['sizes'] ) && is_array( $old_metadata['sizes'] ) ) {
+                        foreach ( $old_metadata['sizes'] as $size_name => $size_data ) {
+                            $old_size_filename = $size_data['file'];
+                            wp_delete_file( $upload_path . $old_size_filename );
+                        }
+                    }
+                    if ( !empty( $old_metadata['file'] ) ) {
+                        $old_scaled_filename = basename( $old_metadata['file'] );
+                        wp_delete_file( $upload_path . $old_scaled_filename );
+                    }
                 }
-                $old_scaled_filename = basename( $old_metadata['file'] );
-                wp_delete_file( $upload_path . $old_scaled_filename );
                 $old_original_path = $upload_path . $old_filename;
                 wp_delete_file( $old_original_path );
                 if ( $is_backup_original ) {
@@ -273,7 +287,7 @@ class SqueezeHandlers extends SqueezeInit {
              * Used by integrations such as WP Offload Media to push the new files to an
              * external storage provider (S3, GCS, DigitalOcean Spaces, etc.).
              *
-             * @since 1.8.0
+             * @since 1.7.16
              * @param int $attach_id Attachment post ID.
              */
             do_action( 'squeeze_after_update_attachment', $attach_id );
@@ -288,13 +302,35 @@ class SqueezeHandlers extends SqueezeInit {
         } else {
             // Path/bulk: after Direct WebP write, remove the JPG/PNG twin and any leftover sidecar.
             if ( $did_direct_rename && $old_filename !== $filename ) {
-                $old_path = $upload_path . $old_filename;
-                if ( file_exists( $old_path ) ) {
+                // Prefer the resolved source path (same file the client fetched). Reconstructed
+                // upload_path + basename can miss when URL→path mapping differs by separators
+                // or when get_upload_path() disagreed with resolve_media_url_to_abspath().
+                $old_candidates = array();
+                if ( is_string( $source_abspath ) && $source_abspath !== '' ) {
+                    $old_candidates[] = wp_normalize_path( $source_abspath );
+                }
+                $old_candidates[] = wp_normalize_path( $upload_path . $old_filename );
+                $old_candidates = array_unique( array_filter( $old_candidates ) );
+                foreach ( $old_candidates as $old_path ) {
+                    if ( !file_exists( $old_path ) ) {
+                        continue;
+                    }
+                    // Never delete the new .webp we just wrote.
+                    if ( wp_basename( $old_path ) === wp_basename( $filename ) ) {
+                        continue;
+                    }
                     wp_delete_file( $old_path );
                 }
-                $sidecar_path = self::$SqueezeHelpers->convert_image_path_to_webp_path( $old_path ) . '.webp';
+                $sidecar_seed = ( isset( $old_candidates[0] ) ? $old_candidates[0] : $upload_path . $old_filename );
+                $sidecar_path = self::$SqueezeHelpers->convert_image_path_to_webp_path( $sidecar_seed ) . '.webp';
                 if ( file_exists( $sidecar_path ) ) {
                     wp_delete_file( $sidecar_path );
+                }
+                // Drop a pre-conversion .bak.jpg/.bak.png only when a .bak.webp already exists.
+                $old_backup_path = $upload_path . self::$SqueezeHelpers->create_backup_filename( $old_filename );
+                $new_backup_path = $upload_path . self::$SqueezeHelpers->create_backup_filename( $filename );
+                if ( file_exists( $old_backup_path ) && file_exists( $new_backup_path ) ) {
+                    wp_delete_file( $old_backup_path );
                 }
             }
             do_action( 'squeeze_successful_squeeze' );
@@ -313,7 +349,13 @@ class SqueezeHandlers extends SqueezeInit {
         if ( $can_restore ) {
             $is_restore_attachment = self::$SqueezeHelpers->restore_attachment( $attach_id );
             if ( !is_wp_error( $is_restore_attachment ) ) {
-                wp_send_json_success( '✅ ' . esc_html__( 'Restored successfully', 'squeeze' ) );
+                $attached_file = get_attached_file( $attach_id );
+                $filesize = ( $attached_file && file_exists( $attached_file ) ? wp_filesize( $attached_file ) : 0 );
+                wp_send_json_success( array(
+                    'message'               => '✅ ' . esc_html__( 'Restored successfully', 'squeeze' ),
+                    'filesize'              => $filesize,
+                    'filesizeHumanReadable' => size_format( $filesize ),
+                ) );
             } else {
                 wp_send_json_error( '❌ ' . esc_html__( 'Attachment not restored', 'squeeze' ) );
             }
@@ -383,6 +425,17 @@ class SqueezeHandlers extends SqueezeInit {
             wp_send_json_error( '❌ ' . esc_html__( 'Invalid path data', 'squeeze' ) );
         }
         $pathes = array_map( array(self::$SqueezeHelpers, 'normalize_bulk_directory_storage_path'), $pathes );
+        $blocked_media_paths = array();
+        $pathes = array_values( array_filter( $pathes, function ( $path ) use(&$blocked_media_paths) {
+            if ( self::$SqueezeHelpers->is_media_uploads_year_month_path( $path ) ) {
+                $blocked_media_paths[] = $path;
+                return false;
+            }
+            return true;
+        } ) );
+        if ( empty( $pathes ) && !empty( $blocked_media_paths ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Media Library year/month folders cannot be squeezed here. Use Bulk Media Library Squeeze instead.', 'squeeze' ) );
+        }
         $attachment_data = array();
         $image_formats = self::$SqueezeHelpers->get_image_formats();
         $image_formats = implode( ',', $image_formats );
@@ -428,8 +481,12 @@ class SqueezeHandlers extends SqueezeInit {
                 if ( !isset( $mime_type_map[$extension] ) ) {
                     continue;
                 }
-                $attach_mime = $mime_type_map[$extension];
                 $filename = basename( $image );
+                // Skip Squeeze .bak sidecars (photo.bak.jpg) so Directory Squeeze does not re-compress them.
+                if ( self::$SqueezeHelpers->is_squeeze_backup_filename( $filename ) ) {
+                    continue;
+                }
+                $attach_mime = $mime_type_map[$extension];
                 // Convert file path to URL efficiently
                 // Normalize path separators and replace ABSPATH with home URL
                 $image_normalized = str_replace( '\\', '/', $image );
@@ -464,6 +521,115 @@ class SqueezeHandlers extends SqueezeInit {
         }
         wp_send_json_success( $attachment_data );
         wp_die();
+    }
+
+    /**
+     * AJAX: restore Squeeze .bak sidecars in selected Directory Squeeze folders (in-place).
+     */
+    public function restore_path_backups() {
+        check_ajax_referer( 'squeeze-nonce', '_ajax_nonce' );
+        if ( !current_user_can( 'upload_files' ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'You do not have permission to upload files', 'squeeze' ) );
+        }
+        if ( !isset( $_POST['path'] ) || $_POST['path'] === '' ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Path not found', 'squeeze' ) );
+        }
+        $pathes = json_decode( sanitize_text_field( wp_unslash( $_POST['path'] ) ), true );
+        if ( !is_array( $pathes ) ) {
+            $pathes = json_decode( stripslashes( (string) wp_unslash( $_POST['path'] ) ), true );
+        }
+        if ( !is_array( $pathes ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Invalid path data', 'squeeze' ) );
+        }
+        $pathes = array_map( array(self::$SqueezeHelpers, 'normalize_bulk_directory_storage_path'), $pathes );
+        $blocked_media_paths = array();
+        $pathes = array_values( array_filter( $pathes, function ( $path ) use(&$blocked_media_paths) {
+            if ( self::$SqueezeHelpers->is_media_uploads_year_month_path( $path ) ) {
+                $blocked_media_paths[] = $path;
+                return false;
+            }
+            return true;
+        } ) );
+        if ( empty( $pathes ) && !empty( $blocked_media_paths ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Media Library year/month folders cannot be restored here. Use Media Library restore instead.', 'squeeze' ) );
+        }
+        $image_formats = self::$SqueezeHelpers->get_image_formats();
+        $results = array();
+        $abspath_norm = wp_normalize_path( ABSPATH );
+        foreach ( $pathes as $path ) {
+            $path = preg_replace( array('/\\.\\.+/', '/\\/\\*/'), '', $path );
+            $path = preg_replace( '/\\/+/', '/', $path );
+            if ( substr( $path, -1 ) !== '/' ) {
+                $path .= '/';
+            }
+            if ( substr( $path, 0, 1 ) !== '/' ) {
+                $path = '/' . $path;
+            }
+            $dir_fs = wp_normalize_path( ABSPATH . ltrim( $path, '/' ) );
+            if ( 0 !== strpos( $dir_fs, $abspath_norm ) || !is_dir( $dir_fs ) ) {
+                $results[] = array(
+                    'status'  => 'failed',
+                    'bak'     => '',
+                    'live'    => '',
+                    'message' => sprintf( 
+                        /* translators: %s: directory path */
+                        __( 'Invalid directory: %s', 'squeeze' ),
+                        $path
+                     ),
+                );
+                continue;
+            }
+            $bak_files = glob( trailingslashit( $dir_fs ) . '*.bak.{' . implode( ',', $image_formats ) . '}', GLOB_BRACE );
+            if ( empty( $bak_files ) ) {
+                continue;
+            }
+            foreach ( $bak_files as $bak_file ) {
+                $bak_file = wp_normalize_path( $bak_file );
+                $bak_name = wp_basename( $bak_file );
+                if ( !self::$SqueezeHelpers->is_squeeze_backup_filename( $bak_name ) ) {
+                    continue;
+                }
+                $live_name = self::$SqueezeHelpers->get_live_filename_from_backup( $bak_name );
+                $restored = self::$SqueezeHelpers->restore_directory_backup_file( $bak_file );
+                if ( is_wp_error( $restored ) ) {
+                    $results[] = array(
+                        'status'  => 'failed',
+                        'bak'     => $bak_name,
+                        'live'    => $live_name,
+                        'message' => $restored->get_error_message(),
+                    );
+                    continue;
+                }
+                $results[] = array(
+                    'status'  => 'restored',
+                    'bak'     => $restored['bak'],
+                    'live'    => $restored['live'],
+                    'message' => sprintf( 
+                        /* translators: 1: backup filename, 2: live filename */
+                        __( 'Restored %1$s → %2$s', 'squeeze' ),
+                        $restored['bak'],
+                        $restored['live']
+                     ),
+                );
+            }
+        }
+        if ( empty( $results ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'No backup (.bak) files were found in the selected directories', 'squeeze' ) );
+        }
+        wp_send_json_success( array(
+            'results' => $results,
+            'summary' => array(
+                'restored' => count( array_filter( $results, static function ( $r ) {
+                    return ($r['status'] ?? '') === 'restored';
+                } ) ),
+                'failed'   => count( array_filter( $results, static function ( $r ) {
+                    return ($r['status'] ?? '') === 'failed';
+                } ) ),
+                'skipped'  => count( array_filter( $results, static function ( $r ) {
+                    return ($r['status'] ?? '') === 'skipped';
+                } ) ),
+            ),
+        ) );
     }
 
     /**
@@ -506,7 +672,7 @@ class SqueezeHandlers extends SqueezeInit {
      *                          (e.g. 'thumbnail', 'medium', 'large').
      *   _ajax_nonce    string  squeeze-nonce value.
      *
-     * @since 1.8.0
+     * @since 1.7.16
      */
     public function fetch_image() {
         // Nonce verification (accepts GET or POST).
@@ -807,10 +973,12 @@ class SqueezeHandlers extends SqueezeInit {
             }
             $path = self::$SqueezeHelpers->bulk_directory_uri_from_filesystem( $base_dir . '/' . $dir . '/' );
             $parent_path = self::$SqueezeHelpers->bulk_directory_uri_from_filesystem( dirname( $base_dir . '/' . $dir ) . '/' );
+            $is_ym = self::$SqueezeHelpers->is_media_uploads_year_month_path( $path );
             return [
                 'name'         => $dir,
                 'path'         => $path,
-                'is_writeable' => wp_is_writable( $base_dir . '/' . $dir ),
+                'is_writeable' => !$is_ym && wp_is_writable( $base_dir . '/' . $dir ),
+                'is_blocked'   => $is_ym,
                 'parent'       => $parent_path,
             ];
         }, $result );
@@ -1012,50 +1180,29 @@ class SqueezeHandlers extends SqueezeInit {
 
     public function update_attachment_metadata_for_js( $response, $attachment, $meta ) {
         if ( isset( $response['filesizeInBytes'] ) && isset( $response['filesizeHumanReadable'] ) ) {
-            // check if the attachment is compressed
-            $is_squeezed = get_post_meta( $attachment->ID, 'squeeze_is_compressed', true );
-            if ( !$is_squeezed ) {
-                return $response;
-            }
-            // get updated filesize from the actual file
+            // Refresh filesize from disk only (cheap). After restore the cached
+            // `_wp_attachment_metadata['filesize']` is often stale; we must not
+            // gate this on squeeze_is_compressed. Do not call getimagesize here —
+            // that re-decodes the full image during async-upload thumb generation
+            // and can 502 low-memory hosts.
             $attachment_path = get_attached_file( $attachment->ID );
             if ( !$attachment_path || !file_exists( $attachment_path ) ) {
                 return $response;
             }
             $filesize = wp_filesize( $attachment_path );
-            $filesize_human = size_format( $filesize );
-            $image_info = wp_getimagesize( $attachment_path );
             $response['filesizeInBytes'] = $filesize;
-            $response['filesizeHumanReadable'] = $filesize_human;
-            if ( $image_info ) {
-                $response['width'] = $image_info[0];
-                $response['height'] = $image_info[1];
-            }
+            $response['filesizeHumanReadable'] = size_format( $filesize );
         }
         return $response;
     }
 
     public function update_attachment_metadata( $data, $attachment_id ) {
         if ( isset( $data['filesize'] ) ) {
-            // check if the attachment is compressed
-            $is_squeezed = get_post_meta( $attachment_id, 'squeeze_is_compressed', true );
-            if ( !$is_squeezed ) {
-                return $data;
-            }
-            // get updated filesize from the actual file
             $attachment_path = get_attached_file( $attachment_id );
             if ( !$attachment_path || !file_exists( $attachment_path ) ) {
                 return $data;
             }
-            $filesize = wp_filesize( $attachment_path );
-            $image_info = wp_getimagesize( $attachment_path );
-            $data['filesize'] = $filesize;
-            if ( $image_info ) {
-                $image_width = $image_info[0];
-                $image_height = $image_info[1];
-                $data['width'] = $image_width;
-                $data['height'] = $image_height;
-            }
+            $data['filesize'] = wp_filesize( $attachment_path );
         }
         return $data;
     }

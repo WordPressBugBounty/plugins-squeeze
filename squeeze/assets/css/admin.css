@@ -1050,6 +1050,17 @@ body.folded.settings_page_squeeze .squeeze-settings-submit {
 .directory-item label:hover {
   color: var(--squeeze-primary-color);
 }
+.directory-item.directory-item--blocked {
+  opacity: 0.5;
+}
+.directory-item.directory-item--blocked,
+.directory-item.directory-item--blocked label {
+  cursor: not-allowed;
+  text-decoration: none;
+}
+.directory-item.directory-item--blocked label:hover {
+  color: inherit;
+}
 .directory-item input[type="checkbox"],
 .directory-item input[type="radio"] {
   margin: 0;

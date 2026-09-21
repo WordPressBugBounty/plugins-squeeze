@@ -42,6 +42,83 @@ class SqueezeHelpers extends SqueezeInit {
         return $backup_filename;
     }
 
+    /**
+     * True when the basename looks like a Squeeze (or compatible) .bak sidecar,
+     * e.g. photo.bak.jpg / photo.bak.webp — not a normal image to re-squeeze.
+     *
+     * @param string $filename Basename or path.
+     * @return bool
+     */
+    public function is_squeeze_backup_filename( $filename ) {
+        $base = wp_basename( (string) $filename );
+        return false !== stripos( $base, '.bak.' );
+    }
+
+    /**
+     * Map a Squeeze backup basename to its in-place live twin.
+     * e.g. photo.bak.webp → photo.webp, photo.bak.jpg → photo.jpg.
+     *
+     * @param string $bak_basename Backup file basename.
+     * @return string Live basename, or empty string if not a valid backup name.
+     */
+    public function get_live_filename_from_backup( $bak_basename ) {
+        $bak_basename = wp_basename( (string) $bak_basename );
+        if ( !$this->is_squeeze_backup_filename( $bak_basename ) ) {
+            return '';
+        }
+        $live = preg_replace( '/\\.bak\\.([^.]+)$/i', '.$1', $bak_basename );
+        if ( !is_string( $live ) || '' === $live || $live === $bak_basename ) {
+            return '';
+        }
+        return $live;
+    }
+
+    /**
+     * Restore one Directory Squeeze .bak file in place, then delete the .bak.
+     *
+     * @param string $bak_abspath Absolute path to the .bak file.
+     * @return array|\WP_Error { bak, live, bak_path, live_path } on success.
+     */
+    public function restore_directory_backup_file( $bak_abspath ) {
+        $bak_abspath = wp_normalize_path( (string) $bak_abspath );
+        if ( '' === $bak_abspath || !file_exists( $bak_abspath ) ) {
+            return new \WP_Error('squeeze_path_restore_missing', __( 'Backup file not found.', 'squeeze' ));
+        }
+        $abs_base = wp_normalize_path( ABSPATH );
+        if ( 0 !== strpos( $bak_abspath, $abs_base ) ) {
+            return new \WP_Error('squeeze_path_restore_forbidden', __( 'Invalid backup path.', 'squeeze' ));
+        }
+        $bak_name = wp_basename( $bak_abspath );
+        $live_name = $this->get_live_filename_from_backup( $bak_name );
+        if ( '' === $live_name ) {
+            return new \WP_Error('squeeze_path_restore_invalid', __( 'Invalid backup filename.', 'squeeze' ));
+        }
+        $dir = trailingslashit( dirname( $bak_abspath ) );
+        $live_path = wp_normalize_path( $dir . $live_name );
+        if ( 0 !== strpos( $live_path, $abs_base ) ) {
+            return new \WP_Error('squeeze_path_restore_forbidden', __( 'Invalid restore path.', 'squeeze' ));
+        }
+        if ( !function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+        global $wp_filesystem;
+        WP_Filesystem();
+        if ( !$wp_filesystem || !method_exists( $wp_filesystem, 'copy' ) ) {
+            return new \WP_Error('squeeze_filesystem_api_error', __( 'Filesystem API is not available or failed to initialize.', 'squeeze' ));
+        }
+        $copied = $wp_filesystem->copy( $bak_abspath, $live_path, true );
+        if ( !$copied ) {
+            return new \WP_Error('squeeze_path_restore_failed', __( 'Restore failed.', 'squeeze' ));
+        }
+        wp_delete_file( $bak_abspath );
+        return array(
+            'bak'       => $bak_name,
+            'live'      => $live_name,
+            'bak_path'  => $bak_abspath,
+            'live_path' => $live_path,
+        );
+    }
+
     public function backup_original_image( $upload_path, $filename, $original_file = null ) {
         if ( !function_exists( 'WP_Filesystem' ) ) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -57,8 +134,24 @@ class SqueezeHelpers extends SqueezeInit {
             try {
                 if ( !$original_file ) {
                     $upload_backup_file = $wp_filesystem->copy( $upload_path . $filename, $upload_path . $backup_filename, true );
+                    if ( !$upload_backup_file || !file_exists( $upload_path . $backup_filename ) ) {
+                        return new \WP_Error('squeeze_backup_original_image_failed', '❌ ' . esc_html__( 'Backup original image failed', 'squeeze' ) . ': ' . $upload_path . $backup_filename);
+                    }
                 } else {
-                    $upload_backup_file = move_uploaded_file( $original_file, $upload_path . $backup_filename );
+                    // Prefer move_uploaded_file for real HTTP uploads; fall back to copy for
+                    // non-uploaded temp paths (tests, some hosts that rewrite tmp).
+                    $dest = $upload_path . $backup_filename;
+                    if ( is_uploaded_file( $original_file ) ) {
+                        $upload_backup_file = move_uploaded_file( $original_file, $dest );
+                    } else {
+                        $upload_backup_file = $wp_filesystem->copy( $original_file, $dest, true );
+                        if ( !$upload_backup_file && @copy( $original_file, $dest ) ) {
+                            $upload_backup_file = true;
+                        }
+                    }
+                    if ( !$upload_backup_file || !file_exists( $dest ) ) {
+                        return new \WP_Error('squeeze_backup_original_image_failed', '❌ ' . esc_html__( 'Backup original image failed', 'squeeze' ) . ': ' . $dest);
+                    }
                 }
             } catch ( \Exception $e ) {
                 return new \WP_Error('squeeze_backup_original_image_failed', '❌ ' . esc_html__( 'Backup original image failed', 'squeeze' ) . ': ' . $upload_path . $backup_filename);
@@ -366,13 +459,15 @@ class SqueezeHelpers extends SqueezeInit {
          * serving from an S3/GCS CDN) can add their provider URL(s) here so that Squeeze
          * can correctly map CDN URLs back to local paths.
          *
-         * @since 1.8.0
+         * @since 1.7.16
          * @param string[] $urls Existing extra base URLs (empty by default).
          */
         $additional_bases = (array) apply_filters( 'squeeze_additional_base_urls', array() );
         $bases = array_values( array_filter( array_unique( array_merge( ( $cdn !== '' ? array($cdn) : array() ), $additional_bases, array(home_url()) ) ) ) );
         $rel = str_replace( $bases, '', $absolute_url );
         $rel = ltrim( str_replace( '\\', '/', $rel ), '/' );
+        // Browser/JS URLs may percent-encode spaces and unicode; disk paths are decoded.
+        $rel = rawurldecode( $rel );
         if ( $rel === '' || strpos( $rel, '..' ) !== false ) {
             return '';
         }
@@ -380,7 +475,7 @@ class SqueezeHelpers extends SqueezeInit {
         if ( stripos( $rel, $content_folder . '/' ) !== 0 && stripos( $rel, $content_folder ) !== 0 ) {
             return '';
         }
-        return ABSPATH . $rel;
+        return wp_normalize_path( ABSPATH . $rel );
     }
 
     public function can_restore( $attach_id ) {
@@ -464,14 +559,34 @@ class SqueezeHelpers extends SqueezeInit {
         return $option_value;
     }
 
+    /**
+     * When neither Direct WebP nor sidecar Auto-WebP is enabled, treat mode as Direct WebP.
+     * Matches get_webp_delivery_mode() UI fallback so runtime conversion agrees with the settings screen.
+     *
+     * @param array $options Raw squeeze_options (or a JS options subset).
+     * @return array
+     */
+    public function normalize_webp_delivery_options( array $options ) {
+        if ( empty( $options['direct_webp'] ) && empty( $options['auto_webp'] ) ) {
+            $options['direct_webp'] = true;
+            $options['auto_webp'] = false;
+            $options['webp_replace_urls'] = false;
+        }
+        return $options;
+    }
+
     public function get_option( $option ) {
         // Cache squeeze_options array per request to avoid repeated database queries
         // This prevents hundreds of get_option('squeeze_options') calls during bulk operations
         if ( self::$cached_squeeze_options === null ) {
-            self::$cached_squeeze_options = get_option( 'squeeze_options' );
+            $raw = get_option( 'squeeze_options' );
+            self::$cached_squeeze_options = ( is_array( $raw ) ? $raw : array() );
         }
         $options = self::$cached_squeeze_options;
-        $option_value = ( isset( $options[$option] ) ? $options[$option] : $this->get_default_value( $option ) );
+        if ( in_array( $option, array('direct_webp', 'auto_webp', 'webp_replace_urls'), true ) ) {
+            $options = $this->normalize_webp_delivery_options( $options );
+        }
+        $option_value = ( array_key_exists( $option, $options ) ? $options[$option] : $this->get_default_value( $option ) );
         return $option_value;
     }
 
@@ -956,6 +1071,42 @@ class SqueezeHelpers extends SqueezeInit {
             return null;
         }
         return apache_get_modules();
+    }
+
+    /**
+     * Site-relative URI for the configured Media Library uploads directory.
+     * Uses wp_upload_dir() so custom UPLOADS / filters / multisite paths are respected.
+     *
+     * @return string e.g. /wp-content/uploads/ or /wp-content/uploads/sites/2/
+     */
+    public function get_uploads_directory_uri() {
+        $uploads = wp_upload_dir( null, false );
+        if ( empty( $uploads['basedir'] ) ) {
+            return $this->bulk_directory_uri_from_filesystem( trailingslashit( WP_CONTENT_DIR ) . 'uploads' );
+        }
+        return $this->bulk_directory_uri_from_filesystem( $uploads['basedir'] );
+    }
+
+    /**
+     * True when $path is a Media Library year or year/month folder under the uploads basedir
+     * (e.g. …/uploads/2024/ or …/uploads/2024/01/), including nested paths under YYYY/MM.
+     * Non-dated folders under uploads (elementor/, etc.) are not blocked.
+     *
+     * @param string $path Site-relative or absolute path (normalized internally).
+     * @return bool
+     */
+    public function is_media_uploads_year_month_path( $path ) {
+        $path = $this->normalize_bulk_directory_storage_path( $path );
+        $uploads_uri = $this->get_uploads_directory_uri();
+        if ( '/' === $uploads_uri || 0 !== strpos( $path, $uploads_uri ) ) {
+            return false;
+        }
+        $rel = substr( $path, strlen( $uploads_uri ) );
+        if ( '' === $rel ) {
+            return false;
+        }
+        // YYYY/ or YYYY/MM/ or YYYY/MM/…
+        return (bool) preg_match( '#^\\d{4}/(?:\\d{2}(?:/|$)|$)#', $rel );
     }
 
     /**

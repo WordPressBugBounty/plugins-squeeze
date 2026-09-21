@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.15
+ * Version:     1.7.16
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -25,9 +25,24 @@ class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.15';
+    const VERSION = '1.7.16';
 
     const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/?utm_source=wordpress_plugin&utm_medium=admin&utm_campaign=squeeze_upgrade&utm_content=settings_upgrade_tab';
+
+    /**
+     * Cache-bust script assets with filemtime so rebuilt bundles are not served from a stale ?ver=.
+     *
+     * @param string $relative_path Path under the plugin directory.
+     * @return string
+     */
+    protected function get_script_asset_version( $relative_path ) {
+        $path = self::$PLUGIN_DIR . ltrim( (string) $relative_path, '/\\' );
+        $mtime = @filemtime( $path );
+        if ( $mtime ) {
+            return self::VERSION . '.' . (string) $mtime;
+        }
+        return self::VERSION;
+    }
 
     /**
      * Allowed image formats
@@ -164,11 +179,14 @@ class SqueezeInit {
 
     public function prepare_localize_args() {
         $options = get_option( 'squeeze_options' );
+        if ( !is_array( $options ) ) {
+            $options = array();
+        }
         $default_options = self::$SqueezeHelpers->get_default_value( null, true );
         // get all default values
         $js_options = array();
         foreach ( $default_options as $key => $value ) {
-            if ( isset( $options[$key] ) ) {
+            if ( array_key_exists( $key, $options ) ) {
                 if ( is_numeric( $options[$key] ) ) {
                     $js_options[$key] = floatval( $options[$key] );
                 } elseif ( $options[$key] === "on" ) {
@@ -183,6 +201,8 @@ class SqueezeInit {
                 $js_options[$key] = $value;
             }
         }
+        // Keep JS worker flags aligned with UI: neither WebP mode set ⇒ Direct WebP.
+        $js_options = self::$SqueezeHelpers->normalize_webp_delivery_options( $js_options );
         self::$JS_OPTIONS = $js_options;
         self::$LOCALIZE_ARGS = array(
             'isPremium'       => false,
@@ -306,7 +326,7 @@ class SqueezeInit {
             'squeeze-script',
             self::$PLUGIN_URL . 'assets/js/script.bundle.js',
             $this->get_squeeze_script_dependencies(),
-            self::VERSION,
+            $this->get_script_asset_version( 'assets/js/script.bundle.js' ),
             true
         );
         // WP Localized globals. Use dynamic PHP stuff in JavaScript via `squeeze` object.
@@ -319,11 +339,16 @@ class SqueezeInit {
         }
         // Check if we are on the options page for the plugin
         if ( $pagenow === 'upload.php' || $pagenow === 'options-general.php' && isset( $_GET['page'] ) && $_GET['page'] === 'squeeze' ) {
+            // media-views required on upload.php so Bulk Squeeze hooks after wp.media.view exists.
+            $admin_script_deps = array('jquery', 'squeeze-script');
+            if ( $pagenow === 'upload.php' ) {
+                $admin_script_deps[] = 'media-views';
+            }
             wp_enqueue_script(
                 'squeeze-settings-script',
                 self::$PLUGIN_URL . 'assets/js/admin.bundle.js',
-                array('jquery'),
-                self::VERSION,
+                $admin_script_deps,
+                $this->get_script_asset_version( 'assets/js/admin.bundle.js' ),
                 true
             );
         }
