@@ -4,7 +4,7 @@ Tags: image compression, webp converter, image optimization, compress images, op
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.16
+Stable tag: 1.7.17
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -251,6 +251,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.7.17 =
+* Fix WordPress.org automated review block: emit WebAssembly codecs as separate `.wasm` files instead of inlining them as multi-megabyte JavaScript lines
 = 1.7.16 =
 * Directory Squeeze: write `.bak` backups when Backup original is on; restore in place via “Restore backups in selected folders”; skip `*.bak.*` when scanning; block Media Library year/month folders (use Bulk Media Library Squeeze instead)
 * Direct WebP (Directory Squeeze): backups are `.bak.webp` beside the live WebP (same as Media Library); original JPG/PNG twins are removed more reliably after conversion
@@ -401,6 +403,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.7.17 =
+* Unblocks WordPress.org updates by shipping WebAssembly codecs as separate `.wasm` files (no oversized inlined JS lines).
 = 1.7.16 =
 * Directory Squeeze backups/restore and Direct WebP bak alignment; Instant Images on-upload squeeze; fresher file-size labels; Direct WebP option normalization for fresh installs.
 = 1.7.15 =

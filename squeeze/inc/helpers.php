@@ -393,9 +393,9 @@ class SqueezeHelpers extends SqueezeInit {
         $dir_rel = str_replace( '\\', '/', dirname( $relative ) );
         if ( $dir_rel === '.' || $dir_rel === '' ) {
             $like = $wpdb->esc_like( $basename );
-            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\r\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\r\n\t\t\t\t\t   AND ( meta_value = %s OR meta_value LIKE %s )", $basename, '%/' . $like ) );
+            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\n\t\t\t\t\t   AND ( meta_value = %s OR meta_value LIKE %s )", $basename, '%/' . $like ) );
         } else {
-            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\r\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\r\n\t\t\t\t\t   AND meta_value LIKE %s", $wpdb->esc_like( $dir_rel . '/' ) . '%' ) );
+            $candidates = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta}\n\t\t\t\t\t WHERE meta_key = '_wp_attached_file'\n\t\t\t\t\t   AND meta_value LIKE %s", $wpdb->esc_like( $dir_rel . '/' ) . '%' ) );
         }
         foreach ( (array) $candidates as $candidate_id ) {
             $candidate_id = (int) $candidate_id;

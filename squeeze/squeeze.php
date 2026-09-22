@@ -5,7 +5,7 @@
  * Description: Compress unlimited images directly into your browser. Convert images to WebP format. No limits on file size or number of images. No third-party services or API keys required.
  * Author URI:  https://pluginarium.com
  * Author:      Bogdan Bendziukov
- * Version:     1.7.16
+ * Version:     1.7.17
  *
  * Text Domain: squeeze
  * Domain Path: /languages
@@ -25,7 +25,7 @@ class SqueezeInit {
     /**
      * Plugin version
      */
-    const VERSION = '1.7.16';
+    const VERSION = '1.7.17';
 
     const CHECKOUT_URL = 'https://checkout.freemius.com/plugin/17217/plan/28703/?utm_source=wordpress_plugin&utm_medium=admin&utm_campaign=squeeze_upgrade&utm_content=settings_upgrade_tab';
 
