@@ -14,11 +14,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "checkMegapixelLimit": () => (/* binding */ checkMegapixelLimit),
 /* harmony export */   "computeContainResize": () => (/* binding */ computeContainResize),
 /* harmony export */   "computePoolSize": () => (/* binding */ computePoolSize),
+/* harmony export */   "detectImageTypeFromMagic": () => (/* binding */ detectImageTypeFromMagic),
 /* harmony export */   "formatOomMessage": () => (/* binding */ formatOomMessage),
 /* harmony export */   "getMegapixelLimit": () => (/* binding */ getMegapixelLimit),
 /* harmony export */   "getMemorySettings": () => (/* binding */ getMemorySettings),
+/* harmony export */   "getServerSafeMegapixelLimit": () => (/* binding */ getServerSafeMegapixelLimit),
+/* harmony export */   "getUploadSafeMegapixelLimit": () => (/* binding */ getUploadSafeMegapixelLimit),
 /* harmony export */   "isLowMemoryDevice": () => (/* binding */ isLowMemoryDevice),
 /* harmony export */   "isWasmOomError": () => (/* binding */ isWasmOomError),
+/* harmony export */   "mapAvifQualityToCqLevel": () => (/* binding */ mapAvifQualityToCqLevel),
 /* harmony export */   "readImageDimensionsFromBuffer": () => (/* binding */ readImageDimensionsFromBuffer),
 /* harmony export */   "shouldForceSingleThreadAvif": () => (/* binding */ shouldForceSingleThreadAvif)
 /* harmony export */ });
@@ -35,25 +39,15 @@ const MEGAPIXEL_LIMITS = {
 };
 
 /**
- * Cap bulk concurrency by available device memory, not raw CPU cores.
- * Image compression is memory-bound; unrestricted hardwareConcurrency
- * can spawn many WASM heaps and trigger OutOfMemory on low-RAM devices.
+ * Soft concurrency for WASM: always 1 — sequential compress only.
+ * (Multi-worker parallel was removed; low-RAM / mobile browsers crashed.)
  *
- * @param {number|undefined} deviceMemory  navigator.deviceMemory (GB), or undefined
- * @param {number|undefined} hardwareConcurrency  navigator.hardwareConcurrency
+ * @param {number|undefined} deviceMemory
+ * @param {number|undefined} hardwareConcurrency
  * @returns {number} pool size (>= 1)
  */
 function computePoolSize(deviceMemory, hardwareConcurrency) {
-  const cores = Math.max(1, Number(hardwareConcurrency) || 1);
-  const gb = deviceMemory == null ? null : Number(deviceMemory);
-
-  if (gb != null && !Number.isNaN(gb)) {
-    if (gb <= 2) return 1;
-    if (gb <= 4) return Math.min(cores, 2);
-  }
-
-  // Cap even on powerful machines — diminishing returns past a few parallel WASM jobs.
-  return Math.min(cores, 4);
+  return 1;
 }
 
 /**
@@ -74,6 +68,65 @@ function isLowMemoryDevice(deviceMemory) {
  */
 function shouldForceSingleThreadAvif(deviceMemory) {
   return isLowMemoryDevice(deviceMemory);
+}
+
+/**
+ * Map Squeeze's AVIF "Quality" setting (0–100, higher = better) to
+ * @jsquash/avif@1.x cqLevel (0–63, higher = worse).
+ *
+ * The settings UI stores avif_cqLevel as a JPEG-like quality slider (default 70).
+ * Passing that value straight through exceeds cqLevel's max (63) and makes the
+ * WASM encoder return null → "Encoding error."
+ *
+ * @param {unknown} quality
+ * @returns {number} cqLevel in [0, 63]
+ */
+function mapAvifQualityToCqLevel(quality) {
+  const q = Number(quality);
+  if (!Number.isFinite(q)) {
+    return 33; // @jsquash/avif defaultOptions.cqLevel
+  }
+  const clamped = Math.min(100, Math.max(0, q));
+  return Math.round(63 - (clamped / 100) * 63);
+}
+
+/**
+ * Detect image subtype from the first bytes (ignores declared MIME).
+ *
+ * @param {ArrayBuffer|Uint8Array} input
+ * @returns {'jpeg'|'png'|'webp'|'avif'|null}
+ */
+function detectImageTypeFromMagic(input) {
+  let bytes;
+  if (input instanceof Uint8Array) {
+    bytes = input;
+  } else if (input instanceof ArrayBuffer) {
+    bytes = new Uint8Array(input);
+  } else {
+    return null;
+  }
+  if (bytes.byteLength < 12) return null;
+
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'png';
+  // RIFF....WEBP
+  if (
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) {
+    return 'webp';
+  }
+  // ISO BMFF: ....ftyp.... (AVIF / HEIF family — treat ftyp+avif/avis/mif1 as avif for our codecs)
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    if (brand === 'avif' || brand === 'avis' || brand === 'mif1' || brand === 'miaf') {
+      return 'avif';
+    }
+    // Some AVIFs put avif later in the brands list — scan a small window.
+    const head = String.fromCharCode(...bytes.subarray(8, Math.min(bytes.byteLength, 32)));
+    if (head.includes('avif') || head.includes('avis')) return 'avif';
+  }
+  return null;
 }
 
 /**
@@ -105,6 +158,43 @@ function checkMegapixelLimit(width, height, megapixelLimit) {
     megapixels,
     limit,
   };
+}
+
+/**
+ * WP_MAX_MEMORY_LIMIT (bytes) → soft megapixel cap for upload metadata safety.
+ * Uses RGBA decode budget with ~2× headroom for intermediates (-scaled / thumbs).
+ *
+ * @param {number} serverMemoryBytes
+ * @returns {number} megapixel limit (Infinity when unknown)
+ */
+function getServerSafeMegapixelLimit(serverMemoryBytes) {
+  const bytes = Number(serverMemoryBytes) || 0;
+  if (bytes <= 0) return Number.POSITIVE_INFINITY;
+  return bytes / 8 / 1e6;
+}
+
+/**
+ * Effective upload safety cap = min(browser soft limit, server-safe limit).
+ *
+ * @param {number|undefined} deviceMemory
+ * @param {number} [serverMemoryBytes]
+ * @returns {number}
+ */
+function getUploadSafeMegapixelLimit(deviceMemory, serverMemoryBytes = 0) {
+  return Math.min(
+    getMegapixelLimit(deviceMemory),
+    getServerSafeMegapixelLimit(serverMemoryBytes)
+  );
+}
+
+function readLocalizedServerMemoryBytes() {
+  try {
+    if (typeof squeezeOptions === 'undefined') return 0;
+    const n = Number(squeezeOptions.wpMaxMemoryBytes);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch (e) {
+    return 0;
+  }
 }
 
 /**
@@ -297,18 +387,24 @@ function formatOomMessage(error, translate = (s) => s) {
 }
 
 /**
- * Snapshot of device memory settings to pass into the worker.
+ * Snapshot of device + server memory settings to pass into the worker.
  *
  * @param {{ deviceMemory?: number, hardwareConcurrency?: number }} [nav]
- * @returns {{ deviceMemory: number|undefined, poolSize: number, forceSingleThreadAvif: boolean, megapixelLimit: number }}
+ * @param {number} [serverMemoryBytes]  WP_MAX_MEMORY_LIMIT bytes (from squeezeOptions)
+ * @returns {{ deviceMemory: number|undefined, poolSize: number, forceSingleThreadAvif: boolean, megapixelLimit: number, serverMemoryBytes: number }}
  */
-function getMemorySettings(nav = typeof navigator !== 'undefined' ? navigator : {}) {
+function getMemorySettings(
+  nav = typeof navigator !== 'undefined' ? navigator : {},
+  serverMemoryBytes = readLocalizedServerMemoryBytes()
+) {
   const deviceMemory = nav.deviceMemory;
+  const serverBytes = Number(serverMemoryBytes) || 0;
   return {
     deviceMemory,
     poolSize: computePoolSize(deviceMemory, nav.hardwareConcurrency),
     forceSingleThreadAvif: shouldForceSingleThreadAvif(deviceMemory),
-    megapixelLimit: getMegapixelLimit(deviceMemory),
+    megapixelLimit: getUploadSafeMegapixelLimit(deviceMemory, serverBytes),
+    serverMemoryBytes: serverBytes,
   };
 }
 
@@ -490,6 +586,8 @@ let memorySettings = {
 };
 /** Last contain-fit resize computed in compressAndAssign (for thumb cleanup). */
 let lastComputedResize = {};
+/** True when last compressAndAssign exceeded the upload megapixel safety limit. */
+let lastIsHugeForUpload = false;
 
 // Lazy-loaded codec modules (loaded only when a job needs them).
 const codecCache = {};
@@ -662,6 +760,10 @@ const encode = async (outputType, imageData) => {
             const keyName = key.replace('avif_', '')
             avifOptions[keyName] = value
           }
+        }
+        // Settings/UI use Quality 0–100; encoder needs cqLevel 0–63.
+        if (Object.prototype.hasOwnProperty.call(avifOptions, 'cqLevel')) {
+          avifOptions.cqLevel = (0,_memory_js__WEBPACK_IMPORTED_MODULE_0__.mapAvifQualityToCqLevel)(avifOptions.cqLevel);
         }
         if (memorySettings.forceSingleThreadAvif) {
           return await encodeAvifSingleThread(imageData, avifOptions);
@@ -992,22 +1094,20 @@ const compressAndAssign = async (compressFunction, { url, fetchUrl, name, source
   }
 
   // Reject clearly when the on-disk bytes are not a decodable JPEG/PNG/WebP/AVIF.
+  // Prefer magic over declared MIME — Direct WebP / CDN / wrong metadata can disagree.
   if (fileBuffer instanceof ArrayBuffer && fileBuffer.byteLength >= 3) {
     const magic = Array.from(new Uint8Array(fileBuffer.slice(0, 8))).map(b => b.toString(16).padStart(2, '0')).join(' ');
-    const looksJpeg = magic.startsWith('ff d8 ff');
-    const looksPng = magic.startsWith('89 50 4e 47');
-    const looksWebp = magic.startsWith('52 49 46 46');
-    const looksAvif = magic.includes('66 74 79 70'); // ftyp
-    const ok =
-      (sourceType === 'jpeg' && looksJpeg) ||
-      (sourceType === 'png' && looksPng) ||
-      (sourceType === 'webp' && looksWebp) ||
-      (sourceType === 'avif' && looksAvif) ||
-      (outputType === 'png' && (looksPng || looksJpeg || looksWebp));
-    if (!ok && (sourceType === 'jpeg' || sourceType === 'png' || sourceType === 'webp' || sourceType === 'avif')) {
+    const detected = (0,_memory_js__WEBPACK_IMPORTED_MODULE_0__.detectImageTypeFromMagic)(fileBuffer);
+    if (!detected) {
       throw new Error(
-        `The source image could not be decoded (file is not a valid ${sourceType.toUpperCase()}; magic=${magic}). Restore from a Squeeze backup if available.`
+        `The source image could not be decoded (file is not a valid JPEG/PNG/WebP/AVIF; magic=${magic}). Restore from a Squeeze backup if available.`
       );
+    }
+    if (detected !== sourceType) {
+      console.warn(
+        `Squeeze: declared type was "${sourceType}" but file magic is "${detected}" (magic=${magic}). Decoding as ${detected}.`
+      );
+      sourceType = detected;
     }
   }
 
@@ -1038,6 +1138,7 @@ const compressAndAssign = async (compressFunction, { url, fetchUrl, name, source
     const checkWidth = resizeOptions.needResize ? resizeOptions.width : dims.width;
     const checkHeight = resizeOptions.needResize ? resizeOptions.height : dims.height;
     const check = (0,_memory_js__WEBPACK_IMPORTED_MODULE_0__.checkMegapixelLimit)(checkWidth, checkHeight, memorySettings.megapixelLimit);
+    lastIsHugeForUpload = !check.ok;
     if (!check.ok) {
       console.warn(
         `Image is large for this device (${check.megapixels.toFixed(1)} MP > ${check.limit} MP soft limit). ` +
@@ -1159,6 +1260,7 @@ onmessage = async function (e) {
 
     try {
       lastComputedResize = {};
+      lastIsHugeForUpload = false;
       let base64 = base64Compressed || ''; // base64Compressed is used for already compressed image, e.g. during image upload
       let base64Webp = base64WebpCompressed || '';
       let base64Sizes, base64SizesWebp;
@@ -1240,7 +1342,9 @@ onmessage = async function (e) {
         'base64Webp': base64Webp,
         'base64SizesWebp': base64SizesWebp,
         
-        'isDirectWebp': options.direct_webp,
+        // Only JPEG/PNG are rewritten to WebP under Direct WebP — never AVIF/WebP.
+        'isDirectWebp': !!(options.direct_webp && (format === 'jpeg' || format === 'png')),
+        'isHugeForUpload': lastIsHugeForUpload,
       });
     } catch (error) {
       console.error(error);

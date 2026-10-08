@@ -1,43 +1,38 @@
-# Copyright (C) 2026 Squeeze – Image Optimization & Compression, WebP Conversion
-# This file is distributed under the same license as the Squeeze – Image Optimization & Compression, WebP Conversion package.
 msgid ""
 msgstr ""
-"Project-Id-Version: Squeeze – Image Optimization & Compression, WebP "
-"Conversion\n"
+"Project-Id-Version: Squeeze\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/squeeze\n"
+"POT-Creation-Date: 2026-10-07 15:43+0000\n"
+"PO-Revision-Date: 2026-10-07T15:43:38+0000\n"
+"Last-Translator: Squeeze / Polyglots contributors\n"
+"Language-Team: German\n"
+"Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-07 15:43+0000\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/squeeze\n"
-"X-Poedit-Basepath: ..\n"
-"X-Poedit-KeywordsList: "
-"__;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_"
-"attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
-"X-Poedit-SearchPath-0: .\n"
-"X-Poedit-SearchPathExcluded-0: *.js\n"
-"X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Squeeze bin/build-translations.mjs\n"
 "X-Domain: squeeze\n"
 
 #: ../freemius.php:12, ../squeeze.php:813
 msgid "Go Premium"
-msgstr ""
+msgstr "Premium freischalten"
 
 #: ../freemius.php:13, ../freemius.php:14
 msgid "Congratulations"
-msgstr ""
+msgstr "Herzlichen Glückwunsch"
 
 #: ../inc/handlers.php:100, ../inc/handlers.php:206, ../inc/handlers.php:558, ../inc/handlers.php:618, ../inc/handlers.php:770
 msgid "You do not have permission to upload files"
-msgstr ""
+msgstr "Sie haben keine Berechtigung, Dateien hochzuladen"
 
 #: ../inc/handlers.php:105, ../inc/handlers.php:250, ../inc/handlers.php:528, ../inc/handlers.php:562
 msgid "Attachment not found"
-msgstr ""
+msgstr "Anhang nicht gefunden"
 
 #: ../inc/handlers.php:110, ../inc/handlers.php:235, ../inc/helpers.php:442, ../inc/helpers.php:611
 msgid "Invalid image format"
-msgstr ""
+msgstr "Ungültiges Bildformat"
 
 #: ../inc/handlers.php:124
 msgid "Squeezed on upload"
@@ -45,232 +40,244 @@ msgstr ""
 
 #: ../inc/handlers.php:210, ../inc/helpers.php:373
 msgid "No image data found"
-msgstr ""
+msgstr "Keine Bilddaten gefunden"
 
 #: ../inc/handlers.php:256
 #: ../inc/handlers.php:573
 #: assets/js/squeeze.js:370
 msgid "Attachment is excluded from compression"
-msgstr ""
+msgstr "Anhang ist von der Komprimierung ausgeschlossen"
 
 #: ../inc/handlers.php:256
 #: ../inc/handlers.php:573
 #: ../inc/settings.php:1499
 #: assets/js/squeeze.js:370
 msgid "found substring: "
-msgstr ""
+msgstr "Teilzeichenkette gefunden: "
 
 #: ../inc/handlers.php:309
 msgid "Compressed image size is greater than original size."
-msgstr ""
+msgstr "Die komprimierte Bildgröße ist größer als die Originalgröße."
 
 #: ../inc/handlers.php:310
 msgid ""
 "Please try to change your <a href=\"%s\" target=\"_blank\">compression "
 "settings</a> by decreasing the quality or compression level."
 msgstr ""
+"Versuchen Sie, Ihre <a href=\"%s\" "
+"target=\"_blank\">Komprimierungseinstellungen</a> anzupassen, indem Sie die "
+"Qualität oder die Komprimierungsstufe verringern."
 
 #: ../inc/handlers.php:509, ../inc/handlers.php:441
 msgid "Squeezed successfully"
-msgstr ""
+msgstr "Erfolgreich komprimiert"
 
 #: ../inc/handlers.php:422
 msgid "Failed to build compression comparison."
-msgstr ""
+msgstr "Vergleich der Komprimierung konnte nicht erstellt werden."
 
 #: ../inc/handlers.php:546
 msgid "Attachment not restored"
-msgstr ""
+msgstr "Anhang nicht wiederhergestellt"
 
 #: ../inc/handlers.php:541
 msgid "Restored successfully"
-msgstr ""
+msgstr "Erfolgreich wiederhergestellt"
 
 #: ../inc/handlers.php:622, ../inc/handlers.php:774
 msgid "Path not found"
-msgstr ""
+msgstr "Pfad nicht gefunden"
 
 #: ../inc/handlers.php:628, ../inc/handlers.php:782
 msgid "Invalid path data"
-msgstr ""
+msgstr "Ungültige Pfaddaten"
 
 #: ../inc/handlers.php:648
 msgid ""
 "Media Library year/month folders cannot be squeezed here. Use Bulk Media "
 "Library Squeeze instead."
 msgstr ""
+"Mediathek-Jahres-/Monatsordner können hier nicht komprimiert werden. "
+"Verwenden Sie stattdessen Bulk-Mediathek-Komprimierung."
 
 #: ../inc/handlers.php:755
 msgid "Images were not found in the selected directories"
-msgstr ""
+msgstr "In den ausgewählten Verzeichnissen wurden keine Bilder gefunden"
 
 #: ../inc/handlers.php:803
 msgid ""
 "Media Library year/month folders cannot be restored here. Use Media Library "
 "restore instead."
 msgstr ""
+"Mediathek-Jahres-/Monatsordner können hier nicht wiederhergestellt werden. "
+"Verwenden Sie stattdessen die Mediathek-Wiederherstellung."
 
 #: ../inc/handlers.php:839
 #. translators: %s: directory path
 msgid "Invalid directory: %s"
-msgstr ""
+msgstr "Ungültiges Verzeichnis: %s"
 
 #: ../inc/handlers.php:878
 #. translators: 1: backup filename, 2: live filename
 msgid "Restored %1$s → %2$s"
-msgstr ""
+msgstr "%1$s → %2$s wiederhergestellt"
 
 #: ../inc/handlers.php:887
 msgid "No backup (.bak) files were found in the selected directories"
 msgstr ""
+"In den ausgewählten Verzeichnissen wurden keine Backup-Dateien (.bak) "
+"gefunden"
 
 #: ../inc/handlers.php:909
 msgid "File name not found"
-msgstr ""
+msgstr "Dateiname nicht gefunden"
 
 #: ../inc/handlers.php:1071
 msgid "Restore Original Image"
-msgstr ""
+msgstr "Originalbild wiederherstellen"
 
 #: ../inc/handlers.php:1072
 msgid "Squeeze Image"
-msgstr ""
+msgstr "Bild komprimieren"
 
 #: ../inc/handlers.php:1073
 msgid "Delete Backup Image"
-msgstr ""
+msgstr "Backup-Bild löschen"
 
 #: ../inc/handlers.php:1074
 msgid "Delete WEBP Image"
-msgstr ""
+msgstr "WEBP-Bild löschen"
 
 #: ../inc/handlers.php:1135
 #. translators: %d: number of attachments restored
 msgid "%d attachment restored."
 msgid_plural "%d attachments restored."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Anhang wiederhergestellt."
+msgstr[1] "%d Anhänge wiederhergestellt."
 
 #: ../inc/handlers.php:1148
 #. translators: %d: number of attachments squeezed
 msgid "%d attachment squeezed."
 msgid_plural "%d attachments squeezed."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Anhang komprimiert."
+msgstr[1] "%d Anhänge komprimiert."
 
 #: ../inc/handlers.php:1161
 #. translators: %d: number of backup images deleted
 msgid "%d backup image deleted."
 msgid_plural "%d backup images deleted."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Backup-Bild gelöscht."
+msgstr[1] "%d Backup-Bilder gelöscht."
 
 #: ../inc/handlers.php:1174
 #. translators: %d: number of webp images deleted
 msgid "%d WEBP image deleted."
 msgid_plural "%d WEBP images deleted."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d WEBP-Bild gelöscht."
+msgstr[1] "%d WEBP-Bilder gelöscht."
 
 #: ../inc/handlers.php:1222
 msgid ""
 "Single file upload is not supported for the image compression by Squeeze. "
 "Please use multi-file uploader or bulk squeeze."
 msgstr ""
+"Einzeldatei-Upload wird für die Bildkomprimierung mit Squeeze nicht "
+"unterstützt. Bitte verwenden Sie den Mehrfach-Upload oder die "
+"Bulk-Komprimierung."
 
 #: ../inc/handlers.php:1232
 msgid "You do not have permission to browse directories."
-msgstr ""
+msgstr "Sie haben keine Berechtigung, Verzeichnisse zu durchsuchen."
 
 #: ../inc/handlers.php:1238
 msgid "Content directory is not accessible."
-msgstr ""
+msgstr "Das Inhaltsverzeichnis ist nicht zugänglich."
 
 #: ../inc/handlers.php:1247, ../inc/handlers.php:1252
 msgid "Invalid directory path."
-msgstr ""
+msgstr "Ungültiger Verzeichnispfad."
 
 #: ../inc/handlers.php:1511
 msgid "You do not have permission to change plugin settings"
-msgstr ""
+msgstr "Sie haben keine Berechtigung, die Plugin-Einstellungen zu ändern"
 
 #: ../inc/handlers.php:1517
 msgid "Options not found"
-msgstr ""
+msgstr "Optionen nicht gefunden"
 
 #: ../inc/handlers.php:1523
 msgid "Options not saved"
-msgstr ""
+msgstr "Optionen nicht gespeichert"
 
 #: ../inc/handlers.php:1526
 msgid "Options saved successfully"
-msgstr ""
+msgstr "Optionen erfolgreich gespeichert"
 
 #: ../inc/helpers.php:220
 msgid "Backup file not found."
-msgstr ""
+msgstr "Backup-Datei nicht gefunden."
 
 #: ../inc/helpers.php:225
 msgid "Invalid backup path."
-msgstr ""
+msgstr "Ungültiger Backup-Pfad."
 
 #: ../inc/helpers.php:231
 msgid "Invalid backup filename."
-msgstr ""
+msgstr "Ungültiger Backup-Dateiname."
 
 #: ../inc/helpers.php:237
 msgid "Invalid restore path."
-msgstr ""
+msgstr "Ungültiger Wiederherstellungspfad."
 
 #: ../inc/helpers.php:246
 msgid "Filesystem API is not available or failed to initialize."
-msgstr ""
+msgstr "Filesystem-API ist nicht verfügbar oder konnte nicht initialisiert werden."
 
 #: ../inc/helpers.php:251
 #: assets/js/handlers.js:127
 #: assets/js/handlers.js:138
 msgid "Restore failed."
-msgstr ""
+msgstr "Wiederherstellung fehlgeschlagen."
 
 #: ../inc/helpers.php:299, ../inc/helpers.php:284, ../inc/helpers.php:303
 msgid "Backup original image failed"
-msgstr ""
+msgstr "Sichern des Originalbilds fehlgeschlagen"
 
 #: ../inc/helpers.php:365, ../inc/helpers.php:458, ../inc/helpers.php:470
 msgid "Upload image failed"
-msgstr ""
+msgstr "Hochladen des Bildes fehlgeschlagen"
 
 #: ../inc/helpers.php:575, ../inc/helpers.php:591
 msgid "No WebP data found"
-msgstr ""
+msgstr "Keine WebP-Daten gefunden"
 
 #: ../inc/helpers.php:823
 msgid "Backup image not found"
-msgstr ""
+msgstr "Backup-Bild nicht gefunden"
 
 #: ../inc/helpers.php:834
 msgid "Restore original image failed"
-msgstr ""
+msgstr "Wiederherstellung des Originalbilds fehlgeschlagen"
 
 #: ../inc/helpers.php:994
 msgid "Size Name"
-msgstr ""
+msgstr "Größenname"
 
 #: ../inc/helpers.php:994
 msgid "Original Size"
-msgstr ""
+msgstr "Originalgröße"
 
 #: ../inc/helpers.php:994
 msgid "Squeezed Size"
-msgstr ""
+msgstr "Komprimierte Größe"
 
 #: ../inc/helpers.php:994
 msgid "Savings"
-msgstr ""
+msgstr "Ersparnis"
 
 #: ../inc/helpers.php:1006, ../inc/helpers.php:1016
 msgid "N/A"
-msgstr ""
+msgstr "k. A."
 
 #: ../inc/helpers.php:1251
 msgid "New"
@@ -278,37 +285,40 @@ msgstr ""
 
 #: ../inc/review-notice.php:129
 msgid "Enjoying Squeeze?"
-msgstr ""
+msgstr "Gefällt Ihnen Squeeze?"
 
 #: ../inc/review-notice.php:130
 msgid ""
 "If the plugin helped you shrink your images, would you mind leaving a quick "
 "5-star review? It really helps other WordPress users find it."
 msgstr ""
+"Wenn Ihnen das Plugin geholfen hat, Ihre Bilder zu verkleinern, würden Sie "
+"eine kurze 5-Sterne-Bewertung hinterlassen? Das hilft anderen "
+"WordPress-Nutzern, es zu finden."
 
 #: ../inc/review-notice.php:134
 msgid "Leave a review"
-msgstr ""
+msgstr "Bewertung schreiben"
 
 #: ../inc/review-notice.php:138
 msgid "Maybe later"
-msgstr ""
+msgstr "Vielleicht später"
 
 #: ../inc/review-notice.php:142
 msgid "Already did / Don't show again"
-msgstr ""
+msgstr "Bereits erledigt / Nicht mehr anzeigen"
 
 #: ../inc/settings.php:40
 msgid "Squeeze Settings"
-msgstr ""
+msgstr "Squeeze-Einstellungen"
 
 #: ../inc/settings.php:41, ../inc/settings.php:1495, ../inc/settings.php:1524, ../inc/premium/premium.php:555
 msgid "Squeeze"
-msgstr ""
+msgstr "Squeeze"
 
 #: ../inc/settings.php:51, ../inc/settings.php:52
 msgid "Squeeze Bulk Tools"
-msgstr ""
+msgstr "Squeeze Bulk-Tools"
 
 #: ../inc/settings.php:101
 msgid ""
@@ -316,20 +326,28 @@ msgid ""
 "(and optionally change format) for items in your Media Library or a folder "
 "you choose."
 msgstr ""
+"Bilder in großen Mengen komprimieren und konvertieren. „Squeeze“ bedeutet, "
+"die Dateigröße zu optimieren (und optional das Format zu ändern) für "
+"Elemente in Ihrer Mediathek oder in einem von Ihnen gewählten Ordner."
 
 #: ../inc/settings.php:110
 msgid "Bulk Media Library Squeeze"
-msgstr ""
+msgstr "Bulk-Mediathek-Komprimierung"
 
 #: ../inc/settings.php:111
 msgid ""
 "Uses attachments in the library; backups follow your plugin settings. With "
 "Direct WebP and Backup original on, backups are saved as .bak.webp."
 msgstr ""
+"Verwendet Anhänge in der Mediathek; Backups folgen Ihren "
+"Plugin-Einstellungen. Mit Direct WebP und Backup original aktiviert werden "
+"Backups als .bak.webp gespeichert."
 
 #: ../inc/settings.php:122
 msgid "Direct WebP conversion is on <a href=\"%s\" target=\"_blank\">(change)</a>"
 msgstr ""
+"Direct-WebP-Konvertierung ist aktiv <a href=\"%s\" "
+"target=\"_blank\">(ändern)</a>"
 
 #: ../inc/settings.php:126
 msgid ""
@@ -337,69 +355,79 @@ msgid ""
 "hard-coded .jpg / .png links (image blocks, custom HTML, CSS, or "
 "shortcodes) so nothing breaks."
 msgstr ""
+"Nach der Konvertierung können sich Bild-URLs ändern. Prüfen Sie Themes und "
+"Inhalte auf fest codierte .jpg- / .png-Links (Bildblöcke, "
+"benutzerdefiniertes HTML, CSS oder Shortcodes), damit nichts ausfällt."
 
 #: ../inc/settings.php:127
 msgid ""
 "If Backup original is enabled, the .bak copy is converted to WebP as well "
 "(e.g. photo.bak.webp)."
 msgstr ""
+"Wenn Backup original aktiviert ist, wird die .bak-Kopie ebenfalls in WebP "
+"konvertiert (z. B. photo.bak.webp)."
 
 #: ../inc/settings.php:136, ../inc/settings.php:413
 msgid "complete"
-msgstr ""
+msgstr "abgeschlossen"
 
 #: ../inc/settings.php:139, ../inc/settings.php:416
 msgid "Squeezed images"
-msgstr ""
+msgstr "Komprimierte Bilder"
 
 #: ../inc/settings.php:151
 #. translators: %s: plugin version that started tracking savings
 msgid "Total saved (since version %s)"
-msgstr ""
+msgstr "Gesamt gespart (seit Version %s)"
 
 #: ../inc/settings.php:160
 #: assets/js/helpers.js:611
 #. translators: 1: human-readable bytes saved, 2: number of images with savings data
 msgid "%1$s on %2$d images"
-msgstr ""
+msgstr "%1$s bei %2$d Bildern"
 
 #: ../inc/settings.php:177, ../inc/settings.php:436
 msgid "Processed (success)"
-msgstr ""
+msgstr "Verarbeitet (erfolgreich)"
 
 #: ../inc/settings.php:181, ../inc/settings.php:440
 msgid "Remaining or needs attention"
-msgstr ""
+msgstr "Verbleibend oder Aufmerksamkeit erforderlich"
 
 #: ../inc/settings.php:191, ../inc/settings.php:450
 msgid "Bulk squeezing paused"
-msgstr ""
+msgstr "Bulk-Komprimierung pausiert"
 
 #: ../inc/settings.php:197, ../inc/settings.php:203
 msgid ""
 "Compress only images that have not been squeezed yet. Click again while "
 "running to pause."
 msgstr ""
+"Nur Bilder komprimieren, die noch nicht komprimiert wurden. Während der "
+"Ausführung erneut klicken, um zu pausieren."
 
 #: ../inc/settings.php:201
 #: assets/js/helpers.js:6
 msgid "Squeeze new images"
-msgstr ""
+msgstr "Neue Bilder komprimieren"
 
 #: ../inc/settings.php:206, ../inc/settings.php:212
 msgid ""
 "Run compression again on every library image, including ones already "
 "squeezed. Use after changing quality or WebP settings."
 msgstr ""
+"Komprimierung für alle Mediathek-Bilder erneut ausführen, einschließlich "
+"bereits komprimierter. Verwenden Sie dies nach Änderungen an Qualitäts- "
+"oder WebP-Einstellungen."
 
 #: ../inc/settings.php:210
 #: assets/js/helpers.js:7
 msgid "Re-squeeze all images"
-msgstr ""
+msgstr "Alle Bilder erneut komprimieren"
 
 #: ../inc/settings.php:219
 msgid "Directory Squeeze"
-msgstr ""
+msgstr "Verzeichnis-Komprimierung"
 
 #: ../inc/settings.php:220
 msgid ""
@@ -409,281 +437,321 @@ msgid ""
 "below (in-place; .bak is removed after success). Media Library year/month "
 "folders are blocked; use Bulk Media Library Squeeze for those."
 msgstr ""
+"Dateisystemordner — nicht auf die Mediathek beschränkt. Wenn Backup "
+"original aktiviert ist, werden .bak-Dateien neben den Bildern gespeichert; "
+"mit Direct WebP sind diese Backups ebenfalls WebP (z. B. photo.bak.webp). "
+"Stellen Sie Backups mit der Schaltfläche unten wieder her (an Ort und "
+"Stelle; .bak wird nach Erfolg entfernt). Mediathek-Jahres-/Monatsordner "
+"sind gesperrt; verwenden Sie dafür Bulk-Mediathek-Komprimierung."
 
 #: ../inc/settings.php:226
 msgid "Directory path"
-msgstr ""
+msgstr "Verzeichnispfad"
 
 #: ../inc/settings.php:227
 msgid "Relative to site root."
-msgstr ""
+msgstr "Relativ zum Website-Stammverzeichnis."
 
 #: ../inc/settings.php:236
 #: assets/js/helpers.js:471
 msgid "Clear the path field"
-msgstr ""
+msgstr "Pfadfeld leeren"
 
 #: ../inc/settings.php:237
 #: assets/js/helpers.js:470
 msgid "Clear path"
-msgstr ""
+msgstr "Pfad leeren"
 
 #: ../inc/settings.php:243
 msgid "Clear path only empties the field — it does not delete files on disk."
 msgstr ""
+"Pfad leeren leert nur das Feld — es werden keine Dateien auf der Festplatte "
+"gelöscht."
 
 #: ../inc/settings.php:251, ../inc/settings.php:276
 msgid "Select Directory"
-msgstr ""
+msgstr "Verzeichnis auswählen"
 
 #: ../inc/settings.php:256
 msgid "Select Directory for Squeeze"
-msgstr ""
+msgstr "Verzeichnis für Squeeze auswählen"
 
 #: ../inc/settings.php:268
 msgid "Loading directories..."
-msgstr ""
+msgstr "Verzeichnisse werden geladen..."
 
 #: ../inc/settings.php:286
 #: assets/js/helpers.js:8
 msgid "Run Directory Squeeze"
-msgstr ""
+msgstr "Verzeichnis-Komprimierung starten"
 
 #: ../inc/settings.php:292
 msgid "Restore backups in selected folders"
-msgstr ""
+msgstr "Backups in ausgewählten Ordnern wiederherstellen"
 
 #: ../inc/settings.php:300
 msgid "Premium"
-msgstr ""
+msgstr "Premium"
 
 #: ../inc/settings.php:301, ../inc/settings.php:337, ../inc/settings.php:399
 msgid "Squeeze from a page"
-msgstr ""
+msgstr "Von einer Seite komprimieren"
 
 #: ../inc/settings.php:302, ../inc/settings.php:720
 msgid ""
 "Paste the URL of a slow page and squeeze every image on it — the page "
 "PageSpeed complains about."
 msgstr ""
+"Fügen Sie die URL einer langsamen Seite ein und komprimieren Sie alle "
+"Bilder darauf — die Seite, über die PageSpeed sich beschwert."
 
 #: ../inc/settings.php:306
 msgid "Page URL"
-msgstr ""
+msgstr "Seiten-URL"
 
 #: ../inc/settings.php:317
 msgid ""
 "Available in Premium. The URL field is shown so you can see how the "
 "workflow works."
 msgstr ""
+"In Premium verfügbar. Das URL-Feld wird angezeigt, damit Sie sehen, wie der "
+"Workflow funktioniert."
 
 #: ../inc/settings.php:322
 msgid "Unlock with Premium"
-msgstr ""
+msgstr "Mit Premium freischalten"
 
 #: ../inc/settings.php:338
 msgid ""
 "Choose a page and squeeze every image on it — the page PageSpeed complains "
 "about."
 msgstr ""
+"Wählen Sie eine Seite und komprimieren Sie alle Bilder darauf — die Seite, "
+"über die PageSpeed sich beschwert."
 
 #: ../inc/settings.php:342
 msgid "Page"
-msgstr ""
+msgstr "Seite"
 
 #: ../inc/settings.php:358
 msgid "Search pages…"
-msgstr ""
+msgstr "Seiten suchen…"
 
 #: ../inc/settings.php:376
 msgid "Search by title, then squeeze every image found on that page."
 msgstr ""
+"Nach Titel suchen und dann jedes auf dieser Seite gefundene Bild "
+"komprimieren."
 
 #: ../inc/settings.php:384
 msgid "Squeeze from this page"
-msgstr ""
+msgstr "Von dieser Seite komprimieren"
 
 #: ../inc/settings.php:404
 msgid "Fetching images from the selected page and squeezing them in your browser."
 msgstr ""
+"Bilder von der ausgewählten Seite werden abgerufen und in Ihrem Browser "
+"komprimiert."
 
 #: ../inc/settings.php:424
 msgid "Fetching images..."
-msgstr ""
+msgstr "Bilder werden abgerufen..."
 
 #: ../inc/settings.php:456
 msgid "Pause or resume squeezing images from this page."
-msgstr ""
+msgstr "Komprimierung der Bilder von dieser Seite pausieren oder fortsetzen."
 
 #: ../inc/settings.php:460
 msgid "Pause Squeezing"
-msgstr ""
+msgstr "Komprimierung pausieren"
 
 #: ../inc/settings.php:462
 msgid ""
 "Click again while running to pause. Keep this tab open until the run "
 "finishes."
 msgstr ""
+"Während der Ausführung erneut klicken, um zu pausieren. Lassen Sie diesen "
+"Tab geöffnet, bis der Vorgang abgeschlossen ist."
 
 #: ../inc/settings.php:476
 msgid "Processed formats:"
-msgstr ""
+msgstr "Verarbeitete Formate:"
 
 #: ../inc/settings.php:477
 msgid ""
 "You can change the image formats for squeezing on the <a href=\"%s\" "
 "target=\"_blank\">settings page.</a>"
 msgstr ""
+"Sie können die Bildformate für die Komprimierung auf der <a href=\"%s\" "
+"target=\"_blank\">Einstellungsseite</a> ändern."
 
 #: ../inc/settings.php:487
 msgid "Start Squeezing your images and watch the progress here."
 msgstr ""
+"Starten Sie die Komprimierung Ihrer Bilder und verfolgen Sie den "
+"Fortschritt hier."
 
 #: ../inc/settings.php:516
 msgid ""
 "The Apache mod_rewrite module is not enabled on your server OR your server "
 "is not running Apache."
 msgstr ""
+"Das Apache-Modul mod_rewrite ist auf Ihrem Server nicht aktiviert ODER Ihr "
+"Server läuft nicht unter Apache."
 
 #: ../inc/settings.php:517
 msgid ""
 "To serve WebP, enable mod_rewrite, or switch to \"Rewrite <img> src to WebP "
 "URLs in HTML\" delivery."
 msgstr ""
+"Um WebP auszuliefern, aktivieren Sie mod_rewrite oder wechseln Sie zur "
+"Auslieferung „Rewrite <img> src to WebP URLs in HTML“."
 
 #: ../inc/settings.php:535
 msgid "Basic Settings"
-msgstr ""
+msgstr "Grundeinstellungen"
 
 #: ../inc/settings.php:536, ../inc/settings.php:615, ../inc/settings.php:915
 msgid "JPEG Settings"
-msgstr ""
+msgstr "JPEG-Einstellungen"
 
 #: ../inc/settings.php:537, ../inc/settings.php:639, ../inc/settings.php:945
 msgid "PNG Settings"
-msgstr ""
+msgstr "PNG-Einstellungen"
 
 #: ../inc/settings.php:538, ../inc/settings.php:652, ../inc/settings.php:949
 msgid "WEBP Settings"
-msgstr ""
+msgstr "WEBP-Einstellungen"
 
 #: ../inc/settings.php:539, ../inc/settings.php:665, ../inc/settings.php:956
 msgid "AVIF Settings"
-msgstr ""
+msgstr "AVIF-Einstellungen"
 
 #: ../inc/settings.php:540, ../inc/settings.php:678, ../inc/settings.php:1138, ../squeeze.php:810
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentation"
 
 #: ../inc/settings.php:542
 msgid "Upgrade"
-msgstr ""
+msgstr "Upgrade"
 
 #: ../inc/settings.php:548
 msgid "Your License"
-msgstr ""
+msgstr "Ihre Lizenz"
 
 #: ../inc/settings.php:564
 msgid "Quick start"
-msgstr ""
+msgstr "Schnellstart"
 
 #: ../inc/settings.php:565
 msgid "Core options used on most sites."
-msgstr ""
+msgstr "Kernoptionen, die auf den meisten Websites verwendet werden."
 
 #: ../inc/settings.php:573
 msgid "WebP delivery"
-msgstr ""
+msgstr "WebP-Auslieferung"
 
 #: ../inc/settings.php:574
 msgid "Choose how WebP files are stored and served. Pick one strategy."
 msgstr ""
+"Wählen Sie, wie WebP-Dateien gespeichert und ausgeliefert werden. Wählen "
+"Sie eine Strategie."
 
 #: ../inc/settings.php:576, ../inc/settings.php:997
 msgid "WebP delivery mode"
-msgstr ""
+msgstr "WebP-Auslieferungsmodus"
 
 #: ../inc/settings.php:585
 msgid "Thumbnails & limits"
-msgstr ""
+msgstr "Vorschaubilder & Grenzwerte"
 
 #: ../inc/settings.php:586
 msgid "Which generated sizes to squeeze, resize limits, and timeout."
-msgstr ""
+msgstr "Welche generierten Größen komprimiert werden, Größenlimits und Timeout."
 
 #: ../inc/settings.php:595
 msgid "Exclusions"
-msgstr ""
+msgstr "Ausschlüsse"
 
 #: ../inc/settings.php:596
 msgid "Skip matching files during bulk or upload squeeze."
-msgstr ""
+msgstr "Übereinstimmende Dateien bei Bulk- oder Upload-Komprimierung überspringen."
 
 #: ../inc/settings.php:606
 msgid "Summary and help"
-msgstr ""
+msgstr "Zusammenfassung und Hilfe"
 
 #: ../inc/settings.php:626
 msgid "JPEG Advanced Settings"
-msgstr ""
+msgstr "JPEG-Erweiterte Einstellungen"
 
 #: ../inc/settings.php:679
 msgid "Documentation for Squeeze plugin."
-msgstr ""
+msgstr "Dokumentation für das Squeeze-Plugin."
 
 #: ../inc/settings.php:689
 msgid ""
 "For more information, please visit the <a href=\"%s\" "
 "target=\"_blank\">official documentation website</a>."
 msgstr ""
+"Weitere Informationen finden Sie auf der <a href=\"%s\" "
+"target=\"_blank\">offiziellen Dokumentationswebsite</a>."
 
 #: ../inc/settings.php:705, ../inc/settings.php:793, ../inc/settings.php:1411
 msgid "Upgrade to Premium"
-msgstr ""
+msgstr "Auf Premium upgraden"
 
 #: ../inc/settings.php:714
 msgid "Image Comparison"
-msgstr ""
+msgstr "Bildvergleich"
 
 #: ../inc/settings.php:715
 msgid ""
 "Slide between the original and squeezed image in the Media Library so you "
 "can judge quality before you commit."
 msgstr ""
+"Schieben Sie in der Mediathek zwischen Original- und komprimiertem Bild, um "
+"die Qualität vor dem endgültigen Speichern zu beurteilen."
 
 #: ../inc/settings.php:719
 msgid "Bulk Squeeze from a Page"
-msgstr ""
+msgstr "Bulk-Komprimierung von einer Seite"
 
 #: ../inc/settings.php:724
 msgid "Resize Original Image"
-msgstr ""
+msgstr "Originalbild skalieren"
 
 #: ../inc/settings.php:725
 msgid ""
 "Cap original width and height so huge phone photos never land full-size on "
 "your server."
 msgstr ""
+"Begrenzen Sie Originalbreite und -höhe, damit riesige Handyfotos nie in "
+"voller Größe auf Ihrem Server landen."
 
 #: ../inc/settings.php:729
 msgid "CDN URL mapping"
-msgstr ""
+msgstr "CDN-URL-Zuordnung"
 
 #: ../inc/settings.php:730
 msgid ""
 "Map CDN URLs back to local files so Squeeze still finds and compresses "
 "Offload Media / CDN images."
 msgstr ""
+"CDN-URLs lokalen Dateien zuordnen, damit Squeeze Offload Media- / "
+"CDN-Bilder weiterhin findet und komprimiert."
 
 #: ../inc/settings.php:734
 msgid "Elementor on upload"
-msgstr ""
+msgstr "Elementor beim Upload"
 
 #: ../inc/settings.php:735
 msgid ""
 "Compress images in the browser when they are uploaded through Elementor, "
 "before they hit your media library."
 msgstr ""
+"Bilder im Browser komprimieren, wenn sie über Elementor hochgeladen werden, "
+"bevor sie in Ihrer Mediathek landen."
 
 #: ../inc/settings.php:739
 msgid "Gravity Forms uploads"
@@ -697,61 +765,64 @@ msgstr ""
 
 #: ../inc/settings.php:758
 msgid "$4.99 / month"
-msgstr ""
+msgstr "$4,99 / Monat"
 
 #: ../inc/settings.php:762
 msgid "$29.99 / year"
-msgstr ""
+msgstr "$29,99 / Jahr"
 
 #: ../inc/settings.php:766
 msgid "$99.99 once"
-msgstr ""
+msgstr "$99,99 einmalig"
 
 #: ../inc/settings.php:773
 msgid "Billing cycle"
-msgstr ""
+msgstr "Abrechnungszeitraum"
 
 #: ../inc/settings.php:774
 msgid "Monthly"
-msgstr ""
+msgstr "Monatlich"
 
 #: ../inc/settings.php:775
 msgid "Annual"
-msgstr ""
+msgstr "Jährlich"
 
 #: ../inc/settings.php:776
 msgid "Lifetime"
-msgstr ""
+msgstr "Lebenslang"
 
 #: ../inc/settings.php:783
 msgid "14-day money-back guarantee. No trial inside the free plugin."
-msgstr ""
+msgstr "14-tägige Geld-zurück-Garantie. Keine Testversion im kostenlosen Plugin."
 
 #: ../inc/settings.php:809
 msgid "Your license hasn't been activated"
-msgstr ""
+msgstr "Ihre Lizenz wurde nicht aktiviert"
 
 #: ../inc/settings.php:814
 msgid ""
 "After you entered your license key, you will receive a confirmation email. "
 "Pleae click on the confirmation button in that email to complete the opt in."
 msgstr ""
+"Nach Eingabe Ihres Lizenzschlüssels erhalten Sie eine Bestätigungs-E-Mail. "
+"Bitte klicken Sie auf die Bestätigungsschaltfläche in dieser E-Mail, um die "
+"Anmeldung abzuschließen."
 
 #: ../inc/settings.php:822
 msgid "Save Changes"
-msgstr ""
+msgstr "Änderungen speichern"
 
 #: ../inc/settings.php:823
 msgid "Restore defaults"
-msgstr ""
+msgstr "Standardwerte wiederherstellen"
 
 #: ../inc/settings.php:838, ../inc/settings.php:1115
 msgid "Squeeze on upload"
-msgstr ""
+msgstr "Beim Upload komprimieren"
 
 #: ../inc/settings.php:838
 msgid "Compresses images in the browser before they are uploaded."
-msgstr ""
+msgstr "Komprimiert Bilder im Browser, bevor sie hochgeladen werden."
 
 #: ../inc/settings.php:839
 msgid "Squeeze form uploads"
@@ -763,210 +834,243 @@ msgid ""
 "uploaded or submitted. Keeps the original format (Direct WebP does not "
 "apply). Contact Form 7 is included; Gravity Forms requires Premium."
 msgstr ""
+"Komprimiert Bilder in Frontend-Formular-Dateifeldern vor Upload oder "
+"Absenden. Behält das Originalformat bei (Direct WebP gilt nicht). Contact "
+"Form 7 ist enthalten; Gravity Forms erfordert Premium."
 
 #: ../inc/settings.php:840
 msgid "Backup original image"
-msgstr ""
+msgstr "Originalbild sichern"
 
 #: ../inc/settings.php:840
 msgid ""
 "Saves a .bak copy beside the file before squeezing. With Direct WebP on, "
 "that backup is also WebP (e.g. photo.bak.webp)."
 msgstr ""
+"Speichert vor der Komprimierung eine .bak-Kopie neben der Datei. Mit Direct "
+"WebP ist dieses Backup ebenfalls WebP (z. B. photo.bak.webp)."
 
 #: ../inc/settings.php:841
 msgid "Delete plugin data on uninstall"
-msgstr ""
+msgstr "Plugin-Daten bei Deinstallation löschen"
 
 #: ../inc/settings.php:841
 msgid ""
 "When enabled, uninstalling Squeeze removes its settings, stats, and "
 "compression status metadata. Image files are never deleted."
 msgstr ""
+"Wenn aktiviert, entfernt die Deinstallation von Squeeze dessen "
+"Einstellungen, Statistiken und Metadaten zum Komprimierungsstatus. "
+"Bilddateien werden niemals gelöscht."
 
 #: ../inc/settings.php:842
 msgid "Image formats"
-msgstr ""
+msgstr "Bildformate"
 
 #: ../inc/settings.php:842
 msgid "Select which image formats you want to be squeezed."
-msgstr ""
+msgstr "Wählen Sie, welche Bildformate komprimiert werden sollen."
 
 #: ../inc/settings.php:850, ../inc/settings.php:846
 msgid "CDN URL"
-msgstr ""
+msgstr "CDN-URL"
 
 #: ../inc/settings.php:850, ../inc/settings.php:846
 msgid ""
 "If your site serves uploads from a CDN, enter that base URL so Squeeze can "
 "map CDN links to local files (all WebP delivery modes)."
 msgstr ""
+"Wenn Ihre Website Uploads über ein CDN ausliefert, geben Sie diese "
+"Basis-URL ein, damit Squeeze CDN-Links lokalen Dateien zuordnen kann (alle "
+"WebP-Auslieferungsmodi)."
 
 #: ../inc/settings.php:860
 msgid ""
 "Map CDN URLs back to local files so Squeeze can find and compress Offload "
 "Media / CDN images."
 msgstr ""
+"CDN-URLs lokalen Dateien zuordnen, damit Squeeze Offload Media- / "
+"CDN-Bilder finden und komprimieren kann."
 
 #: ../inc/settings.php:867
 msgid "Squeeze thumbnails"
-msgstr ""
+msgstr "Vorschaubilder komprimieren"
 
 #: ../inc/settings.php:867
 msgid ""
 "Choose which image thumbnail sizes you want to squeeze along with the "
 "original image."
 msgstr ""
+"Wählen Sie, welche Vorschaubildgrößen zusammen mit dem Originalbild "
+"komprimiert werden sollen."
 
 #: ../inc/settings.php:876, ../inc/settings.php:871
 msgid "Max. image width"
-msgstr ""
+msgstr "Max. Bildbreite"
 
 #: ../inc/settings.php:876, ../inc/settings.php:871
 msgid ""
 "Limit a width of an original image. Leave this field empty if you do not "
 "want to crop the image by width."
 msgstr ""
+"Breite eines Originalbilds begrenzen. Lassen Sie dieses Feld leer, wenn Sie "
+"das Bild nicht in der Breite zuschneiden möchten."
 
 #: ../inc/settings.php:886
 msgid "Cap how wide original uploads can be before Squeeze compresses them."
 msgstr ""
+"Begrenzen Sie, wie breit Original-Uploads sein dürfen, bevor Squeeze sie "
+"komprimiert."
 
 #: ../inc/settings.php:892, ../inc/settings.php:872
 msgid "Max. image height"
-msgstr ""
+msgstr "Max. Bildhöhe"
 
 #: ../inc/settings.php:892, ../inc/settings.php:872
 msgid ""
 "Limit a height of an original image. Leave this field empty if you do not "
 "want to crop the image by height."
 msgstr ""
+"Höhe eines Originalbilds begrenzen. Lassen Sie dieses Feld leer, wenn Sie "
+"das Bild nicht in der Höhe zuschneiden möchten."
 
 #: ../inc/settings.php:902
 msgid "Cap how tall original uploads can be before Squeeze compresses them."
 msgstr ""
+"Begrenzen Sie, wie hoch Original-Uploads sein dürfen, bevor Squeeze sie "
+"komprimiert."
 
 #: ../inc/settings.php:907
 msgid "Squeeze timeout"
-msgstr ""
+msgstr "Squeeze-Timeout"
 
 #: ../inc/settings.php:907
 msgid ""
 "Time limit for squeezing an image. If you get an error during image "
 "squeezing, try to increase this value."
 msgstr ""
+"Zeitlimit für die Bildkomprimierung. Wenn bei der Komprimierung ein Fehler "
+"auftritt, versuchen Sie, diesen Wert zu erhöhen."
 
 #: ../inc/settings.php:910
 msgid "Excluded images"
-msgstr ""
+msgstr "Ausgeschlossene Bilder"
 
 #: ../inc/settings.php:910
 msgid ""
 "Enter a list of images that you want to exclude from squeezing. Both full "
 "URLs and partial strings can be used. One URL per line."
 msgstr ""
+"Geben Sie eine Liste von Bildern ein, die von der Komprimierung "
+"ausgeschlossen werden sollen. Vollständige URLs und Teilzeichenketten sind "
+"möglich. Eine URL pro Zeile."
 
 #: ../inc/settings.php:917, ../inc/settings.php:947, ../inc/settings.php:952, ../inc/settings.php:958
 msgid "Quality"
-msgstr ""
+msgstr "Qualität"
 
 #: ../inc/settings.php:918
 msgid "Smoothing"
-msgstr ""
+msgstr "Glättung"
 
 #: ../inc/settings.php:919
 msgid "Pointless spec compliance"
-msgstr ""
+msgstr "Unnötige Spezifikationskonformität"
 
 #: ../inc/settings.php:922
 msgid "Progressive rendering"
-msgstr ""
+msgstr "Progressive Darstellung"
 
 #: ../inc/settings.php:923
 msgid "Optimize Huffman table"
-msgstr ""
+msgstr "Huffman-Tabelle optimieren"
 
 #: ../inc/settings.php:924
 msgid "Channels"
-msgstr ""
+msgstr "Kanäle"
 
 #: ../inc/settings.php:925
 msgid "Quantization"
-msgstr ""
+msgstr "Quantisierung"
 
 #: ../inc/settings.php:936
 msgid "Trellis multipass"
-msgstr ""
+msgstr "Trellis-Mehrfachdurchlauf"
 
 #: ../inc/settings.php:937
 msgid "Optimize zero block runs"
-msgstr ""
+msgstr "Nullblock-Läufe optimieren"
 
 #: ../inc/settings.php:938
 msgid "Optimize after trellis quantization"
-msgstr ""
+msgstr "Nach Trellis-Quantisierung optimieren"
 
 #: ../inc/settings.php:939
 msgid "Trellis quantization passes"
-msgstr ""
+msgstr "Trellis-Quantisierungsdurchläufe"
 
 #: ../inc/settings.php:940
 msgid "Auto subsample chroma"
-msgstr ""
+msgstr "Chroma automatisch subsampeln"
 
 #: ../inc/settings.php:941
 msgid "Subsample chroma by"
-msgstr ""
+msgstr "Chroma subsampeln um"
 
 #: ../inc/settings.php:942
 msgid "Separate chroma quality"
-msgstr ""
+msgstr "Separate Chroma-Qualität"
 
 #: ../inc/settings.php:943
 msgid "Chroma quality"
-msgstr ""
+msgstr "Chroma-Qualität"
 
 #: ../inc/settings.php:951
 msgid "Effort"
-msgstr ""
+msgstr "Aufwand"
 
 #: ../inc/settings.php:953
 msgid "Lossless"
-msgstr ""
+msgstr "Verlustfrei"
 
 #: ../inc/settings.php:954
 msgid "Near lossless"
-msgstr ""
+msgstr "Nahezu verlustfrei"
 
 #: ../inc/settings.php:1000
 msgid "Recommended"
-msgstr ""
+msgstr "Empfohlen"
 
 #: ../inc/settings.php:1001, ../inc/settings.php:1098
 msgid "Direct WebP"
-msgstr ""
+msgstr "Direct WebP"
 
 #: ../inc/settings.php:1002
 msgid "Replace originals with .webp on disk. Lowest storage; URLs change to .webp."
 msgstr ""
+"Originale auf der Festplatte durch .webp ersetzen. Geringster "
+"Speicherbedarf; URLs ändern sich zu .webp."
 
 #: ../inc/settings.php:1005
 msgid "Advanced delivery methods"
-msgstr ""
+msgstr "Erweiterte Auslieferungsmethoden"
 
 #: ../inc/settings.php:1007
 msgid ""
 "Keep JPEG/PNG originals and serve WebP via a separate folder. Prefer Direct "
 "WebP unless you have a specific hosting constraint."
 msgstr ""
+"JPEG/PNG-Originale behalten und WebP über einen separaten Ordner "
+"ausliefern. Bevorzugen Sie Direct WebP, sofern keine spezifische "
+"Hosting-Einschränkung vorliegt."
 
 #: ../inc/settings.php:1011
 msgid "PHP / any host"
-msgstr ""
+msgstr "PHP / jeder Host"
 
 #: ../inc/settings.php:1012, ../inc/settings.php:1102
 msgid "Rewrite <img> src to WebP URLs in HTML"
-msgstr ""
+msgstr "Rewrite <img> src to WebP URLs in HTML"
 
 #: ../inc/settings.php:1013
 msgid ""
@@ -974,14 +1078,17 @@ msgid ""
 "changes src and srcset in the page HTML to the WebP path. Best when "
 ".htaccess rewrites are missing (Nginx, CDN, etc.)."
 msgstr ""
+"Behält JPEG/PNG in uploads und WebP-Kopien unter squeeze-webp. Squeeze "
+"ändert src und srcset im Seiten-HTML auf den WebP-Pfad. Am besten, wenn "
+".htaccess-Rewrites fehlen (Nginx, CDN usw.)."
 
 #: ../inc/settings.php:1017
 msgid "Apache / .htaccess"
-msgstr ""
+msgstr "Apache / .htaccess"
 
 #: ../inc/settings.php:1018, ../inc/settings.php:1100
 msgid "Keep JPEG/PNG URLs — server serves WebP"
-msgstr ""
+msgstr "Keep JPEG/PNG URLs — server serves WebP"
 
 #: ../inc/settings.php:1019
 msgid ""
@@ -989,10 +1096,13 @@ msgid ""
 "shows .jpg/.png URLs. The server rewrite rules send WebP bytes when the "
 "browser supports it — no HTML changes."
 msgstr ""
+"Behält Originale in uploads; WebP-Dateien landen in squeeze-webp. Das "
+"Seiten-HTML zeigt weiterhin .jpg/.png-URLs. Die Server-Rewrite-Regeln "
+"liefern WebP-Bytes, wenn der Browser es unterstützt — ohne HTML-Änderungen."
 
 #: ../inc/settings.php:1026, ../inc/settings.php:1037
 msgid "Not compatible with WP Offload Media"
-msgstr ""
+msgstr "Nicht kompatibel mit WP Offload Media"
 
 #: ../inc/settings.php:1027
 msgid ""
@@ -1002,6 +1112,12 @@ msgid ""
 "CDN (S3, GCS, DigitalOcean Spaces, etc.) and those requests never pass "
 "through your .htaccess — so WebP files will not be served."
 msgstr ""
+"Der Modus „Keep JPEG/PNG URLs — server serves WebP“ basiert auf "
+"Apache-.htaccess-Rewrite-Regeln, die nur für Anfragen funktionieren, die "
+"Ihren Origin-Server erreichen. Wenn WP Offload Media aktiv ist, verweisen "
+"Bild-URLs auf ein externes CDN (S3, GCS, DigitalOcean Spaces usw.), und "
+"diese Anfragen passieren nie Ihre .htaccess — WebP-Dateien werden daher "
+"nicht ausgeliefert."
 
 #: ../inc/settings.php:1029, ../inc/settings.php:1040
 msgid ""
@@ -1009,6 +1125,9 @@ msgid ""
 "images to WebP in-place and WP Offload Media handles uploading "
 "automatically."
 msgstr ""
+"Bitte wechseln Sie zur <strong>Direct WebP</strong>-Konvertierung — sie "
+"konvertiert Bilder an Ort und Stelle und WP Offload Media übernimmt den "
+"Upload automatisch."
 
 #: ../inc/settings.php:1038
 msgid ""
@@ -1017,30 +1136,39 @@ msgid ""
 "folder and are never pushed to your external storage provider (S3, GCS, "
 "DigitalOcean Spaces, etc.), so they cannot be served from your CDN URL."
 msgstr ""
+"Der Modus „Rewrite <img> src to WebP URLs in HTML“ ist nicht kompatibel mit "
+"WP Offload Media. WebP-Sidecar-Dateien werden in einem lokalen "
+"squeeze-webp/-Ordner gespeichert und nie an Ihren externen Speicheranbieter "
+"(S3, GCS, DigitalOcean Spaces usw.) übertragen, daher können sie nicht über "
+"Ihre CDN-URL ausgeliefert werden."
 
 #: ../inc/settings.php:1047
 msgid "Show example: Rewrite <img> src to WebP URLs in HTML"
-msgstr ""
+msgstr "Beispiel anzeigen: Rewrite <img> src to WebP URLs in HTML"
 
 #: ../inc/settings.php:1049
 msgid "Before: the page outputs a normal uploads URL for the JPEG."
-msgstr ""
+msgstr "Vorher: Die Seite gibt eine normale Uploads-URL für das JPEG aus."
 
 #: ../inc/settings.php:1052
 msgid ""
 "After: the same img tag in the markup, but PHP rewrites src to the WebP "
 "path under squeeze-webp when that file exists."
 msgstr ""
+"Nachher: Dasselbe img-Tag im Markup, aber PHP schreibt src auf den "
+"WebP-Pfad unter squeeze-webp um, wenn diese Datei existiert."
 
 #: ../inc/settings.php:1057
 msgid "Show example: Keep JPEG/PNG URLs — server serves WebP"
-msgstr ""
+msgstr "Beispiel anzeigen: Keep JPEG/PNG URLs — server serves WebP"
 
 #: ../inc/settings.php:1059
 msgid ""
 "The published HTML keeps the usual uploads URL on the img (still ends in "
 ".jpg or .png)."
 msgstr ""
+"Das veröffentlichte HTML behält die übliche Uploads-URL im img (endet "
+"weiterhin in .jpg oder .png)."
 
 #: ../inc/settings.php:1062
 msgid ""
@@ -1048,78 +1176,93 @@ msgid ""
 "same URL can be served as a WebP response from the file under squeeze-webp, "
 "without changing the markup."
 msgstr ""
+"Wenn der Browser WebP unterstützt und Ihre Server-Rewrite-Regeln greifen, "
+"kann dieselbe URL als WebP-Antwort aus der Datei unter squeeze-webp "
+"ausgeliefert werden, ohne das Markup zu ändern."
 
 #: ../inc/settings.php:1064
 msgid "On disk (after optimization)"
-msgstr ""
+msgstr "Auf der Festplatte (nach Optimierung)"
 
 #: ../inc/settings.php:1065
 msgid "original"
-msgstr ""
+msgstr "Original"
 
 #: ../inc/settings.php:1066
 msgid "sidecar WebP"
-msgstr ""
+msgstr "Sidecar-WebP"
 
 #: ../inc/settings.php:1073
 msgid "Show example: Direct WebP (file sizes)"
-msgstr ""
+msgstr "Beispiel anzeigen: Direct WebP (Dateigrößen)"
 
 #: ../inc/settings.php:1075
 msgid ""
 "Direct WebP: on disk, files use the .webp extension instead of .jpg / .png "
 "for the same attachment paths."
 msgstr ""
+"Direct WebP: Auf der Festplatte verwenden Dateien die .webp-Erweiterung "
+"statt .jpg / .png für dieselben Anhangspfade."
 
 #: ../inc/settings.php:1076
 #: ../inc/settings.php:1717
 #: assets/js/script.js:527
 msgid "Before"
-msgstr ""
+msgstr "Vorher"
 
 #: ../inc/settings.php:1080
 #: ../inc/settings.php:1718
 #: assets/js/script.js:530
 msgid "After"
-msgstr ""
+msgstr "Nachher"
 
 #: ../inc/settings.php:1109
 msgid "Current profile"
-msgstr ""
+msgstr "Aktuelles Profil"
 
 #: ../inc/settings.php:1118
 msgid "Backup on"
-msgstr ""
+msgstr "Backup aktiviert"
 
 #: ../inc/settings.php:1130
 msgid "Originals stay in uploads; page HTML points at WebP under squeeze-webp."
 msgstr ""
+"Originale bleiben in uploads; Seiten-HTML verweist auf WebP unter "
+"squeeze-webp."
 
 #: ../inc/settings.php:1131
 msgid "Works without .htaccess — PHP rewrites image URLs on each page load."
 msgstr ""
+"Funktioniert ohne .htaccess — PHP schreibt Bild-URLs bei jedem Seitenaufruf "
+"um."
 
 #: ../inc/settings.php:1127
 msgid ""
 "HTML keeps normal .jpg/.png URLs; WebP is chosen by the server when the "
 "browser supports it."
 msgstr ""
+"HTML behält normale .jpg/.png-URLs; WebP wird vom Server gewählt, wenn der "
+"Browser es unterstützt."
 
 #: ../inc/settings.php:1128
 msgid "Needs working .htaccess rewrite rules (Apache mod_rewrite or equivalent)."
 msgstr ""
+"Erfordert funktionierende .htaccess-Rewrite-Regeln (Apache mod_rewrite oder "
+"gleichwertig)."
 
 #: ../inc/settings.php:1124
 msgid "Best for storage savings on new uploads."
-msgstr ""
+msgstr "Am besten für Speicherersparnis bei neuen Uploads."
 
 #: ../inc/settings.php:1125
 msgid "If you deactivate the plugin, hard-coded .jpg/.png links may need updating."
 msgstr ""
+"Wenn Sie das Plugin deaktivieren, müssen fest codierte .jpg/.png-Links "
+"möglicherweise aktualisiert werden."
 
 #: ../inc/settings.php:1142
 msgid "Squeeze documentation"
-msgstr ""
+msgstr "Squeeze-Dokumentation"
 
 #: ../inc/settings.php:1221
 msgid ""
@@ -1127,50 +1270,54 @@ msgid ""
 "re-squeeze images after switching. Leftover JPEG/PNG + WebP pairs or "
 "orphaned files under squeeze-webp may remain until cleaned up."
 msgstr ""
+"WebP-Auslieferungsmodus geändert. Vorhandene Dateien werden nicht "
+"automatisch migriert — komprimieren Sie Bilder nach dem Wechsel erneut. "
+"Übrig gebliebene JPEG/PNG- + WebP-Paare oder verwaiste Dateien unter "
+"squeeze-webp können bis zur Bereinigung verbleiben."
 
 #: ../inc/settings.php:1244
 msgid "Settings have been updated."
-msgstr ""
+msgstr "Einstellungen wurden aktualisiert."
 
 #: ../inc/settings.php:1353
 msgid "Select all"
-msgstr ""
+msgstr "Alle auswählen"
 
 #: ../inc/settings.php:1354
 msgid "Clear all"
-msgstr ""
+msgstr "Alle löschen"
 
 #: ../inc/settings.php:1355
 msgid "WordPress defaults"
-msgstr ""
+msgstr "WordPress-Standardwerte"
 
 #: ../inc/settings.php:1379
 msgid "(mandatory when Direct WebP is enabled)"
-msgstr ""
+msgstr "(obligatorisch, wenn Direct WebP aktiviert ist)"
 
 #: ../inc/settings.php:1419
 msgid "Basic squeezing settings."
-msgstr ""
+msgstr "Grundlegende Komprimierungseinstellungen."
 
 #: ../inc/settings.php:1422
 msgid "Squeezing settings for JPEG images."
-msgstr ""
+msgstr "Komprimierungseinstellungen für JPEG-Bilder."
 
 #: ../inc/settings.php:1425
 msgid "More precise settings for experienced users."
-msgstr ""
+msgstr "Präzisere Einstellungen für erfahrene Nutzer."
 
 #: ../inc/settings.php:1428
 msgid "Squeezing settings for PNG images."
-msgstr ""
+msgstr "Komprimierungseinstellungen für PNG-Bilder."
 
 #: ../inc/settings.php:1431
 msgid "Squeezing settings for WebP images."
-msgstr ""
+msgstr "Komprimierungseinstellungen für WebP-Bilder."
 
 #: ../inc/settings.php:1434
 msgid "Squeezing settings for Avif images."
-msgstr ""
+msgstr "Komprimierungseinstellungen für AVIF-Bilder."
 
 #: ../inc/settings.php:1437
 msgid ""
@@ -1184,66 +1331,75 @@ msgid ""
 "To activate your license and manage your account details (e.g. to receive "
 "security & feature updates notifications), please enter your license key."
 msgstr ""
+"Geben Sie Ihren Lizenzschlüssel ein, um Ihre Lizenz zu aktivieren und Ihre "
+"Kontodaten zu verwalten (z. B. um Benachrichtigungen zu Sicherheits- und "
+"Feature-Updates zu erhalten)."
 
 #: ../inc/settings.php:1453
 msgid "Opt In & Connect"
-msgstr ""
+msgstr "Anmelden & verbinden"
 
 #: ../inc/settings.php:1466
 msgid "Settings have not been restored."
-msgstr ""
+msgstr "Einstellungen wurden nicht wiederhergestellt."
 
 #: ../inc/settings.php:1464
 msgid "Settings have been restored."
-msgstr ""
+msgstr "Einstellungen wurden wiederhergestellt."
 
 #: ../inc/settings.php:1474
 msgid "Rewrite rules have been flushed."
-msgstr ""
+msgstr "Rewrite-Regeln wurden geleert."
 
 #: ../inc/settings.php:1497
 msgid "Image format is not selected for compression in the plugin settings"
 msgstr ""
+"Bildformat ist in den Plugin-Einstellungen nicht für die Komprimierung "
+"ausgewählt"
 
 #: ../inc/settings.php:1499
 msgid "Image is excluded from compression"
-msgstr ""
+msgstr "Bild ist von der Komprimierung ausgeschlossen"
 
 #: ../inc/settings.php:1502
 msgid ""
 "Could not compress — result was larger than original. Try <a href=\"%s\" "
 "target=\"_blank\">adjusting compression settings</a>, then re-squeeze."
 msgstr ""
+"Komprimierung nicht möglich — Ergebnis war größer als das Original. "
+"Versuchen Sie, die <a href=\"%s\" "
+"target=\"_blank\">Komprimierungseinstellungen anzupassen</a>, und "
+"komprimieren Sie erneut."
 
 #: ../inc/settings.php:1503, ../inc/settings.php:1508
 msgid "Restore original image"
-msgstr ""
+msgstr "Originalbild wiederherstellen"
 
 #: ../inc/settings.php:1504, ../inc/settings.php:1509
 msgid "Re-Squeeze image"
-msgstr ""
+msgstr "Bild erneut komprimieren"
 
 #: ../inc/settings.php:1507
 msgid "Squeezed"
-msgstr ""
+msgstr "Komprimiert"
 
 #: ../inc/settings.php:1511
 msgid "Not squeezed"
-msgstr ""
+msgstr "Nicht komprimiert"
 
 #: ../inc/settings.php:1512
 msgid "Squeeze Now"
-msgstr ""
+msgstr "Jetzt komprimieren"
 
 #: ../inc/settings.php:1594
 #: assets/js/admin.js:302
 msgid "Squeeze: All images"
-msgstr ""
+msgstr "Squeeze: Alle Bilder"
 
 #: ../inc/settings.php:1595
 #: assets/js/admin.js:310
 msgid "Non Squeezed Images"
-msgstr ""
+msgstr "Nicht komprimierte Bilder"
 
 #: ../inc/settings.php:1721
 #: assets/js/script.js:536
@@ -1251,47 +1407,55 @@ msgid ""
 "Slide between the original and squeezed image in the Media Library before "
 "you commit."
 msgstr ""
+"Schieben Sie in der Mediathek zwischen Original- und komprimiertem Bild, "
+"bevor Sie speichern."
 
 #: ../inc/settings.php:1725
 #: assets/js/script.js:543
 msgid "Unlock Image Comparison"
-msgstr ""
+msgstr "Bildvergleich freischalten"
 
 #: ../inc/settings.php:1757
 msgid ""
 "The WebP Express plugin is active. Please deactivate it in order to use "
 "correct WebP serving from <strong>Squeeze plugin</strong>."
 msgstr ""
+"Das Plugin WebP Express ist aktiv. Bitte deaktivieren Sie es, um die "
+"korrekte WebP-Auslieferung durch das <strong>Squeeze-Plugin</strong> zu "
+"nutzen."
 
 #: ../inc/settings.php:1769
 msgid ""
 "The Image Converter for WebP plugin is active. Please deactivate it in "
 "order to use correct WebP serving from <strong>Squeeze plugin</strong>."
 msgstr ""
+"Das Plugin Image Converter for WebP ist aktiv. Bitte deaktivieren Sie es, "
+"um die korrekte WebP-Auslieferung durch das <strong>Squeeze-Plugin</strong> "
+"zu nutzen."
 
 #: ../inc/premium/premium.php:25
 msgid "You do not have permission to search pages."
-msgstr ""
+msgstr "Sie haben keine Berechtigung, Seiten zu durchsuchen."
 
 #: ../inc/premium/premium.php:46
 msgid "Home"
-msgstr ""
+msgstr "Startseite"
 
 #: ../inc/premium/premium.php:95
 msgid "(no title)"
-msgstr ""
+msgstr "(kein Titel)"
 
 #: ../inc/premium/premium.php:156
 msgid "Page URL not found"
-msgstr ""
+msgstr "Seiten-URL nicht gefunden"
 
 #: ../inc/premium/premium.php:201
 msgid "URL is not from the same domain"
-msgstr ""
+msgstr "URL stammt nicht von derselben Domain"
 
 #: ../inc/premium/premium.php:207
 msgid "Error fetching the page:"
-msgstr ""
+msgstr "Fehler beim Abrufen der Seite:"
 
 #: ../inc/premium/premium.php:216
 #. translators: %d: HTTP status code
@@ -1299,42 +1463,47 @@ msgid ""
 "Could not fetch the page (HTTP %d). If the site uses staging password "
 "protection, open the page while logged in and try again."
 msgstr ""
+"Seite konnte nicht abgerufen werden (HTTP %d). Wenn die Website "
+"Staging-Passwortschutz verwendet, öffnen Sie die Seite angemeldet und "
+"versuchen Sie es erneut."
 
 #: ../inc/premium/premium.php:240, ../inc/premium/premium.php:511
 msgid "No images found on the page"
-msgstr ""
+msgstr "Keine Bilder auf der Seite gefunden"
 
 #: ../inc/premium/premium.php:565
 msgid "Squeeze images from this page"
-msgstr ""
+msgstr "Bilder von dieser Seite komprimieren"
 
 #: ../inc/premium/premium.php:568
 msgid "Squeeze images from the current page"
-msgstr ""
+msgstr "Bilder von der aktuellen Seite komprimieren"
 
 #: ../inc/premium/premium.php:578
 #: ../squeeze.php:808
 #: assets/js/script.js:874
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 #: ../inc/premium/premium.php:581
 msgid "Squeeze settings"
-msgstr ""
+msgstr "Squeeze-Einstellungen"
 
 #: ../inc/premium/premium.php:645
 msgid "Squeeze Preview"
-msgstr ""
+msgstr "Squeeze-Vorschau"
 
 #: ../squeeze.php:342
 msgid ""
 "Confirmation email was sent! Please check your inbox to complete the "
 "Squeeze Premium setup."
 msgstr ""
+"Bestätigungs-E-Mail wurde gesendet! Bitte prüfen Sie Ihren Posteingang, um "
+"die Squeeze-Premium-Einrichtung abzuschließen."
 
 #. Plugin Name of the plugin
 msgid "Squeeze – Image Optimization & Compression, WebP Conversion"
-msgstr ""
+msgstr "Squeeze – Bildoptimierung & Komprimierung, WebP-Konvertierung"
 
 #. Description of the plugin
 msgid ""
@@ -1342,14 +1511,18 @@ msgid ""
 "WebP format. No limits on file size or number of images. No third-party "
 "services or API keys required."
 msgstr ""
+"Komprimieren Sie unbegrenzt viele Bilder direkt in Ihrem Browser. "
+"Konvertieren Sie Bilder in das WebP-Format. Keine Limits bei Dateigröße "
+"oder Bildanzahl. Keine Drittanbieter-Dienste oder API-Schlüssel "
+"erforderlich."
 
 #. Author of the plugin
 msgid "Bogdan Bendziukov"
-msgstr ""
+msgstr "Bogdan Bendziukov"
 
 #. Author URI of the plugin
 msgid "https://pluginarium.com"
-msgstr ""
+msgstr "https://pluginarium.com"
 
 #: assets/js/admin.js:203
 msgid ""
@@ -1357,15 +1530,19 @@ msgid ""
 "images after saving. Leftover JPEG/PNG + WebP pairs or orphaned files under "
 "squeeze-webp may remain until cleaned up."
 msgstr ""
+"Ein Wechsel des WebP-Auslieferungsmodus migriert vorhandene Dateien nicht. "
+"Komprimieren Sie Bilder nach dem Speichern erneut. Übrig gebliebene "
+"JPEG/PNG- + WebP-Paare oder verwaiste Dateien unter squeeze-webp können bis "
+"zur Bereinigung verbleiben."
 
 #: assets/js/admin.js:323
 #: assets/js/admin.js:401
 msgid "Bulk Squeeze"
-msgstr ""
+msgstr "Bulk-Komprimierung"
 
 #: assets/js/admin.js:362
 msgid "Please select at least one image."
-msgstr ""
+msgstr "Bitte wählen Sie mindestens ein Bild aus."
 
 #: assets/js/admin.js:378
 #: assets/js/handlers copy.js:162
@@ -1375,14 +1552,14 @@ msgstr ""
 #: assets/js/script.js:179
 #: assets/js/script.js:185
 msgid "Squeezing..."
-msgstr ""
+msgstr "Wird komprimiert..."
 
 #: assets/js/admin.js:388
 #: assets/js/handlers.js:422
 #: assets/js/handlers.js:1015
 #: assets/js/script.js:88
 msgid "Squeezing complete"
-msgstr ""
+msgstr "Komprimierung abgeschlossen"
 
 #: assets/js/admin.js:396
 #: assets/js/handlers copy.js:150
@@ -1395,7 +1572,7 @@ msgstr ""
 #: assets/js/script.js:100
 #: assets/js/script.js:201
 msgid "An error has occured. Check the console for details."
-msgstr ""
+msgstr "Ein Fehler ist aufgetreten. Details finden Sie in der Konsole."
 
 #: assets/js/cf7-upload-compat.js:57
 #: assets/js/gf-upload-compat.js:67
@@ -1405,49 +1582,49 @@ msgstr ""
 #: assets/js/editor.js:78
 #: assets/js/editor__old.js:131
 msgid "Squeezing image…"
-msgstr ""
+msgstr "Bild wird komprimiert…"
 
 #: assets/js/editor.js:123
 #: assets/js/editor__old.js:30
 #: assets/js/script.js:382
 msgid "Error fetching attachment: %s"
-msgstr ""
+msgstr "Fehler beim Abrufen des Anhangs: %s"
 
 #: assets/js/editor.js:156
 #: assets/js/editor__old.js:60
 msgid "Error uploading image: %s"
-msgstr ""
+msgstr "Fehler beim Hochladen des Bildes: %s"
 
 #: assets/js/editor.js:299
 #: assets/js/script.js:291
 msgid "Squeezing the image..."
-msgstr ""
+msgstr "Bild wird komprimiert..."
 
 #: assets/js/editor.js:388
 #: assets/js/editor.js:404
 msgid "Error squeezing the image: %s"
-msgstr ""
+msgstr "Fehler beim Komprimieren des Bildes: %s"
 
 #: assets/js/form-compress.js:124
 #: ../squeeze.php
 msgid "Compressing the image..."
-msgstr ""
+msgstr "Bild wird komprimiert..."
 
 #: assets/js/handlers copy.js:23
 #: assets/js/handlers copy.js:225
 #: assets/js/handlers.js:213
 #: assets/js/handlers.js:526
 msgid "Resume bulk squeezing"
-msgstr ""
+msgstr "Bulk-Komprimierung fortsetzen"
 
 #: assets/js/handlers copy.js:23
 #: assets/js/handlers.js:213
 msgid "Pause bulk squeezing"
-msgstr ""
+msgstr "Bulk-Komprimierung pausieren"
 
 #: assets/js/handlers copy.js:95
 msgid "Restore in process..."
-msgstr ""
+msgstr "Wiederherstellung läuft..."
 
 #: assets/js/handlers copy.js:128
 #: assets/js/handlers copy.js:458
@@ -1455,7 +1632,7 @@ msgstr ""
 #: assets/js/handlers.js:1001
 #: assets/js/script.js:74
 msgid "Pausing..."
-msgstr ""
+msgstr "Wird pausiert..."
 
 #: assets/js/handlers copy.js:141
 #: assets/js/handlers copy.js:469
@@ -1464,7 +1641,7 @@ msgstr ""
 #: assets/js/helpers.js:645
 #: assets/js/script.js:86
 msgid "All images have been processed!"
-msgstr ""
+msgstr "Alle Bilder wurden verarbeitet!"
 
 #: assets/js/handlers copy.js:212
 #: assets/js/handlers.js:511
@@ -1472,43 +1649,47 @@ msgid ""
 "Are you sure you want to leave this page? The squeezing process will be "
 "terminated!"
 msgstr ""
+"Möchten Sie diese Seite wirklich verlassen? Der Komprimierungsvorgang wird "
+"abgebrochen!"
 
 #: assets/js/handlers copy.js:215
 #: assets/js/handlers.js:514
 msgid "Are you sure you want to leave this page? The settings will not be saved!"
 msgstr ""
+"Möchten Sie diese Seite wirklich verlassen? Die Einstellungen werden nicht "
+"gespeichert!"
 
 #: assets/js/handlers copy.js:221
 #: assets/js/handlers.js:531
 #: assets/js/helpers.js:155
 msgid "Bulk squeezing has been paused!"
-msgstr ""
+msgstr "Bulk-Komprimierung wurde pausiert!"
 
 #: assets/js/handlers copy.js:290
 #: assets/js/handlers.js:72
 #: assets/js/helpers.js:155
 msgid "Media"
-msgstr ""
+msgstr "Medien"
 
 #: assets/js/handlers copy.js:312
 #: assets/js/handlers copy.js:320
 #: assets/js/handlers.js:577
 msgid "No more images found!"
-msgstr ""
+msgstr "Keine weiteren Bilder gefunden!"
 
 #: assets/js/handlers copy.js:331
 #: assets/js/handlers.js:601
 msgid "Start squeezing..."
-msgstr ""
+msgstr "Komprimierung starten..."
 
 #: assets/js/handlers copy.js:420
 msgid "Found images on the page:"
-msgstr ""
+msgstr "Auf der Seite gefundene Bilder:"
 
 #: assets/js/handlers copy.js:427
 #: assets/js/handlers.js:970
 msgid "Error:"
-msgstr ""
+msgstr "Fehler:"
 
 #: assets/js/handlers copy.js:434
 #: assets/js/handlers copy.js:437
@@ -1518,16 +1699,18 @@ msgid ""
 "An error has occurred while fetching images from the page. Check the "
 "console for details."
 msgstr ""
+"Beim Abrufen der Bilder von der Seite ist ein Fehler aufgetreten. Details "
+"finden Sie in der Konsole."
 
 #: assets/js/handlers.js:63
 #: assets/js/handlers.js:669
 msgid "Skipped — continuing with next image."
-msgstr ""
+msgstr "Übersprungen — mit dem nächsten Bild fortfahren."
 
 #: assets/js/handlers.js:100
 #: assets/js/script.js:49
 msgid "Please enter a valid path!"
-msgstr ""
+msgstr "Bitte geben Sie einen gültigen Pfad ein!"
 
 #: assets/js/handlers.js:105
 msgid ""
@@ -1535,87 +1718,94 @@ msgid ""
 "be overwritten in place and .bak files will be deleted after a successful "
 "restore."
 msgstr ""
+"Alle Squeeze-.bak-Backups in den ausgewählten Ordnern wiederherstellen? "
+"Live-Dateien werden an Ort und Stelle überschrieben und .bak-Dateien nach "
+"erfolgreicher Wiederherstellung gelöscht."
 
 #: assets/js/handlers.js:118
 msgid "Looking for .bak files in the selected folders…"
-msgstr ""
+msgstr "Suche nach .bak-Dateien in den ausgewählten Ordnern…"
 
 #: assets/js/handlers.js:120
 msgid "Restore"
-msgstr ""
+msgstr "Wiederherstellen"
 
 #: assets/js/handlers.js:132
 msgid "Directory restore finished with errors."
-msgstr ""
+msgstr "Verzeichnis-Wiederherstellung mit Fehlern abgeschlossen."
 
 #: assets/js/handlers.js:134
 #: assets/js/handlers.js:189
 msgid "Bulk restoring has been completed!"
-msgstr ""
+msgstr "Bulk-Wiederherstellung abgeschlossen!"
 
 #: assets/js/handlers.js:137
 msgid "Restore failed"
-msgstr ""
+msgstr "Wiederherstellung fehlgeschlagen"
 
 #: assets/js/handlers.js:153
 msgid "Backup"
-msgstr ""
+msgstr "Backup"
 
 #: assets/js/handlers.js:157
 msgid "Restored"
-msgstr ""
+msgstr "Wiederhergestellt"
 
 #: assets/js/handlers.js:162
 msgid "Skipped"
-msgstr ""
+msgstr "Übersprungen"
 
 #: assets/js/handlers.js:168
 msgid "Failed"
-msgstr ""
+msgstr "Fehlgeschlagen"
 
 #: assets/js/handlers.js:181
 msgid "Restore finished: %1$d restored, %2$d skipped, %3$d failed."
 msgstr ""
+"Wiederherstellung abgeschlossen: %1$d wiederhergestellt, %2$d übersprungen, "
+"%3$d fehlgeschlagen."
 
 #: assets/js/handlers.js:192
 msgid "Restore complete"
-msgstr ""
+msgstr "Wiederherstellung abgeschlossen"
 
 #: assets/js/handlers.js:303
 msgid "Restoring the original image..."
-msgstr ""
+msgstr "Originalbild wird wiederhergestellt..."
 
 #: assets/js/handlers.js:306
 msgid "Still restoring... Just need to regenerate thumbnails, please wait a moment."
 msgstr ""
+"Wird noch wiederhergestellt... Vorschaubilder werden regeneriert, bitte "
+"warten Sie einen Moment."
 
 #: assets/js/handlers.js:456
 msgid "Still squeezing... This may take a while depending on the image size."
-msgstr ""
+msgstr "Wird noch komprimiert... Dies kann je nach Bildgröße eine Weile dauern."
 
 #: assets/js/handlers.js:800
 msgid "No pages found."
-msgstr ""
+msgstr "Keine Seiten gefunden."
 
 #: assets/js/handlers.js:831
 msgid "Could not search pages."
-msgstr ""
+msgstr "Seiten konnten nicht durchsuchen werden."
 
 #: assets/js/handlers.js:960
 msgid "Found images on the page"
-msgstr ""
+msgstr "Auf der Seite gefundene Bilder"
 
 #: assets/js/handlers.js:1017
 msgid "You will be redirected back to the page after you close this message."
-msgstr ""
+msgstr "Sie werden nach dem Schließen dieser Meldung zur Seite zurückgeleitet."
 
 #: assets/js/handlers.js:1146
 msgid "File is excluded from compression:"
-msgstr ""
+msgstr "Datei ist von der Komprimierung ausgeschlossen:"
 
 #: assets/js/handlers.js:1146
 msgid "File compression failed:"
-msgstr ""
+msgstr "Dateikomprimierung fehlgeschlagen:"
 
 #: assets/js/handlers.js:1163
 msgid ""
@@ -1625,46 +1815,48 @@ msgstr ""
 
 #: assets/js/helpers.js:155
 msgid "Bulk squeezing has been completed!"
-msgstr ""
+msgstr "Bulk-Komprimierung abgeschlossen!"
 
 #: assets/js/helpers.js:168
 #: assets/js/helpers.js:172
 msgid "Show details"
-msgstr ""
+msgstr "Details anzeigen"
 
 #: assets/js/helpers.js:172
 msgid "Hide details"
-msgstr ""
+msgstr "Details ausblenden"
 
 #: assets/js/helpers.js:267
 msgid "Paused. Click Resume to continue."
-msgstr ""
+msgstr "Pausiert. Klicken Sie auf Fortsetzen, um fortzufahren."
 
 #: assets/js/helpers.js:341
 msgid "No directories found!"
-msgstr ""
+msgstr "Keine Verzeichnisse gefunden!"
 
 #: assets/js/helpers.js:383
 msgid ""
 "Media Library year/month folders cannot be selected. Use Bulk Media Library "
 "Squeeze instead."
 msgstr ""
+"Mediathek-Jahres-/Monatsordner können nicht ausgewählt werden. Verwenden "
+"Sie stattdessen Bulk-Mediathek-Komprimierung."
 
 #: assets/js/helpers.js:478
 msgid "Error parsing path input!"
-msgstr ""
+msgstr "Fehler beim Parsen der Pfadeingabe!"
 
 #: assets/js/helpers.js:634
 msgid "Saved %1$s on %2$d images"
-msgstr ""
+msgstr "%1$s bei %2$d Bildern gespart"
 
 #: assets/js/helpers.js:641
 msgid "Processed %d images"
-msgstr ""
+msgstr "%d Bilder verarbeitet"
 
 #: assets/js/helpers.js:648
 msgid "Enjoying Squeeze? Please leave a review"
-msgstr ""
+msgstr "Gefällt Ihnen Squeeze? Bitte hinterlassen Sie eine Bewertung"
 
 #: assets/js/helpers.js:1104
 msgid ""
@@ -1674,33 +1866,35 @@ msgstr ""
 
 #: assets/js/helpers.js:1235
 msgid "Still processing %s… Large images can take several minutes."
-msgstr ""
+msgstr "Wird noch verarbeitet %s… Große Bilder können mehrere Minuten dauern."
 
 #: assets/js/script.js:395
 msgid "Squeezing thumbnails..."
-msgstr ""
+msgstr "Vorschaubilder werden komprimiert..."
 
 #: assets/js/script.js:419
 msgid "Successfully squeezed!"
-msgstr ""
+msgstr "Erfolgreich komprimiert!"
 
 #: assets/js/script.js:424
 #: assets/js/script.js:432
 msgid "Something went wrong during compression. Check the console for more details."
 msgstr ""
+"Bei der Komprimierung ist etwas schiefgelaufen. Weitere Details finden Sie "
+"in der Konsole."
 
 #: assets/js/script.js:467
 #: assets/js/script.js:638
 msgid "Compare Squeeze"
-msgstr ""
+msgstr "Squeeze vergleichen"
 
 #: assets/js/script.js:468
 msgid "Image comparison with Squeeze"
-msgstr ""
+msgstr "Bildvergleich mit Squeeze"
 
 #: assets/js/script.js:638
 msgid "Loading..."
-msgstr ""
+msgstr "Wird geladen..."
 
 #: assets/js/script.js:850
 msgid "Compression returned no image data."
@@ -1709,21 +1903,23 @@ msgstr ""
 #: assets/js/script.js:875
 #: assets/js/script.js:923
 msgid "Collapse"
-msgstr ""
+msgstr "Einklappen"
 
 #: assets/js/script.js:876
 msgid "Apply"
-msgstr ""
+msgstr "Anwenden"
 
 #: assets/js/script.js:894
 msgid ""
 "An error occurred while rendering the preview. Check the console for "
 "details."
 msgstr ""
+"Beim Rendern der Vorschau ist ein Fehler aufgetreten. Details finden Sie in "
+"der Konsole."
 
 #: assets/js/script.js:926
 msgid "Expand"
-msgstr ""
+msgstr "Ausklappen"
 
 #: assets/js/squeeze.js:221
 #: assets/js/squeeze.js:738
@@ -1731,6 +1927,8 @@ msgid ""
 "Request timed out. Try to increase the timeout limit on the Squeeze <a "
 "target=\"_blank\" href=\"%s\">settings page</a>."
 msgstr ""
+"Zeitüberschreitung der Anfrage. Versuchen Sie, das Timeout-Limit auf der "
+"Squeeze-<a target=\"_blank\" href=\"%s\">Einstellungsseite</a> zu erhöhen."
 
 #: assets/js/squeeze.js:332
 msgid ""
@@ -1738,17 +1936,22 @@ msgid ""
 "413). Please ask your host to raise the post_max_size PHP setting and, for "
 "nginx, the client_max_body_size directive."
 msgstr ""
+"Die komprimierte Bildnutzlast ist zu groß für den Server (HTTP 413). Bitten "
+"Sie Ihren Hoster, die PHP-Einstellung post_max_size und für nginx die "
+"Direktive client_max_body_size zu erhöhen."
 
 #: assets/js/squeeze.js:336
 msgid "Upload failed with HTTP %1$d: %2$s"
-msgstr ""
+msgstr "Upload fehlgeschlagen mit HTTP %1$d: %2$s"
 
 #: assets/js/squeeze.js:434
 msgid ""
 "Skipped: the image is broken or its format is not supported or excluded "
 "from squeezing."
 msgstr ""
+"Übersprungen: Das Bild ist beschädigt, das Format wird nicht unterstützt "
+"oder ist von der Komprimierung ausgeschlossen."
 
 #: assets/js/squeeze.js:790
 msgid "Image conversion blocked by browser privacy setting"
-msgstr ""
+msgstr "Bildkonvertierung durch Browser-Datenschutzeinstellung blockiert"

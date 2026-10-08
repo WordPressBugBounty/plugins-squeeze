@@ -1,0 +1,23 @@
+Title: Translation help request for Squeeze (de_DE, es_ES, fr_FR)
+
+Hi Polyglots,
+
+I am the author of the Squeeze plugin:
+https://wordpress.org/plugins/squeeze/
+https://translate.wordpress.org/projects/wp-plugins/squeeze/
+
+The plugin ships starter translations for German, Spanish, and French. I would love help from the locale teams to review suggestions on translate.wordpress.org, approve strings toward language packs (≥90% Current), and keep translations current as new releases land.
+
+Priority locales:
+
+o #de_DE — review / contributors welcome
+o #es_ES — review / contributors welcome
+o #fr_FR — review / contributors welcome
+
+Stable project:
+https://translate.wordpress.org/projects/wp-plugins/squeeze/stable/
+
+How to contribute:
+https://make.wordpress.org/polyglots/handbook/translating/how-to-translate/
+
+Thank you!

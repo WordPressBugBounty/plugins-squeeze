@@ -277,9 +277,9 @@ msgstr "Налаштування Squeeze"
 msgid "Squeeze Settings"
 msgstr "Налаштування Squeeze"
 
-#: inc/settings.php:50 inc/settings.php:51 squeeze.php:536
-msgid "Bulk / Directory Squeeze"
-msgstr "Масове стиснення Squeeze"
+#: inc/settings.php:50 inc/settings.php:51 squeeze.php:809
+msgid "Squeeze Bulk Tools"
+msgstr "Інструменти масового стиснення Squeeze"
 
 #: assets/js/admin.bundle.js:19 assets/js/admin.js:283 assets/js/admin.js:359
 msgid "Bulk Squeeze"

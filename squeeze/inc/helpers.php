@@ -13,6 +13,21 @@ class SqueezeHelpers extends SqueezeInit {
     /** @var string[]|null */
     private static $cached_excluded_images = null;
 
+    /** Per-attachment sum of original sizes (bytes) across all image sizes. */
+    const META_SIZE_BEFORE = 'squeeze_size_before';
+
+    /** Per-attachment sum of compressed sizes (bytes) across all image sizes. */
+    const META_SIZE_AFTER = 'squeeze_size_after';
+
+    /** Transient key for site-wide savings totals (SUM cache). */
+    const TRANSIENT_SITE_SAVINGS = 'squeeze_site_savings';
+
+    /**
+     * Plugin version that introduced savings tracking — used to label totals for
+     * older images that have no before/after meta.
+     */
+    const SAVINGS_SINCE_VERSION = '1.8.0';
+
     public function __construct() {
         //parent::__construct(); // will cause infinite loop in SquuezeInit
         add_filter(
@@ -21,6 +36,100 @@ class SqueezeHelpers extends SqueezeInit {
             10,
             2
         );
+    }
+
+    /**
+     * Sum original_size and compressed_size across a sizes array from compression.
+     *
+     * @param array $sizes Size name => [ original_size, compressed_size, ... ].
+     * @return array{before: int, after: int}
+     */
+    public function sum_size_totals( $sizes ) {
+        $before = 0;
+        $after = 0;
+        if ( !is_array( $sizes ) ) {
+            return array(
+                'before' => 0,
+                'after'  => 0,
+            );
+        }
+        foreach ( $sizes as $size_data ) {
+            if ( !is_array( $size_data ) ) {
+                continue;
+            }
+            $before += ( isset( $size_data['original_size'] ) ? (int) $size_data['original_size'] : 0 );
+            $after += ( isset( $size_data['compressed_size'] ) ? (int) $size_data['compressed_size'] : 0 );
+        }
+        return array(
+            'before' => $before,
+            'after'  => $after,
+        );
+    }
+
+    /**
+     * Store per-attachment size totals and invalidate the site savings cache.
+     *
+     * @param int $attach_id Attachment ID.
+     * @param int $before    Total original bytes.
+     * @param int $after     Total compressed bytes.
+     * @return void
+     */
+    public function save_attachment_size_meta( $attach_id, $before, $after ) {
+        $attach_id = (int) $attach_id;
+        if ( $attach_id <= 0 ) {
+            return;
+        }
+        update_post_meta( $attach_id, self::META_SIZE_BEFORE, max( 0, (int) $before ) );
+        update_post_meta( $attach_id, self::META_SIZE_AFTER, max( 0, (int) $after ) );
+        $this->invalidate_site_savings_cache();
+    }
+
+    /**
+     * Remove per-attachment size totals (e.g. on restore) and invalidate the cache.
+     *
+     * @param int $attach_id Attachment ID.
+     * @return void
+     */
+    public function delete_attachment_size_meta( $attach_id ) {
+        $attach_id = (int) $attach_id;
+        if ( $attach_id <= 0 ) {
+            return;
+        }
+        delete_post_meta( $attach_id, self::META_SIZE_BEFORE );
+        delete_post_meta( $attach_id, self::META_SIZE_AFTER );
+        $this->invalidate_site_savings_cache();
+    }
+
+    /**
+     * Drop the cached site-wide savings totals.
+     *
+     * @return void
+     */
+    public function invalidate_site_savings_cache() {
+        delete_transient( self::TRANSIENT_SITE_SAVINGS );
+    }
+
+    /**
+     * Site-wide savings: SQL SUM of before/after meta, cached in a transient.
+     *
+     * @return array{before: int, after: int, saved: int, count: int}
+     */
+    public function get_site_savings() {
+        $cached = get_transient( self::TRANSIENT_SITE_SAVINGS );
+        if ( is_array( $cached ) && isset( $cached['before'], $cached['after'], $cached['count'] ) ) {
+            $cached['saved'] = ( isset( $cached['saved'] ) ? (int) $cached['saved'] : max( 0, (int) $cached['before'] - (int) $cached['after'] ) );
+            return $cached;
+        }
+        global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT\n\t\t\t\t\tCOALESCE( SUM( CAST( before_meta.meta_value AS UNSIGNED ) ), 0 ) AS size_before,\n\t\t\t\t\tCOALESCE( SUM( CAST( after_meta.meta_value AS UNSIGNED ) ), 0 ) AS size_after,\n\t\t\t\t\tCOUNT( DISTINCT before_meta.post_id ) AS image_count\n\t\t\t\tFROM {$wpdb->postmeta} before_meta\n\t\t\t\tINNER JOIN {$wpdb->postmeta} after_meta\n\t\t\t\t\tON before_meta.post_id = after_meta.post_id\n\t\t\t\tWHERE before_meta.meta_key = %s\n\t\t\t\t\tAND after_meta.meta_key = %s", self::META_SIZE_BEFORE, self::META_SIZE_AFTER ), ARRAY_A );
+        $result = array(
+            'before' => (int) ($row['size_before'] ?? 0),
+            'after'  => (int) ($row['size_after'] ?? 0),
+            'count'  => (int) ($row['image_count'] ?? 0),
+        );
+        $result['saved'] = max( 0, $result['before'] - $result['after'] );
+        set_transient( self::TRANSIENT_SITE_SAVINGS, $result, DAY_IN_SECONDS );
+        return $result;
     }
 
     public function get_upload_path( $attach_id, $filename, $url ) {
@@ -161,9 +270,36 @@ class SqueezeHelpers extends SqueezeInit {
     }
 
     public function decode_base64_image( $base64, $file_format ) {
-        $img = str_replace( 'data:image/' . $file_format . ';base64,', '', $base64 );
-        $img = str_replace( ' ', '+', $img );
-        return base64_decode( $img );
+        if ( !is_string( $base64 ) || $base64 === '' ) {
+            return false;
+        }
+        // FileReader emits MIME subtypes (data:image/jpeg;base64,...). update_attachment()
+        // normalizes the allowlist key to "jpg", so a literal str_replace for image/jpg
+        // left the jpeg prefix in place and prepended 15 garbage bytes to every JPG write
+        // (sidecar mode). Split on the data-URL comma like JS base64ToBlob.
+        if ( strpos( $base64, 'data:' ) === 0 ) {
+            $comma = strpos( $base64, ',' );
+            if ( false !== $comma ) {
+                $base64 = substr( $base64, $comma + 1 );
+            }
+        } else {
+            $fmt = strtolower( (string) $file_format );
+            $candidates = array($fmt);
+            if ( 'jpg' === $fmt ) {
+                $candidates[] = 'jpeg';
+            } elseif ( 'jpeg' === $fmt ) {
+                $candidates[] = 'jpg';
+            }
+            foreach ( $candidates as $candidate ) {
+                $prefix = 'data:image/' . $candidate . ';base64,';
+                if ( strpos( $base64, $prefix ) === 0 ) {
+                    $base64 = substr( $base64, strlen( $prefix ) );
+                    break;
+                }
+            }
+        }
+        $base64 = str_replace( ' ', '+', $base64 );
+        return base64_decode( $base64 );
     }
 
     public function upload_image(
@@ -524,6 +660,7 @@ class SqueezeHelpers extends SqueezeInit {
         if ( !delete_post_meta( $attach_id, "squeeze_is_compressed" ) ) {
             return false;
         }
+        $this->delete_attachment_size_meta( $attach_id );
         wp_delete_file( $backup_img_path );
         $this->delete_webp_images( $original_img_path, $attachment_data );
         $uncompressed_images = $this->get_stats_option( 'uncompressed_images' );
@@ -633,6 +770,7 @@ class SqueezeHelpers extends SqueezeInit {
         \delete_option( 'squeeze_options' );
         \delete_option( 'squeeze_stats' );
         \delete_transient( 'squeeze_bulk_path' );
+        \delete_transient( self::TRANSIENT_SITE_SAVINGS );
         self::$cached_squeeze_options = null;
         global $wpdb;
         $wpdb->delete( $wpdb->postmeta, array(
@@ -640,6 +778,12 @@ class SqueezeHelpers extends SqueezeInit {
         ) );
         $wpdb->delete( $wpdb->postmeta, array(
             'meta_key' => 'squeeze_compression_failed',
+        ) );
+        $wpdb->delete( $wpdb->postmeta, array(
+            'meta_key' => self::META_SIZE_BEFORE,
+        ) );
+        $wpdb->delete( $wpdb->postmeta, array(
+            'meta_key' => self::META_SIZE_AFTER,
         ) );
     }
 
@@ -870,6 +1014,15 @@ class SqueezeHelpers extends SqueezeInit {
     }
 
     /**
+     * Small “New” badge for settings field titles.
+     *
+     * @return string
+     */
+    public function get_new_tag() {
+        return '<span class="squeeze-option-new-tag">' . esc_html__( 'New', 'squeeze' ) . '</span>';
+    }
+
+    /**
      * Parsed list of exclusion patterns (one per line in settings). Cached per request.
      *
      * @return string[]
@@ -1014,6 +1167,7 @@ class SqueezeHelpers extends SqueezeInit {
             'webp_near_lossless'           => 100,
             'avif_cqLevel'                 => 70,
             'auto_compress'                => true,
+            'form_compress'                => true,
             'auto_webp'                    => false,
             'webp_replace_urls'            => false,
             'direct_webp'                  => true,

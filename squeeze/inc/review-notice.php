@@ -15,7 +15,7 @@ class SqueezeReviewNotice extends SqueezeInit {
 	const SNOOZE_DAYS = 30;
 	const OPTION_COUNT = 'squeeze_success_count';
 	const USER_META    = 'squeeze_review_notice';
-	const REVIEW_URL   = 'https://wordpress.org/support/plugin/squeeze/reviews/#new-post';
+	const REVIEW_URL   = 'https://wordpress.org/support/plugin/squeeze/reviews/?rate=5#new-post';
 
 	public function __construct() {
 		add_action( 'admin_notices', array( $this, 'maybe_render' ) );

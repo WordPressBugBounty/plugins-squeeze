@@ -18,6 +18,7 @@ class SqueezeHandlers extends SqueezeInit {
         add_action( 'wp_ajax_squeeze_get_directories', [$this, 'get_directories'] );
         add_action( 'wp_ajax_squeeze_set_options', [$this, 'set_options'] );
         add_action( 'wp_ajax_squeeze_check_file_excluded', [$this, 'check_file_excluded'] );
+        add_action( 'wp_ajax_squeeze_mark_client_compressed', [$this, 'ajax_mark_client_compressed'] );
         add_action( 'delete_attachment', [$this, 'delete_backup_attachment'] );
         add_action( 'delete_attachment', [$this, 'delete_webp_images'] );
         add_action(
@@ -55,9 +56,14 @@ class SqueezeHandlers extends SqueezeInit {
     }
 
     /**
-     * Voxel (and similar) multipart uploads are compressed in the browser before send, so
-     * squeeze_update_attachment never runs. When the client adds signed fields to the same
-     * request, mark new image attachments so the Media Library and stats stay consistent.
+     * Client-precompressed multipart uploads (Media Library Plupload, Voxel, etc.) never
+     * hit squeeze_update_attachment when after-upload thumb squeeze is skipped. When the
+     * client adds signed fields to the same async-upload request, mark new image
+     * attachments so the Media Library and stats stay consistent.
+     *
+     * Accepts either:
+     * - `_squeeze_client` + `_squeeze_client_nonce` (Media Library / general)
+     * - `_squeeze_voxel_client` + `_squeeze_voxel_nonce` (Voxel compat)
      *
      * @param int $attach_id Attachment ID.
      * @return void
@@ -67,31 +73,129 @@ class SqueezeHandlers extends SqueezeInit {
         if ( $attach_id <= 0 ) {
             return;
         }
-        if ( empty( $_POST['_squeeze_voxel_client'] ) || '1' !== $_POST['_squeeze_voxel_client'] ) {
+        $is_client = !empty( $_POST['_squeeze_client'] ) && '1' === $_POST['_squeeze_client'];
+        $is_voxel = !empty( $_POST['_squeeze_voxel_client'] ) && '1' === $_POST['_squeeze_voxel_client'];
+        if ( !$is_client && !$is_voxel ) {
             return;
         }
-        if ( empty( $_POST['_squeeze_voxel_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_squeeze_voxel_nonce'] ) ), 'squeeze-nonce' ) ) {
+        $nonce = '';
+        if ( $is_client && !empty( $_POST['_squeeze_client_nonce'] ) ) {
+            $nonce = sanitize_text_field( wp_unslash( $_POST['_squeeze_client_nonce'] ) );
+        } elseif ( $is_voxel && !empty( $_POST['_squeeze_voxel_nonce'] ) ) {
+            $nonce = sanitize_text_field( wp_unslash( $_POST['_squeeze_voxel_nonce'] ) );
+        }
+        if ( '' === $nonce || !wp_verify_nonce( $nonce, 'squeeze-nonce' ) ) {
             return;
         }
         if ( !current_user_can( 'upload_files' ) ) {
-            return;
-        }
-        if ( get_post_meta( $attach_id, 'squeeze_is_compressed', true ) ) {
             return;
         }
         $mime = get_post_mime_type( $attach_id );
         if ( !$mime || strpos( $mime, 'image/' ) !== 0 ) {
             return;
         }
-        update_post_meta( $attach_id, 'squeeze_is_compressed', true );
-        $uncompressed_images = self::$SqueezeHelpers->get_stats_option( 'uncompressed_images' );
-        if ( $uncompressed_images > 0 ) {
-            $uncompressed_images--;
+        $original_size = ( isset( $_POST['_squeeze_original_size'] ) ? (int) $_POST['_squeeze_original_size'] : 0 );
+        $this->mark_attachment_client_compressed( $attach_id, $original_size );
+    }
+
+    /**
+     * AJAX: mark an attachment as squeezed after client-side precompress when
+     * after-upload thumb squeeze was skipped (e.g. huge images).
+     * Optionally writes the full-size sidecar WebP (auto_webp / sidecar mode only).
+     *
+     * @return void
+     */
+    public function ajax_mark_client_compressed() {
+        check_ajax_referer( 'squeeze-nonce', '_ajax_nonce' );
+        if ( !current_user_can( 'upload_files' ) ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'You do not have permission to upload files', 'squeeze' ) );
         }
-        update_option( 'squeeze_stats', array(
-            'uncompressed_images' => $uncompressed_images,
+        $attach_id = ( isset( $_POST['attachmentID'] ) ? (int) $_POST['attachmentID'] : 0 );
+        if ( $attach_id <= 0 ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Attachment not found', 'squeeze' ) );
+        }
+        $mime = get_post_mime_type( $attach_id );
+        if ( !$mime || strpos( $mime, 'image/' ) !== 0 ) {
+            wp_send_json_error( '❌ ' . esc_html__( 'Invalid image format', 'squeeze' ) );
+        }
+        $original_size = ( isset( $_POST['originalSize'] ) ? (int) $_POST['originalSize'] : 0 );
+        $this->mark_attachment_client_compressed( $attach_id, $original_size );
+        $webp_written = false;
+        $base64_webp = ( isset( $_POST['base64Webp'] ) ? sanitize_text_field( wp_unslash( $_POST['base64Webp'] ) ) : '' );
+        if ( $base64_webp !== '' ) {
+            $webp_written = $this->maybe_write_full_sidecar_webp( $attach_id, $base64_webp );
+        }
+        wp_send_json_success( array(
+            'message'      => '✅ ' . esc_html__( 'Squeezed on upload', 'squeeze' ),
+            'webp_written' => $webp_written,
         ) );
-        do_action( 'squeeze_successful_squeeze' );
+    }
+
+    /**
+     * Write only the full-size squeeze-webp sidecar (no thumb WebPs, no metadata regen).
+     * Used when after-upload thumb squeeze is skipped for huge images in sidecar mode.
+     *
+     * @param int    $attach_id   Attachment ID.
+     * @param string $base64_webp Base64 (or data-URL) WebP payload from the browser.
+     * @return bool True when a sidecar file was written.
+     */
+    public function maybe_write_full_sidecar_webp( $attach_id, $base64_webp ) {
+        $attach_id = (int) $attach_id;
+        if ( $attach_id <= 0 || $base64_webp === '' ) {
+            return false;
+        }
+        // Sidecar / auto_webp only — Direct WebP already uploaded as .webp.
+        if ( !self::$SqueezeHelpers->get_option( 'auto_webp' ) || self::$SqueezeHelpers->get_option( 'direct_webp' ) ) {
+            return false;
+        }
+        $file = get_attached_file( $attach_id );
+        if ( !$file || !file_exists( $file ) ) {
+            return false;
+        }
+        $mime = get_post_mime_type( $attach_id );
+        // Only JPEG/PNG get squeeze-webp sidecars; WebP/AVIF originals do not.
+        if ( !$mime || !in_array( $mime, array('image/jpeg', 'image/png'), true ) ) {
+            return false;
+        }
+        $upload_path = trailingslashit( dirname( $file ) );
+        $filename = basename( $file );
+        $result = self::$SqueezeHelpers->upload_webp( $upload_path, $base64_webp, $filename );
+        if ( is_wp_error( $result ) ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Persist squeeze_is_compressed (+ optional size savings) for a client-precompressed image.
+     *
+     * @param int $attach_id     Attachment ID.
+     * @param int $original_size Pre-compress byte size (0 to skip savings meta).
+     * @return void
+     */
+    public function mark_attachment_client_compressed( $attach_id, $original_size = 0 ) {
+        $attach_id = (int) $attach_id;
+        if ( $attach_id <= 0 ) {
+            return;
+        }
+        $already = (bool) get_post_meta( $attach_id, 'squeeze_is_compressed', true );
+        if ( !$already ) {
+            update_post_meta( $attach_id, 'squeeze_is_compressed', true );
+            $uncompressed_images = self::$SqueezeHelpers->get_stats_option( 'uncompressed_images' );
+            if ( $uncompressed_images > 0 ) {
+                $uncompressed_images--;
+            }
+            update_option( 'squeeze_stats', array(
+                'uncompressed_images' => $uncompressed_images,
+            ) );
+            do_action( 'squeeze_successful_squeeze' );
+        }
+        $original_size = (int) $original_size;
+        $attached_file = get_attached_file( $attach_id );
+        $after_size = ( $attached_file && file_exists( $attached_file ) ? (int) wp_filesize( $attached_file ) : 0 );
+        if ( $original_size > 0 && $after_size > 0 ) {
+            self::$SqueezeHelpers->save_attachment_size_meta( $attach_id, $original_size, $after_size );
+        }
     }
 
     public function update_attachment() {
@@ -120,6 +224,7 @@ class SqueezeHandlers extends SqueezeInit {
             $file_format = 'jpg';
         }
         $original_file = ( isset( $_FILES['originalFile'] ) ? $_FILES['originalFile'] : null );
+        $original_size_posted = ( isset( $_POST['originalSize'] ) ? (int) $_POST['originalSize'] : 0 );
         // Validate against the hardcoded constant — never trust user-writable options for security decisions.
         $allowed_extensions = array_keys( self::ALLOWED_IMAGE_FORMATS );
         if ( !in_array( $extension, $allowed_extensions, true ) || !in_array( $file_format, $allowed_extensions, true ) || empty( $file_format ) ) {
@@ -171,6 +276,10 @@ class SqueezeHandlers extends SqueezeInit {
         }
         if ( $original_file ) {
             $sizes['original']['original_size'] = $original_file['size'];
+        } elseif ( $original_size_posted > 0 ) {
+            // Pre-upload compression: client sends the pre-compress byte size so savings stay accurate
+            // when the file on disk is already the compressed upload.
+            $sizes['original']['original_size'] = $original_size_posted;
         } else {
             $path_for_size = ( $source_abspath !== '' && file_exists( $source_abspath ) ? $source_abspath : $upload_path . $old_filename );
             $sizes['original']['original_size'] = ( file_exists( $path_for_size ) ? wp_filesize( $path_for_size ) : 0 );
@@ -276,6 +385,13 @@ class SqueezeHandlers extends SqueezeInit {
             }
             update_post_meta( $attach_id, "squeeze_is_compressed", true );
             delete_post_meta( $attach_id, 'squeeze_compression_failed' );
+            $had_prior_savings = metadata_exists( 'post', $attach_id, SqueezeHelpers::META_SIZE_BEFORE );
+            $old_before = ( $had_prior_savings ? (int) get_post_meta( $attach_id, SqueezeHelpers::META_SIZE_BEFORE, true ) : 0 );
+            $old_after = ( $had_prior_savings ? (int) get_post_meta( $attach_id, SqueezeHelpers::META_SIZE_AFTER, true ) : 0 );
+            $old_saved = max( 0, $old_before - $old_after );
+            $size_totals = self::$SqueezeHelpers->sum_size_totals( $sizes );
+            self::$SqueezeHelpers->save_attachment_size_meta( $attach_id, $size_totals['before'], $size_totals['after'] );
+            $new_saved = max( 0, $size_totals['before'] - $size_totals['after'] );
             $response_msg = '<strong>✅ ' . esc_html__( 'Squeezed successfully', 'squeeze' ) . '!</strong> ' . $response_msg;
             $uncompressed_images = self::$SqueezeHelpers->get_stats_option( 'uncompressed_images' );
             $uncompressed_images--;
@@ -293,10 +409,13 @@ class SqueezeHandlers extends SqueezeInit {
             do_action( 'squeeze_after_update_attachment', $attach_id );
             do_action( 'squeeze_successful_squeeze' );
             $response_data = array(
-                'message'  => $response_msg,
-                'sizes'    => $sizes,
-                'filename' => $filename,
-                'url'      => $url,
+                'message'           => $response_msg,
+                'sizes'             => $sizes,
+                'filename'          => $filename,
+                'url'               => $url,
+                'persisted_savings' => true,
+                'savings_is_new'    => !$had_prior_savings,
+                'savings_delta'     => $new_saved - $old_saved,
             );
             wp_send_json_success( $response_data );
         } else {
@@ -334,7 +453,17 @@ class SqueezeHandlers extends SqueezeInit {
                 }
             }
             do_action( 'squeeze_successful_squeeze' );
-            wp_send_json_success( '✅ ' . esc_html__( 'Squeezed successfully', 'squeeze' ) );
+            $size_totals = self::$SqueezeHelpers->sum_size_totals( $sizes );
+            wp_send_json_success( array(
+                'message' => '✅ ' . esc_html__( 'Squeezed successfully', 'squeeze' ),
+                'sizes'   => array(
+                    'original' => array(
+                        'original_size'   => ( isset( $sizes['original']['original_size'] ) ? (int) $sizes['original']['original_size'] : 0 ),
+                        'compressed_size' => ( isset( $sizes['original']['compressed_size'] ) ? (int) $sizes['original']['compressed_size'] : 0 ),
+                    ),
+                ),
+                'saved'   => max( 0, $size_totals['before'] - $size_totals['after'] ),
+            ) );
         }
         wp_die();
     }

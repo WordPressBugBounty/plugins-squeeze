@@ -78,8 +78,8 @@ class SqueezeSettings extends SqueezeInit {
     public function options_bulk_page() {
         add_submenu_page(
             'upload.php',
-            __( 'Bulk / Directory Squeeze', 'squeeze' ),
-            __( 'Bulk / Directory Squeeze', 'squeeze' ),
+            __( 'Squeeze Bulk Tools', 'squeeze' ),
+            __( 'Squeeze Bulk Tools', 'squeeze' ),
             'manage_options',
             'squeeze-bulk',
             [$this, 'options_bulk_page_html']
@@ -99,6 +99,8 @@ class SqueezeSettings extends SqueezeInit {
         $compressed_count = $total_count - $uncompressed_count;
         $compressed_percentage = ( $total_count > 0 ? round( $compressed_count / $total_count * 100, 2 ) : 0 );
         //$total_count = array_sum((array)wp_count_attachments("image"));
+        $site_savings = self::$SqueezeHelpers->get_site_savings();
+        $site_saved_label = ( $site_savings['saved'] > 0 ? size_format( $site_savings['saved'], 0 ) : '' );
         $not_compressed_posts = implode( ",", self::$SqueezeHelpers->get_uncompressed_images() );
         $all_posts = implode( ",", self::$SqueezeHelpers->get_total_images() );
         $directory_path = ( get_transient( 'squeeze_bulk_path' ) ? get_transient( 'squeeze_bulk_path' ) : array(self::$SqueezeHelpers->get_uploads_directory_uri()) );
@@ -174,7 +176,7 @@ class SqueezeSettings extends SqueezeInit {
             esc_html_e( 'complete', 'squeeze' );
             ?></span>
                                     </div>
-                                    <div class="squeeze-bulk-media-stats-item squeeze-bulk-media-stats-item--inline">
+                                    <div class="squeeze-bulk-media-stats-item squeeze-bulk-media-stats-item--inline squeeze-bulk-media-stats-item--squeezed">
                                         <span class="squeeze-bulk-media-stats-item-label"><?php 
             esc_html_e( 'Squeezed images', 'squeeze' );
             ?></span>
@@ -182,6 +184,36 @@ class SqueezeSettings extends SqueezeInit {
             echo esc_html( $compressed_count );
             ?> / <?php 
             echo esc_html( $total_count );
+            ?></span>
+                                    </div>
+                                    <div
+                                        class="squeeze-bulk-media-stats-item squeeze-bulk-media-stats-item--inline squeeze-bulk-media-stats-item--savings"
+                                        data-baseline-saved="<?php 
+            echo esc_attr( (int) $site_savings['saved'] );
+            ?>"
+                                        data-baseline-count="<?php 
+            echo esc_attr( (int) $site_savings['count'] );
+            ?>"
+                                        <?php 
+            echo ( $site_savings['count'] > 0 && $site_savings['saved'] > 0 ? '' : 'hidden' );
+            ?>
+                                    >
+                                        <span class="squeeze-bulk-media-stats-item-label"><?php 
+            printf( 
+                /* translators: %s: plugin version that started tracking savings */
+                esc_html__( 'Total saved (since version %s)', 'squeeze' ),
+                esc_html( SqueezeHelpers::SAVINGS_SINCE_VERSION )
+             );
+            ?></span>
+                                        <span class="squeeze-bulk-media-stats-item-value"><?php 
+            if ( $site_savings['count'] > 0 && $site_savings['saved'] > 0 ) {
+                echo esc_html( sprintf( 
+                    /* translators: 1: human-readable bytes saved, 2: number of images with savings data */
+                    __( '%1$s on %2$d images', 'squeeze' ),
+                    $site_saved_label,
+                    (int) $site_savings['count']
+                 ) );
+            }
             ?></span>
                                     </div>
                                 </div>
@@ -368,6 +400,58 @@ class SqueezeSettings extends SqueezeInit {
                             </button>
                         </div>
                     </section>
+
+                    <?php 
+            ?>
+                    <section id="squeeze-bulk-section-page" class="squeeze-bulk-section squeeze-bulk-section--page squeeze-bulk-section--locked" aria-labelledby="squeeze-heading-page">
+                        <header class="squeeze-bulk-section__head">
+                            <p class="squeeze-bulk-section__kicker"><?php 
+            esc_html_e( 'Premium', 'squeeze' );
+            ?></p>
+                            <h2 id="squeeze-heading-page"><?php 
+            esc_html_e( 'Squeeze from a page', 'squeeze' );
+            ?></h2>
+                            <p class="squeeze-bulk-section__meta"><?php 
+            esc_html_e( 'Paste the URL of a slow page and squeeze every image on it — the page PageSpeed complains about.', 'squeeze' );
+            ?></p>
+                        </header>
+                        <div class="squeeze-bulk-section__body">
+                            <div class="squeeze-bulk-field">
+                                <label class="squeeze-bulk-field-label" for="squeeze-bulk-page-url-locked"><?php 
+            esc_html_e( 'Page URL', 'squeeze' );
+            ?></label>
+                                <input
+                                    id="squeeze-bulk-page-url-locked"
+                                    type="url"
+                                    class="regular-text"
+                                    value=""
+                                    placeholder="<?php 
+            echo esc_attr( home_url( '/' ) );
+            ?>"
+                                    disabled
+                                    readonly
+                                    aria-describedby="squeeze-bulk-page-locked-hint"
+                                />
+                                <p id="squeeze-bulk-page-locked-hint" class="squeeze-bulk-field-hint"><?php 
+            esc_html_e( 'Available in Premium. The URL field is shown so you can see how the workflow works.', 'squeeze' );
+            ?></p>
+                            </div>
+                        </div>
+                        <div class="squeeze-bulk-section__actions">
+                            <a class="button button-primary button-hero" href="<?php 
+            echo esc_url( self::get_checkout_url( 'bulk_from_page' ) );
+            ?>" target="_blank" rel="noopener noreferrer">
+                                <?php 
+            esc_html_e( 'Unlock with Premium', 'squeeze' );
+            ?>
+                            </a>
+                        </div>
+                    </section>
+                    <?php 
+            ?>
+
+                    <?php 
+            ?>
                     </div>
                     <?php 
         }
@@ -527,8 +611,11 @@ class SqueezeSettings extends SqueezeInit {
         $this->render_webp_delivery_field();
         ?>
                                     </div>
-                                    <?php 
+                                    <table class="form-table squeeze-form-table--card" role="presentation">
+                                        <?php 
+        do_settings_fields( 'squeeze_options', 'squeeze_basic_webp' );
         ?>
+                                    </table>
                                 </div>
                                 <div class="squeeze-card squeeze-card--settings">
                                     <div class="squeeze-card-header">
@@ -703,7 +790,7 @@ class SqueezeSettings extends SqueezeInit {
                             <div class="squeeze-box-header">
                                 <div class="squeeze-box-header__col">
                                     <h2><?php 
-        esc_html_e( 'Upgrade', 'squeeze' );
+        esc_html_e( 'Upgrade to Premium', 'squeeze' );
         ?></h2>
                                     <?php 
         $this->setting_upgrade_desc();
@@ -712,15 +799,20 @@ class SqueezeSettings extends SqueezeInit {
                             </div>
                             <div class="squeeze-upgrade-features">
                                 <?php 
-        $features = [['icon-compare.svg', __( 'Image Comparison', 'squeeze' ), __( 'Compare original and Squeezed image directly in the Media Library.', 'squeeze' )], ['icon-resize.svg', __( 'Resize Original Image', 'squeeze' ), __( 'Set maximum width and height for the original image.', 'squeeze' )], ['icon-bulk-page.svg', __( 'Bulk Squeeze from a Page', 'squeeze' ), __( 'Compress all images from a specific page.', 'squeeze' )]];
+        $features = array(
+            array('icon-feature-compare.svg', __( 'Image Comparison', 'squeeze' ), __( 'Slide between the original and squeezed image in the Media Library so you can judge quality before you commit.', 'squeeze' )),
+            array('icon-feature-bulk-page.svg', __( 'Bulk Squeeze from a Page', 'squeeze' ), __( 'Paste the URL of a slow page and squeeze every image on it — the page PageSpeed complains about.', 'squeeze' )),
+            array('icon-resize.svg', __( 'Resize Original Image', 'squeeze' ), __( 'Cap original width and height so huge phone photos never land full-size on your server.', 'squeeze' )),
+            array('icon-feature-cloudflare.svg', __( 'CDN URL mapping', 'squeeze' ), __( 'Map CDN URLs back to local files so Squeeze still finds and compresses Offload Media / CDN images.', 'squeeze' )),
+            array('icon-feature-elementor.svg', __( 'Elementor on upload', 'squeeze' ), __( 'Compress images in the browser when they are uploaded through Elementor, before they hit your media library.', 'squeeze' )),
+            array('icon-feature-gravity-forms.svg', __( 'Gravity Forms uploads', 'squeeze' ), __( 'Compress visitor photos in the browser on Gravity Forms single- and multi-file fields before they hit your server.', 'squeeze' ))
+        );
         foreach ( $features as $feature ) {
             ?>
                                     <div class="squeeze-box--fieldset">
                                         <img src="<?php 
             echo esc_url( self::$PLUGIN_URL . 'assets/images/' . $feature[0] );
-            ?>" alt="<?php 
-            echo esc_attr( $feature[1] );
-            ?>" />
+            ?>" alt="" />
                                         <h3><?php 
             echo esc_html( $feature[1] );
             ?></h3>
@@ -732,12 +824,79 @@ class SqueezeSettings extends SqueezeInit {
         }
         ?>
                             </div>
-                            <div class="squeeze-box-footer">
-                                <h3 style="text-align: center;">
+                            <div class="squeeze-box-footer squeeze-upgrade-cta">
+                                <?php 
+        $upgrade_prices = array(
+            'monthly'  => array(
+                'label' => __( '$4.99 / month', 'squeeze' ),
+                'url'   => self::get_checkout_url( 'settings_upgrade_tab', array(
+                    'billing_cycle' => 'monthly',
+                    'licenses'      => 1,
+                ) ),
+            ),
+            'annual'   => array(
+                'label' => __( '$29.99 / year', 'squeeze' ),
+                'url'   => self::get_checkout_url( 'settings_upgrade_tab', array(
+                    'billing_cycle' => 'annual',
+                    'licenses'      => 1,
+                ) ),
+            ),
+            'lifetime' => array(
+                'label' => __( '$99.99 once', 'squeeze' ),
+                'url'   => self::get_checkout_url( 'settings_upgrade_tab', array(
+                    'billing_cycle' => 'lifetime',
+                    'licenses'      => 1,
+                ) ),
+            ),
+        );
+        $default_cycle = 'annual';
+        ?>
+                                <div class="squeeze-upgrade-cta__pricing">
+                                    <div class="squeeze-billing-switcher" role="group" aria-label="<?php 
+        esc_attr_e( 'Billing cycle', 'squeeze' );
+        ?>" data-default-cycle="<?php 
+        echo esc_attr( $default_cycle );
+        ?>">
+                                        <button type="button" class="squeeze-billing-switcher__btn" data-cycle="monthly" aria-pressed="false"><?php 
+        esc_html_e( 'Monthly', 'squeeze' );
+        ?></button>
+                                        <button type="button" class="squeeze-billing-switcher__btn is-active" data-cycle="annual" aria-pressed="true"><?php 
+        esc_html_e( 'Annual', 'squeeze' );
+        ?></button>
+                                        <button type="button" class="squeeze-billing-switcher__btn" data-cycle="lifetime" aria-pressed="false"><?php 
+        esc_html_e( 'Lifetime', 'squeeze' );
+        ?></button>
+                                    </div>
+                                    <p class="squeeze-upgrade-price" data-prices="<?php 
+        echo esc_attr( wp_json_encode( wp_list_pluck( $upgrade_prices, 'label' ) ) );
+        ?>">
+                                        <?php 
+        echo esc_html( $upgrade_prices[$default_cycle]['label'] );
+        ?>
+                                    </p>
+                                </div>
+                                <p class="squeeze-upgrade-guarantee">
                                     <?php 
-        echo sprintf( __( 'To upgrade to the Premium version, <a href="%s" target="_blank">click here</a>.', 'squeeze' ), esc_url( self::CHECKOUT_URL ) );
-        ?>&nbsp;↗
-                                </h3>
+        esc_html_e( '14-day money-back guarantee. No trial inside the free plugin.', 'squeeze' );
+        ?>
+                                </p>
+                                <p>
+                                    <a
+                                        class="button button-primary button-hero squeeze-upgrade-cta__button"
+                                        href="<?php 
+        echo esc_url( $upgrade_prices[$default_cycle]['url'] );
+        ?>"
+                                        data-urls="<?php 
+        echo esc_attr( wp_json_encode( wp_list_pluck( $upgrade_prices, 'url' ) ) );
+        ?>"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <?php 
+        esc_html_e( 'Upgrade to Premium', 'squeeze' );
+        ?>
+                                    </a>
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -784,6 +943,18 @@ class SqueezeSettings extends SqueezeInit {
             )
         );
         add_settings_field(
+            'squeeze_setting_form_compress',
+            __( 'Squeeze form uploads', 'squeeze' ) . ' ' . self::$SqueezeHelpers->get_new_tag() . self::$SqueezeHelpers->get_hint( __( 'Compresses images selected in front-end form file fields before they are uploaded or submitted. Keeps the original format (Direct WebP does not apply). Contact Form 7 is included; Gravity Forms requires Premium.', 'squeeze' ) ),
+            [$this, 'options_callback'],
+            'squeeze_options',
+            'squeeze_basic_quick',
+            array(
+                'label_for' => 'form_compress',
+                'class'     => 'squeeze_setting_form_compress squeeze-settings-row',
+                'type'      => 'checkbox',
+            )
+        );
+        add_settings_field(
             'squeeze_setting_backup_original',
             __( 'Backup original image', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'Saves a .bak copy beside the file before squeezing. With Direct WebP on, that backup is also WebP (e.g. photo.bak.webp).', 'squeeze' ) ),
             [$this, 'options_callback'],
@@ -825,6 +996,22 @@ class SqueezeSettings extends SqueezeInit {
             '__return_false',
             'squeeze_options'
         );
+        add_settings_field(
+            'squeeze_setting_cdn_url',
+            __( 'CDN URL', 'squeeze' ) . self::$SqueezeHelpers->get_hint( __( 'If your site serves uploads from a CDN, enter that base URL so Squeeze can map CDN links to local files (all WebP delivery modes).', 'squeeze' ) ),
+            [$this, 'options_callback'],
+            'squeeze_options',
+            'squeeze_basic_webp',
+            array(
+                'label_for'   => 'cdn_url',
+                'class'       => 'squeeze_setting_cdn_url squeeze-settings-row squeeze-cdn-url-row',
+                'type'        => 'placeholder',
+                'input_type'  => 'text',
+                'placeholder' => 'https://cdn.host.com',
+                'description' => __( 'Map CDN URLs back to local files so Squeeze can find and compress Offload Media / CDN images.', 'squeeze' ),
+                'utm_content' => 'settings_placeholder_cdn_url',
+            )
+        );
         add_settings_section(
             'squeeze_basic_thumbs',
             '',
@@ -856,9 +1043,13 @@ class SqueezeSettings extends SqueezeInit {
             'squeeze_options',
             'squeeze_basic_limits',
             array(
-                'label_for' => 'max_width',
-                'class'     => 'squeeze_setting_max_width squeeze-settings-row',
-                'type'      => 'placeholder',
+                'label_for'   => 'max_width',
+                'class'       => 'squeeze_setting_max_width squeeze-settings-row squeeze-inline-limit',
+                'type'        => 'placeholder',
+                'input_type'  => 'number',
+                'units'       => 'px',
+                'description' => __( 'Cap how wide original uploads can be before Squeeze compresses them.', 'squeeze' ),
+                'utm_content' => 'settings_placeholder_max_width',
             )
         );
         add_settings_field(
@@ -868,9 +1059,13 @@ class SqueezeSettings extends SqueezeInit {
             'squeeze_options',
             'squeeze_basic_limits',
             array(
-                'label_for' => 'max_height',
-                'class'     => 'squeeze_setting_max_height squeeze-settings-row',
-                'type'      => 'placeholder',
+                'label_for'   => 'max_height',
+                'class'       => 'squeeze_setting_max_height squeeze-settings-row squeeze-inline-limit',
+                'type'        => 'placeholder',
+                'input_type'  => 'number',
+                'units'       => 'px',
+                'description' => __( 'Cap how tall original uploads can be before Squeeze compresses them.', 'squeeze' ),
+                'utm_content' => 'settings_placeholder_max_height',
             )
         );
         add_settings_field(
@@ -1601,6 +1796,7 @@ class SqueezeSettings extends SqueezeInit {
         $input['webp_lossless'] = ( isset( $input['webp_lossless'] ) ? boolval( $input['webp_lossless'] ) : '0' );
         $input['auto_compress'] = ( isset( $input['auto_compress'] ) ? boolval( $input['auto_compress'] ) : '0' );
         // TBD: maybe get default value from the database
+        $input['form_compress'] = ( isset( $input['form_compress'] ) ? boolval( $input['form_compress'] ) : '0' );
         $input['auto_webp'] = ( isset( $input['auto_webp'] ) ? boolval( $input['auto_webp'] ) : '0' );
         $input['webp_replace_urls'] = ( isset( $input['webp_replace_urls'] ) && $input['auto_webp'] ? boolval( $input['webp_replace_urls'] ) : '0' );
         $input['direct_webp'] = ( isset( $input['direct_webp'] ) ? boolval( $input['direct_webp'] ) : '0' );
@@ -1783,7 +1979,21 @@ class SqueezeSettings extends SqueezeInit {
                 echo "<textarea class='" . esc_attr( $extra_classes ) . "' id='squeeze_setting_" . esc_attr( $label_for ) . "' name='squeeze_options[" . esc_attr( $label_for ) . "]'>" . esc_textarea( $value ) . "</textarea>";
                 break;
             case 'placeholder':
-                echo '<p>' . sprintf( __( 'This feature is available only in the <a href="%s">premium version</a>.', 'squeeze' ), esc_url( self::$UPGRADE_URL ) ) . '</p>';
+                $utm_content = ( isset( $args['utm_content'] ) ? (string) $args['utm_content'] : 'settings_placeholder' );
+                $input_type = ( isset( $args['input_type'] ) ? (string) $args['input_type'] : 'text' );
+                $placeholder = ( isset( $args['placeholder'] ) ? (string) $args['placeholder'] : '' );
+                $units = ( isset( $args['units'] ) ? (string) $args['units'] : '' );
+                echo '<div class="squeeze-premium-placeholder">';
+                if ( 'number' === $input_type ) {
+                    echo "<input class='" . esc_attr( $extra_classes ) . "' id='squeeze_setting_" . esc_attr( $label_for ) . "' type='number' value='' disabled readonly />";
+                    if ( $units ) {
+                        echo "<span class='squeeze-setting-units'>" . esc_html( $units ) . '</span>';
+                    }
+                } else {
+                    echo "<input class='" . esc_attr( $extra_classes ) . "' id='squeeze_setting_" . esc_attr( $label_for ) . "' type='text' value='' placeholder='" . esc_attr( $placeholder ) . "' disabled readonly />";
+                }
+                printf( '<a class="button button-secondary" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>', esc_url( self::get_checkout_url( $utm_content ) ), esc_html__( 'Upgrade to Premium', 'squeeze' ) );
+                echo '</div>';
                 break;
         }
     }
@@ -1813,7 +2023,7 @@ class SqueezeSettings extends SqueezeInit {
     }
 
     public function setting_upgrade_desc() {
-        echo '<p>' . esc_html__( 'Upgrade to premium version for more features.', 'squeeze' ) . '</p>';
+        echo '<p>' . esc_html__( 'Premium adds comparison, page-level bulk squeeze, resize limits, CDN mapping, Elementor upload compression, and Gravity Forms form uploads — still entirely in your browser, with no external servers.', 'squeeze' ) . '</p>';
     }
 
     public function setting_license_desc() {
@@ -2018,9 +2228,29 @@ class SqueezeSettings extends SqueezeInit {
         if ( !wp_attachment_is_image( $post->ID ) ) {
             return;
         }
+        $mime = ( !empty( $post->post_mime_type ) ? $post->post_mime_type : get_post_mime_type( $post->ID ) );
+        $allowed_mimes = self::$SqueezeHelpers->get_image_formats( true, self::ALLOWED_IMAGE_FORMATS );
+        if ( !is_array( $allowed_mimes ) || !in_array( $mime, $allowed_mimes, true ) ) {
+            return;
+        }
+        $thumb = wp_get_attachment_image_src( $post->ID, 'medium' );
+        $thumb_url = ( is_array( $thumb ) && !empty( $thumb[0] ) ? $thumb[0] : '' );
+        $checkout_url = self::get_checkout_url( 'compare_attachment_edit' );
         echo '<div class="squeeze-preview-button is-placeholder">';
-        echo '<input type="checkbox" disabled class="squeeze-ios8-switch" id="squeeze-ios8-switch"><label for="squeeze-ios8-switch" title="' . esc_attr__( "Image comparison with Squeeze", "squeeze" ) . '">' . esc_html__( "Compare Squeeze", "squeeze" ) . ' ';
-        echo sprintf( __( '(<a href="%s" target="_blank">premium only</a>)', 'squeeze' ), esc_url( self::$UPGRADE_URL ) ) . '</label>';
+        echo '<div class="squeeze-compare-teaser">';
+        if ( $thumb_url ) {
+            $stage_style = sprintf( '--squeeze-teaser-image: url("%s");', esc_url( $thumb_url ) );
+            echo '<div class="squeeze-compare-teaser__stage" style="' . esc_attr( $stage_style ) . '">';
+            echo '<div class="squeeze-compare-teaser__before" aria-hidden="true"></div>';
+            echo '<div class="squeeze-compare-teaser__after" aria-hidden="true"></div>';
+            echo '<div class="squeeze-compare-teaser__divider" aria-hidden="true"></div>';
+            echo '<span class="squeeze-compare-teaser__label squeeze-compare-teaser__label--before">' . esc_html__( 'Before', 'squeeze' ) . '</span>';
+            echo '<span class="squeeze-compare-teaser__label squeeze-compare-teaser__label--after">' . esc_html__( 'After', 'squeeze' ) . '</span>';
+            echo '</div>';
+        }
+        echo '<p class="squeeze-compare-teaser__text">' . esc_html__( 'Slide between the original and squeezed image in the Media Library before you commit.', 'squeeze' ) . '</p>';
+        printf( '<a class="button button-primary" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>', esc_url( $checkout_url ), esc_html__( 'Unlock Image Comparison', 'squeeze' ) );
+        echo '</div>';
         echo '</div>';
     }
 

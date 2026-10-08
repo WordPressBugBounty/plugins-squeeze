@@ -1,6 +1,1537 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./assets/js/bulk-timing.js":
+/*!**********************************!*\
+  !*** ./assets/js/bulk-timing.js ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "createBulkTiming": () => (/* binding */ createBulkTiming)
+/* harmony export */ });
+/**
+ * Bulk / upload run timing.
+ * Summary lands in console as [Squeeze timing] and on window.SqueezeLastBulkTiming.
+ */
+
+const now = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+
+const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+const avg = (arr) => (arr.length ? Math.round(sum(arr) / arr.length) : 0);
+
+/**
+ * @param {'sequential'} [mode]
+ * @param {{ poolSize?: number, path?: string }} [meta]
+ */
+function createBulkTiming(mode = 'sequential', meta = {}) {
+  const wallStart = now();
+  let activeStart = wallStart;
+  let activeAccumMs = 0;
+  let paused = false;
+  const compressSamples = [];
+  const uploadSamples = [];
+  let images = 0;
+  let skipped = 0;
+
+  const activeElapsed = () => (
+    paused ? activeAccumMs : activeAccumMs + (now() - activeStart)
+  );
+
+  return {
+    mode: 'sequential',
+    meta,
+
+    markCompress(ms) {
+      if (Number.isFinite(ms) && ms >= 0) compressSamples.push(ms);
+    },
+
+    markUpload(ms) {
+      if (Number.isFinite(ms) && ms >= 0) uploadSamples.push(ms);
+    },
+
+    /** Count a finished image (success or skip after work). */
+    markImage({ skipped: wasSkipped = false } = {}) {
+      images += 1;
+      if (wasSkipped) skipped += 1;
+    },
+
+    pause() {
+      if (paused) return;
+      activeAccumMs += now() - activeStart;
+      paused = true;
+    },
+
+    resume() {
+      if (!paused) return;
+      activeStart = now();
+      paused = false;
+      this._logged = false;
+    },
+
+    summary() {
+      const wallMs = Math.round(now() - wallStart);
+      const activeMs = Math.round(activeElapsed());
+      const compressSumMs = Math.round(sum(compressSamples));
+      const uploadSumMs = Math.round(sum(uploadSamples));
+      const imagesPerSec = activeMs > 0 ? +(images / (activeMs / 1000)).toFixed(2) : 0;
+
+      return {
+        mode: 'sequential',
+        poolSize: meta.poolSize ?? 1,
+        path: meta.path,
+        images,
+        skipped,
+        wallMs,
+        activeMs,
+        compressSumMs,
+        uploadSumMs,
+        compressAvgMs: avg(compressSamples),
+        uploadAvgMs: avg(uploadSamples),
+        imagesPerSec,
+        compressOverlapRatio: activeMs > 0 ? +(compressSumMs / activeMs).toFixed(2) : 0,
+      };
+    },
+
+    /**
+     * Final results table for bulk / upload squeeze runs.
+     * @returns {object} summary
+     */
+    logSummary() {
+      if (this._logged) {
+        return this._lastSummary || this.summary();
+      }
+
+      const s = this.summary();
+      console.log('[Squeeze timing]');
+      console.table({
+        mode: s.mode,
+        poolSize: s.poolSize,
+        path: s.path,
+        images: s.images,
+        skipped: s.skipped,
+        active_ms: s.activeMs,
+        compress_sum_ms: s.compressSumMs,
+        upload_sum_ms: s.uploadSumMs,
+        compress_avg_ms: s.compressAvgMs,
+        upload_avg_ms: s.uploadAvgMs,
+        images_per_sec: s.imagesPerSec,
+        compress_overlap_ratio: s.compressOverlapRatio,
+      });
+
+      if (typeof window !== 'undefined') {
+        window.SqueezeLastBulkTiming = s;
+      }
+
+      this._logged = true;
+      this._lastSummary = s;
+      return s;
+    },
+  };
+}
+
+
+/***/ }),
+
+/***/ "./assets/js/cf7-upload-compat.js":
+/*!****************************************!*\
+  !*** ./assets/js/cf7-upload-compat.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "CF7_STATUS_CLASS": () => (/* binding */ CF7_STATUS_CLASS),
+/* harmony export */   "STATUS_CLASS": () => (/* reexport safe */ _form_compress_js__WEBPACK_IMPORTED_MODULE_0__.STATUS_CLASS),
+/* harmony export */   "initCf7UploadCompat": () => (/* binding */ initCf7UploadCompat)
+/* harmony export */ });
+/* harmony import */ var _form_compress_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./form-compress.js */ "./assets/js/form-compress.js");
+/**
+ * Contact Form 7 native file-input adapter.
+ * On change: compress images via form-compress, assign back with DataTransfer,
+ * and rely on submit gating so AJAX submit waits for workers.
+ */
+
+
+
+
+
+const LOG_PREFIX = "[Squeeze · CF7]";
+const BOUND_KEY = "__squeezeCf7Bound";
+/** CF7-only companion to STATUS_CLASS — tip-like styling (not validation red). */
+const CF7_STATUS_CLASS = "wpcf7-squeeze-form-status";
+const WAITING_CLASS = "squeeze-form-waiting";
+const STYLE_ID = "squeeze-cf7-form-compress-styles";
+const RESPONSE_MARK = "data-squeeze-waiting-msg";
+
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isOptionEnabled(value) {
+	return value === true || value === 1 || value === "1";
+}
+
+function ensureCf7Styles() {
+	if (typeof document === "undefined") return;
+	if (document.getElementById(STYLE_ID)) return;
+	const style = document.createElement("style");
+	style.id = STYLE_ID;
+	// Match .wpcf7-not-valid-tip layout/typography; keep a neutral color (not tip red).
+	style.textContent = `
+.${CF7_STATUS_CLASS} {
+	font-size: 1em;
+	font-weight: normal;
+	display: block;
+	color: inherit;
+}
+.wpcf7 form.${WAITING_CLASS} .wpcf7-response-output {
+	display: block;
+	border-color: #00a0d2;
+}
+`.trim();
+	document.head.appendChild(style);
+}
+
+function waitingLabel() {
+	try {
+		if (typeof wp !== "undefined" && wp.i18n && typeof wp.i18n.__ === "function") {
+			return wp.i18n.__(
+				"Please wait — Squeeze is still optimizing your image…",
+				"squeeze"
+			);
+		}
+	} catch (_e) {
+		/* fall through */
+	}
+	return "Please wait — Squeeze is still optimizing your image…";
+}
+
+/**
+ * @param {HTMLFormElement} form
+ */
+function showCf7WaitingResponse(form) {
+	ensureCf7Styles();
+	form.classList.add(WAITING_CLASS);
+	const output = form.querySelector(".wpcf7-response-output");
+	if (!output) return;
+	if (!output.hasAttribute(RESPONSE_MARK)) {
+		output.setAttribute(RESPONSE_MARK, output.textContent || "");
+	}
+	output.textContent = waitingLabel();
+	output.setAttribute("aria-hidden", "false");
+}
+
+/**
+ * @param {HTMLFormElement} form
+ */
+function clearCf7WaitingResponse(form) {
+	form.classList.remove(WAITING_CLASS);
+	const output = form.querySelector(".wpcf7-response-output");
+	if (!output || !output.hasAttribute(RESPONSE_MARK)) return;
+	output.textContent = output.getAttribute(RESPONSE_MARK) || "";
+	output.removeAttribute(RESPONSE_MARK);
+	output.setAttribute("aria-hidden", "true");
+}
+
+/**
+ * @param {File[]} files
+ * @returns {DataTransfer}
+ */
+function filesToDataTransfer(files) {
+	const dt = new DataTransfer();
+	for (const file of files) {
+		dt.items.add(file);
+	}
+	return dt;
+}
+
+/**
+ * @param {HTMLInputElement} input
+ * @param {Record<string, unknown>} compressOptions
+ */
+/**
+ * Clear a prior CF7 “file too large” tip so SWV can re-validate the squeezed file on submit.
+ *
+ * @param {HTMLInputElement} input
+ * @param {Element|null} fieldEl
+ */
+function clearCf7FileSizeTip(input, fieldEl) {
+	input.classList.remove("wpcf7-not-valid");
+	input.removeAttribute("aria-invalid");
+	const wrap = fieldEl || input.closest(".wpcf7-form-control-wrap");
+	wrap?.querySelectorAll(".wpcf7-not-valid-tip").forEach((tip) => tip.remove());
+}
+
+async function compressInputFiles(input, compressOptions) {
+	const list = input.files ? Array.from(input.files) : [];
+	if (!list.length) {
+		return;
+	}
+
+	const form = input.closest("form.wpcf7-form") || input.closest("form");
+	const fieldEl = input.closest(".wpcf7-form-control-wrap") || input.parentElement;
+
+	// Master switch is form_compress (checked at init). Force auto_compress so
+	// maybeCompressAttachment still runs when Media Library "Squeeze on upload" is off.
+	const opts = { ...compressOptions, auto_compress: true };
+	const statusExtraClasses = [CF7_STATUS_CLASS];
+	const progressOpts = { extraClasses: statusExtraClasses };
+
+	ensureCf7Styles();
+	clearCf7FileSizeTip(input, fieldEl);
+
+	// Show tip-styled progress label immediately on select (before any await).
+	const hasImage = list.some((f) => typeof f?.type === "string" && f.type.startsWith("image/"));
+	if (hasImage && fieldEl) {
+		(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.showFormCompressProgress)(fieldEl, progressOpts);
+	}
+
+	try {
+		const outFiles = [];
+		for (const file of list) {
+			outFiles.push(
+				await (0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.compressFormFile)(file, {
+					compressOptions: opts,
+					fieldEl,
+					form,
+					showProgress: true,
+					statusExtraClasses,
+				})
+			);
+		}
+
+		try {
+			input.files = filesToDataTransfer(outFiles).files;
+		} catch (e) {
+			console.warn(LOG_PREFIX, "could not assign compressed files to input; leaving original.", e);
+		}
+
+		// CF7 live-validates on change; we blocked that for the raw file — re-run on squeezed bytes.
+		clearCf7FileSizeTip(input, fieldEl);
+		if (form && typeof window.wpcf7?.validate === "function") {
+			try {
+				window.wpcf7.validate(form, { target: input });
+			} catch (e) {
+				console.warn(LOG_PREFIX, "wpcf7.validate after compress failed", e);
+			}
+		}
+	} finally {
+		if (hasImage && fieldEl) {
+			(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.hideFormCompressProgress)(fieldEl);
+		}
+	}
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindForm(form, compressOptions) {
+	if (!form || form[BOUND_KEY]) {
+		return;
+	}
+	form[BOUND_KEY] = true;
+	ensureCf7Styles();
+
+	(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.installFormSubmitGate)(form, {
+		onBlocked: showCf7WaitingResponse,
+		onResume: clearCf7WaitingResponse,
+	});
+
+	// Capture phase: CF7 binds `change` → wpcf7.validate() in bubble phase, which would
+	// flag oversized originals before Squeeze runs. Stop that, compress, then validate.
+	form.addEventListener(
+		"change",
+		(event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLInputElement) || target.type !== "file") {
+				return;
+			}
+			if (!target.classList.contains("wpcf7-file") && !form.classList.contains("wpcf7-form")) {
+				return;
+			}
+			event.stopImmediatePropagation();
+			void compressInputFiles(target, compressOptions);
+		},
+		true
+	);
+}
+
+/**
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindAllForms(compressOptions) {
+	document.querySelectorAll(".wpcf7 > form, form.wpcf7-form").forEach((form) => {
+		bindForm(/** @type {HTMLFormElement} */ (form), compressOptions);
+	});
+}
+
+/**
+ * @param {Record<string, unknown>} compressOptions Parsed squeezeOptions.options
+ */
+function initCf7UploadCompat(compressOptions) {
+	if (typeof window === "undefined" || typeof document === "undefined") {
+		return;
+	}
+
+	if (!isOptionEnabled(compressOptions?.form_compress)) {
+		console.info(LOG_PREFIX, "compat skipped: Squeeze form uploads (form_compress) is off.");
+		return;
+	}
+
+	const run = () => bindAllForms(compressOptions);
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", run);
+	} else {
+		run();
+	}
+
+	// CF7 dispatches wpcf7init on each form after init / re-init.
+	document.addEventListener(
+		"wpcf7init",
+		(event) => {
+			const form = event.target;
+			if (form && form.tagName === "FORM") {
+				bindForm(/** @type {HTMLFormElement} */ (form), compressOptions);
+			}
+		},
+		true
+	);
+}
+
+
+
+
+/***/ }),
+
+/***/ "./assets/js/form-compress.js":
+/*!************************************!*\
+  !*** ./assets/js/form-compress.js ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "STATUS_CLASS": () => (/* binding */ STATUS_CLASS),
+/* harmony export */   "__resetFormCompressStateForTests": () => (/* binding */ __resetFormCompressStateForTests),
+/* harmony export */   "compressFormFile": () => (/* binding */ compressFormFile),
+/* harmony export */   "hasPendingFormCompressions": () => (/* binding */ hasPendingFormCompressions),
+/* harmony export */   "hideFormCompressProgress": () => (/* binding */ hideFormCompressProgress),
+/* harmony export */   "installFormSubmitGate": () => (/* binding */ installFormSubmitGate),
+/* harmony export */   "showFormCompressProgress": () => (/* binding */ showFormCompressProgress),
+/* harmony export */   "whenFormCompressionsIdle": () => (/* binding */ whenFormCompressionsIdle)
+/* harmony export */ });
+/* harmony import */ var _helpers_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers.js */ "./assets/js/helpers.js");
+/**
+ * Shared front-end form compression helpers (GF / WPForms / CF7 adapters).
+ * Thin wrapper around window.Squeeze.compressBeforeUpload: fail-open File out,
+ * optional progress field UI, and submit gating while workers run.
+ * Keeps the original image format — Direct WebP does not apply to form uploads.
+ */
+
+
+
+const LOG_PREFIX = "[Squeeze · Form]";
+/** Shared status element class (adapters may add plugin-specific classes). */
+const STATUS_CLASS = "squeeze-form-status";
+const FIELD_CLASS = "squeeze-form-optimizing";
+const STYLE_ID = "squeeze-form-compress-styles";
+const GATE_KEY = "__squeezeFormSubmitGate";
+const ALLOW_SUBMIT_KEY = "__squeezeFormAllowSubmit";
+const GATE_OPTS_KEY = "__squeezeFormSubmitGateOpts";
+
+/** @type {number} */
+let globalPending = 0;
+
+/** @type {WeakMap<HTMLFormElement, number>} */
+const pendingByForm = new WeakMap();
+
+/** @type {Set<() => void>} */
+const idleWaiters = new Set();
+
+/** @type {WeakMap<Element, number>} */
+const fieldProgressDepth = new WeakMap();
+
+function fcLog(...args) {
+  console.info(LOG_PREFIX, ...args);
+}
+
+function fcWarn(...args) {
+  console.warn(LOG_PREFIX, ...args);
+}
+
+function getSqueeze(explicit) {
+  if (explicit) return explicit;
+  return typeof window !== "undefined" ? window.Squeeze : null;
+}
+
+function resolveForm(form, fieldEl) {
+  if (form) return form;
+  if (fieldEl && typeof fieldEl.closest === "function") {
+    return fieldEl.closest("form");
+  }
+  return null;
+}
+
+function notifyIdleWaiters() {
+  // Each waiter checks its own scope (global vs one form) and removes itself when idle.
+  for (const waiter of [...idleWaiters]) {
+    waiter();
+  }
+}
+
+/**
+ * @param {HTMLFormElement|null} form
+ */
+function beginPending(form) {
+  globalPending += 1;
+  if (form) {
+    pendingByForm.set(form, (pendingByForm.get(form) || 0) + 1);
+  }
+}
+
+/**
+ * @param {HTMLFormElement|null} form
+ */
+function endPending(form) {
+  if (globalPending > 0) globalPending -= 1;
+  if (form) {
+    const n = (pendingByForm.get(form) || 1) - 1;
+    if (n <= 0) pendingByForm.delete(form);
+    else pendingByForm.set(form, n);
+  }
+  notifyIdleWaiters();
+}
+
+function ensureStyles() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = `
+.${FIELD_CLASS} { position: relative; }
+.${STATUS_CLASS} {
+  display: inline-block;
+  margin-top: 0.35em;
+  font-size: 0.875em;
+  opacity: 0.85;
+}
+`.trim();
+  document.head.appendChild(style);
+}
+
+/**
+ * Field progress label. Prefer PHP-filtered `squeezeOptions.formCompressProgressLabel`
+ * (filter: `squeeze_form_compress_progress_label`), then wp.i18n, then English default.
+ *
+ * @returns {string}
+ */
+function progressLabel() {
+  try {
+    if (
+      typeof squeezeOptions !== "undefined" &&
+      squeezeOptions &&
+      typeof squeezeOptions.formCompressProgressLabel === "string" &&
+      squeezeOptions.formCompressProgressLabel.length > 0
+    ) {
+      return squeezeOptions.formCompressProgressLabel;
+    }
+  } catch (_e) {
+    /* fall through */
+  }
+  try {
+    if (typeof wp !== "undefined" && wp.i18n && typeof wp.i18n.__ === "function") {
+      return wp.i18n.__("Compressing the image...", "squeeze");
+    }
+  } catch (_e) {
+    /* fall through */
+  }
+  return "Compressing the image...";
+}
+
+/**
+ * @param {unknown} extraClasses
+ * @returns {string[]}
+ */
+function normalizeExtraClasses(extraClasses) {
+  if (!extraClasses) return [];
+  if (Array.isArray(extraClasses)) {
+    return extraClasses.filter((c) => typeof c === "string" && c.length > 0);
+  }
+  if (typeof extraClasses === "string" && extraClasses.trim()) {
+    return extraClasses.trim().split(/\s+/);
+  }
+  return [];
+}
+
+/**
+ * Show subtle progress text next to a form field (ref-counted for parallel files).
+ *
+ * @param {Element|null|undefined} fieldEl
+ * @param {object} [options]
+ * @param {string|string[]} [options.extraClasses] Extra classes on the status element (e.g. CF7 tip class)
+ */
+function showFormCompressProgress(fieldEl, options = {}) {
+  if (!fieldEl || typeof fieldEl.classList === "undefined") return;
+  ensureStyles();
+  const depth = (fieldProgressDepth.get(fieldEl) || 0) + 1;
+  fieldProgressDepth.set(fieldEl, depth);
+  if (depth > 1) return;
+
+  const extra = normalizeExtraClasses(options.extraClasses);
+  fieldEl.classList.add(FIELD_CLASS);
+  let status = fieldEl.querySelector?.(`:scope > .${STATUS_CLASS}`);
+  if (!status) {
+    status = document.createElement("span");
+    status.className = [STATUS_CLASS, ...extra].join(" ");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    fieldEl.appendChild(status);
+  } else if (extra.length) {
+    status.classList.add(...extra);
+  }
+  status.textContent = progressLabel();
+}
+
+/**
+ * Hide field progress when the last in-flight compress for that field finishes.
+ *
+ * @param {Element|null|undefined} fieldEl
+ */
+function hideFormCompressProgress(fieldEl) {
+  if (!fieldEl || typeof fieldEl.classList === "undefined") return;
+  const depth = (fieldProgressDepth.get(fieldEl) || 0) - 1;
+  if (depth > 0) {
+    fieldProgressDepth.set(fieldEl, depth);
+    return;
+  }
+  fieldProgressDepth.delete(fieldEl);
+  fieldEl.classList.remove(FIELD_CLASS);
+  fieldEl.querySelectorAll?.(`.${STATUS_CLASS}`).forEach((el) => el.remove());
+}
+
+/**
+ * @param {HTMLFormElement|null|undefined} [form]
+ * @returns {boolean}
+ */
+function hasPendingFormCompressions(form = null) {
+  if (form) return (pendingByForm.get(form) || 0) > 0;
+  return globalPending > 0;
+}
+
+/**
+ * Resolve when in-flight form compressions finish (globally or for one form).
+ *
+ * @param {HTMLFormElement|null|undefined} [form]
+ * @returns {Promise<void>}
+ */
+function whenFormCompressionsIdle(form = null) {
+  if (!hasPendingFormCompressions(form)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const waiter = () => {
+      if (!hasPendingFormCompressions(form)) {
+        idleWaiters.delete(waiter);
+        resolve();
+      }
+    };
+    idleWaiters.add(waiter);
+  });
+}
+
+/**
+ * Block submit while compressions for this form are still running, then re-submit.
+ * Idempotent per form element (first install wins for callbacks).
+ *
+ * @param {HTMLFormElement|null|undefined} form
+ * @param {object} [gateOptions]
+ * @param {(form: HTMLFormElement) => void} [gateOptions.onBlocked] Called when submit is deferred
+ * @param {(form: HTMLFormElement) => void} [gateOptions.onResume] Called before re-submit
+ */
+function installFormSubmitGate(form, gateOptions = {}) {
+  if (!form) return;
+
+  if (!form[GATE_KEY]) {
+    form[GATE_OPTS_KEY] = gateOptions || {};
+    form[GATE_KEY] = true;
+
+    form.addEventListener(
+      "submit",
+      (event) => {
+        if (form[ALLOW_SUBMIT_KEY]) return;
+        if (!hasPendingFormCompressions(form)) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const opts = form[GATE_OPTS_KEY] || {};
+        try {
+          if (typeof opts.onBlocked === "function") {
+            opts.onBlocked(form);
+          }
+        } catch (e) {
+          fcWarn("onBlocked failed", e);
+        }
+
+        void whenFormCompressionsIdle(form).then(() => {
+          try {
+            if (typeof opts.onResume === "function") {
+              opts.onResume(form);
+            }
+          } catch (e) {
+            fcWarn("onResume failed", e);
+          }
+
+          form[ALLOW_SUBMIT_KEY] = true;
+          try {
+            if (typeof form.requestSubmit === "function") {
+              form.requestSubmit();
+            } else {
+              HTMLFormElement.prototype.submit.call(form);
+            }
+          } finally {
+            form[ALLOW_SUBMIT_KEY] = false;
+          }
+        });
+      },
+      true
+    );
+    return;
+  }
+
+  // Already installed: allow filling in callbacks if the first call had none.
+  const existing = form[GATE_OPTS_KEY] || {};
+  if (gateOptions?.onBlocked && !existing.onBlocked) {
+    existing.onBlocked = gateOptions.onBlocked;
+  }
+  if (gateOptions?.onResume && !existing.onResume) {
+    existing.onResume = gateOptions.onResume;
+  }
+  form[GATE_OPTS_KEY] = existing;
+}
+
+/**
+ * Compress a File for a form upload. Non-images and failures return the original (fail-open).
+ * Tracks pending work for submit gating and optionally shows field progress.
+ *
+ * @param {File|Blob} file
+ * @param {object} [options]
+ * @param {object} [options.compressOptions]
+ * @param {Element|null} [options.fieldEl] Field wrapper for progress UI
+ * @param {HTMLFormElement|null} [options.form] Form to gate (defaults to fieldEl’s form)
+ * @param {object|null} [options.squeeze] Squeeze instance (defaults to window.Squeeze)
+ * @param {boolean} [options.showProgress=true]
+ * @param {string|string[]} [options.statusExtraClasses] Extra classes for the status element
+ * @returns {Promise<File|Blob>}
+ */
+async function compressFormFile(file, options = {}) {
+  const {
+    compressOptions: compressOptionsIn = {},
+    fieldEl = null,
+    form = null,
+    squeeze: squeezeOpt = null,
+    showProgress = true,
+    statusExtraClasses = [],
+  } = options;
+
+  // Form uploads keep the original container (jpg/png/…) — Direct WebP is Media Library only.
+  const compressOptions = { ...compressOptionsIn, direct_webp: false };
+
+  if (!file) return file;
+
+  const formEl = resolveForm(form, fieldEl);
+  if (formEl) installFormSubmitGate(formEl);
+
+  const { type, subtype } = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.parseMimeType)(file);
+  if (!(0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeCompressAttachment)(type, subtype, compressOptions)) {
+    return file;
+  }
+
+  const squeeze = getSqueeze(squeezeOpt);
+  if (!squeeze || typeof squeeze.compressBeforeUpload !== "function") {
+    fcWarn("compressBeforeUpload missing; using original:", file.name);
+    return file;
+  }
+
+  const progressOpts = { extraClasses: statusExtraClasses };
+
+  // Pending + UI as soon as we know this is a compressible image (before exclusion await).
+  beginPending(formEl);
+  if (showProgress) showFormCompressProgress(fieldEl, progressOpts);
+
+  const inBytes = file.size || 0;
+  try {
+    if (typeof squeeze.isExcludedByName === "function") {
+      try {
+        if (await squeeze.isExcludedByName(file.name)) {
+          fcLog("file skipped (exclusion list):", file.name);
+          return file;
+        }
+      } catch (e) {
+        fcWarn("exclude check failed; continuing with compression:", file.name, e);
+      }
+    }
+
+    fcLog("compressing:", file.name, `(${inBytes} B in)`);
+    const t0 = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+    const base64Obj = await squeeze.compressBeforeUpload(file, null, { direct_webp: false });
+
+    if (!base64Obj?.base64) {
+      fcWarn("compress returned no data; using original:", file.name);
+      return file;
+    }
+
+    const uploadTarget = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.resolveCompressedUploadTarget)(
+      file,
+      compressOptions,
+      { ...base64Obj, isDirectWebp: false }
+    );
+    const outFile = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.base64ToFile)(base64Obj.base64, uploadTarget.name, uploadTarget.type);
+    const ms = Math.round(
+      ((typeof performance !== "undefined" && performance.now ? performance.now() : Date.now()) - t0)
+    );
+
+    if (inBytes > 0 && outFile.size > inBytes) {
+      fcLog(
+        "compressed larger than original; using original:",
+        file.name,
+        `(${inBytes} B vs ${outFile.size} B in ${ms} ms)`
+      );
+      return file;
+    }
+
+    fcLog("compressed:", file.name, `(${inBytes} B → ${outFile.size} B in ${ms} ms)`);
+    return outFile;
+  } catch (e) {
+    fcWarn("compress failed; using original:", file?.name, e);
+    return file;
+  } finally {
+    if (showProgress) hideFormCompressProgress(fieldEl);
+    endPending(formEl);
+  }
+}
+
+/** @private Test helper — clears module counters between cases when reusing the same import. */
+function __resetFormCompressStateForTests() {
+  globalPending = 0;
+  idleWaiters.clear();
+}
+
+
+/***/ }),
+
+/***/ "./assets/js/gf-upload-compat.js":
+/*!***************************************!*\
+  !*** ./assets/js/gf-upload-compat.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "GF_STATUS_CLASS": () => (/* binding */ GF_STATUS_CLASS),
+/* harmony export */   "STATUS_CLASS": () => (/* reexport safe */ _form_compress_js__WEBPACK_IMPORTED_MODULE_0__.STATUS_CLASS),
+/* harmony export */   "initGfUploadCompat": () => (/* binding */ initGfUploadCompat)
+/* harmony export */ });
+/* harmony import */ var _form_compress_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./form-compress.js */ "./assets/js/form-compress.js");
+/**
+ * Gravity Forms file-upload adapter.
+ * - Single-file: native input change → compressFormFile → DataTransfer (like CF7)
+ * - Multi-file: Plupload BeforeUpload → compress → swap source → restart upload
+ */
+
+
+
+
+
+const LOG_PREFIX = "[Squeeze · GF]";
+const BOUND_KEY = "__squeezeGfBound";
+/** GF-only companion to STATUS_CLASS. */
+const GF_STATUS_CLASS = "gform-squeeze-form-status";
+const WAITING_CLASS = "squeeze-form-waiting";
+const WAITING_MSG_CLASS = "gform-squeeze-waiting-msg";
+const STYLE_ID = "squeeze-gf-form-compress-styles";
+
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isOptionEnabled(value) {
+	return value === true || value === 1 || value === "1";
+}
+
+function ensureGfStyles() {
+	if (typeof document === "undefined") return;
+	if (document.getElementById(STYLE_ID)) return;
+	const style = document.createElement("style");
+	style.id = STYLE_ID;
+	// Tip-like field status (GF validation tip layout, neutral color — not error red).
+	style.textContent = `
+.${GF_STATUS_CLASS} {
+	font-size: 14.992px;
+	font-weight: normal;
+	display: block;
+	margin-top: 8px;
+	color: inherit;
+}
+.${WAITING_MSG_CLASS} {
+	display: none;
+	font-size: 14.992px;
+	margin: 1em 0;
+	padding: 12.992px 24px;
+	border: 1px solid #00a0d2;
+	background: #f7fcfe;
+	color: inherit;
+}
+.gform_wrapper form.${WAITING_CLASS} .${WAITING_MSG_CLASS},
+form.${WAITING_CLASS} .${WAITING_MSG_CLASS} {
+	display: block;
+}
+`.trim();
+	document.head.appendChild(style);
+}
+
+function waitingLabel() {
+	try {
+		if (typeof wp !== "undefined" && wp.i18n && typeof wp.i18n.__ === "function") {
+			return wp.i18n.__(
+				"Please wait — Squeeze is still optimizing your image…",
+				"squeeze"
+			);
+		}
+	} catch (_e) {
+		/* fall through */
+	}
+	return "Please wait — Squeeze is still optimizing your image…";
+}
+
+/**
+ * @param {HTMLFormElement} form
+ */
+function showGfWaitingResponse(form) {
+	ensureGfStyles();
+	form.classList.add(WAITING_CLASS);
+	let msg = form.querySelector(`.${WAITING_MSG_CLASS}`);
+	if (!msg) {
+		msg = document.createElement("div");
+		msg.className = WAITING_MSG_CLASS;
+		msg.setAttribute("role", "status");
+		msg.setAttribute("aria-live", "polite");
+		const footer = form.querySelector(".gform_page_footer, .gform_footer");
+		if (footer && footer.parentNode) {
+			footer.parentNode.insertBefore(msg, footer);
+		} else {
+			form.appendChild(msg);
+		}
+	}
+	msg.textContent = waitingLabel();
+}
+
+/**
+ * @param {HTMLFormElement} form
+ */
+function clearGfWaitingResponse(form) {
+	form.classList.remove(WAITING_CLASS);
+	const msg = form.querySelector(`.${WAITING_MSG_CLASS}`);
+	if (msg) {
+		msg.textContent = "";
+	}
+}
+
+/**
+ * @param {File[]} files
+ * @returns {DataTransfer}
+ */
+function filesToDataTransfer(files) {
+	const dt = new DataTransfer();
+	for (const file of files) {
+		dt.items.add(file);
+	}
+	return dt;
+}
+
+/**
+ * Parse Plupload / GF size strings ("10mb", "2097152b") or numbers to bytes.
+ *
+ * @param {unknown} size
+ * @returns {number}
+ */
+function parseSizeLimitBytes(size) {
+	if (size == null || size === "") return 0;
+	if (typeof size === "number" && Number.isFinite(size)) return Math.max(0, Math.floor(size));
+	const s = String(size).toLowerCase().trim();
+	const m = s.match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i);
+	if (!m) return 0;
+	const n = parseFloat(m[1]);
+	const u = (m[2] || "b").toLowerCase();
+	const mult = { b: 1, kb: 1024, mb: 1024 * 1024, gb: 1024 * 1024 * 1024 };
+	return Math.floor(n * (mult[u] || 1));
+}
+
+/**
+ * Read max bytes from GF's inline onchange or nearby MAX_FILE_SIZE input.
+ *
+ * @param {HTMLInputElement} input
+ * @returns {number}
+ */
+function getGfSingleMaxBytes(input) {
+	const stored = input.getAttribute("data-squeeze-gf-max");
+	if (stored) {
+		const n = parseInt(stored, 10);
+		if (n > 0) return n;
+	}
+	const oc = input.getAttribute("onchange") || "";
+	const m = oc.match(/gformValidateFileSize\s*\(\s*this\s*,\s*(\d+)\s*\)/i);
+	if (m) return parseInt(m[1], 10) || 0;
+
+	const container = input.closest(".ginput_container_fileupload");
+	const maxInput =
+		container?.querySelector('input[name="MAX_FILE_SIZE"]') ||
+		input.form?.querySelector('input[name="MAX_FILE_SIZE"]');
+	if (maxInput) {
+		return parseInt(String(maxInput.value), 10) || 0;
+	}
+	return 0;
+}
+
+/**
+ * Stop GF from validating size on the raw selected file; we validate after Squeeze.
+ *
+ * @param {HTMLInputElement} input
+ */
+function disarmGfInlineSizeCheck(input) {
+	const oc = input.getAttribute("onchange");
+	if (!oc || !/gformValidateFileSize/i.test(oc)) return;
+	const max = getGfSingleMaxBytes(input);
+	if (max > 0) {
+		input.setAttribute("data-squeeze-gf-max", String(max));
+	}
+	input.removeAttribute("onchange");
+}
+
+/**
+ * Clear GF live size-limit message for this field (shown too early on the original file).
+ *
+ * @param {HTMLInputElement} input
+ */
+function clearGfFileSizeMessage(input) {
+	const field = input.closest(".gfield");
+	const container = input.closest(".ginput_container_fileupload");
+	const candidates = [];
+	if (field) candidates.push(...field.querySelectorAll(".validation_message"));
+	if (container?.parentElement) {
+		candidates.push(
+			...Array.from(container.parentElement.children).filter((el) =>
+				el.classList?.contains("validation_message")
+			)
+		);
+	}
+	candidates.forEach((el) => {
+		el.textContent = "";
+	});
+}
+
+/**
+ * Ensure a live validation message node exists (GF removes it on a passing check).
+ *
+ * @param {HTMLInputElement} input
+ * @returns {Element}
+ */
+function ensureGfValidationMessageEl(input) {
+	const container = input.closest(".ginput_container_fileupload");
+	const field = input.closest(".gfield");
+	let el =
+		(container?.parentElement &&
+			Array.from(container.parentElement.children).find((c) =>
+				c.classList?.contains("validation_message")
+			)) ||
+		field?.querySelector(".validation_message") ||
+		null;
+	if (el) return el;
+
+	el = document.createElement("div");
+	el.className =
+		"gfield_description validation_message gfield_validation_message validation_message--hidden-on-empty";
+	if (container) {
+		container.insertAdjacentElement("afterend", el);
+	} else {
+		input.insertAdjacentElement("afterend", el);
+	}
+	return el;
+}
+
+/**
+ * Run GF size check against the (compressed) file currently in the input.
+ *
+ * @param {HTMLInputElement} input
+ */
+function validateGfSingleFileSizeAfterCompress(input) {
+	const maxBytes = getGfSingleMaxBytes(input);
+	if (!(maxBytes > 0)) return;
+
+	ensureGfValidationMessageEl(input);
+	if (typeof window.gformValidateFileSize === "function") {
+		window.gformValidateFileSize(input, maxBytes);
+		return;
+	}
+
+	// Fallback if GF JS is missing: mirror gformValidateFileSize behaviour.
+	const file = input.files?.[0];
+	const el = ensureGfValidationMessageEl(input);
+	const exceeds =
+		typeof gform_gravityforms !== "undefined" && gform_gravityforms.strings?.file_exceeds_limit
+			? gform_gravityforms.strings.file_exceeds_limit
+			: "File exceeds size limit.";
+	if (file && file.size > maxBytes) {
+		el.textContent = `${file.name} - ${exceeds}`;
+	} else {
+		el.textContent = "";
+	}
+}
+
+/**
+ * Raise Plupload max so oversized phone photos aren't rejected before Squeeze runs.
+ *
+ * @param {object} uploader
+ */
+function relaxPluploadSizeLimit(uploader) {
+	if (!uploader?.settings || uploader.__squeezeOrigMax !== undefined) return;
+	const settings = uploader.settings;
+	uploader.__squeezeOrigMax =
+		settings.max_file_size || settings.filters?.max_file_size || "";
+	const relaxed = "2048mb";
+	settings.max_file_size = relaxed;
+	if (settings.filters && typeof settings.filters === "object") {
+		settings.filters.max_file_size = relaxed;
+	}
+}
+
+/**
+ * @param {object} uploader
+ * @returns {number}
+ */
+function getPluploadOrigMaxBytes(uploader) {
+	return parseSizeLimitBytes(uploader?.__squeezeOrigMax);
+}
+
+/**
+ * @param {Element} multiEl
+ * @param {string} fileName
+ */
+function showGfMultiSizeError(multiEl, fileName) {
+	const $ = window.jQuery;
+	let messageId = null;
+	if ($ && typeof $(multiEl).data === "function") {
+		const settings = $(multiEl).data("settings");
+		messageId = settings?.gf_vars?.message_id || null;
+	}
+	const exceeds =
+		typeof gform_gravityforms !== "undefined" && gform_gravityforms.strings?.file_exceeds_limit
+			? gform_gravityforms.strings.file_exceeds_limit
+			: "File exceeds size limit.";
+	const text = `${fileName} - ${exceeds}`;
+	const ul =
+		(messageId && document.getElementById(messageId)) ||
+		multiEl.parentElement?.querySelector(".gform_fileupload_rules") ||
+		null;
+	const list =
+		ul?.tagName === "UL"
+			? ul
+			: multiEl.parentElement?.querySelector('[id^="gform_multifile_messages_"]');
+	if (list) {
+		const li = document.createElement("li");
+		li.className = "gfield_description validation_message gfield_validation_message";
+		li.textContent = text;
+		list.appendChild(li);
+		return;
+	}
+	console.warn(LOG_PREFIX, text);
+}
+
+/**
+ * Remove GF multi-file preview row for a Plupload file (FilesAdded creates #file.id).
+ *
+ * @param {{ id?: string }|null|undefined} file
+ */
+function clearGfMultiFilePreview(file) {
+	const id = file?.id;
+	if (!id || typeof document === "undefined") return;
+	document.getElementById(id)?.remove();
+}
+
+/**
+ * Drop an over-limit multi-file from the queue + UI (mirrors GF Plupload FILE_SIZE_ERROR cleanup).
+ *
+ * @param {object} up Plupload uploader
+ * @param {object} file Plupload file
+ * @param {Element} multiEl
+ * @param {string} [displayName]
+ */
+function rejectGfMultiFileOverLimit(up, file, multiEl, displayName) {
+	const name = displayName || file?.name || "file";
+	showGfMultiSizeError(multiEl, name);
+	if (file) {
+		file.__squeezeDone = true;
+	}
+	clearGfMultiFilePreview(file);
+	try {
+		if (up && file) {
+			// Prefer remove by id if still in the queue.
+			const queued =
+				typeof up.getFile === "function" && file.id ? up.getFile(file.id) : null;
+			up.removeFile(queued || file);
+		}
+	} catch (e) {
+		console.warn(LOG_PREFIX, "removeFile failed for over-limit multi-file", e);
+	}
+	try {
+		up?.refresh?.();
+	} catch (_e) {
+		/* ignore */
+	}
+}
+
+/**
+ * @param {unknown} fileLike
+ * @param {string} fallbackName
+ * @returns {File|null}
+ */
+function toBrowserFile(fileLike, fallbackName) {
+	if (!fileLike) return null;
+	if (typeof File !== "undefined" && fileLike instanceof File) {
+		return fileLike;
+	}
+	if (typeof Blob !== "undefined" && fileLike instanceof Blob) {
+		return new File([fileLike], fallbackName || "image.jpg", {
+			type: fileLike.type || "application/octet-stream",
+			lastModified: Date.now(),
+		});
+	}
+	if (typeof fileLike.getNative === "function") {
+		const native = fileLike.getNative();
+		if (native) return toBrowserFile(native, fallbackName || fileLike.name);
+	}
+	if (typeof fileLike.getSource === "function") {
+		const src = fileLike.getSource();
+		if (src && src !== fileLike) return toBrowserFile(src, fallbackName || fileLike.name);
+	}
+	return null;
+}
+
+/**
+ * @param {object} pluploadFile
+ * @param {File} compressedFile
+ */
+function applyCompressedToPluploadFile(pluploadFile, compressedFile) {
+	if (typeof mOxie !== "undefined" && mOxie.File) {
+		try {
+			const newSource = new mOxie.File(null, compressedFile);
+			pluploadFile.getSource = () => newSource;
+		} catch (e) {
+			console.warn(LOG_PREFIX, "mOxie.File wrap failed; using getNative override.", e);
+		}
+	}
+	pluploadFile.getNative = () => compressedFile;
+	pluploadFile.name = compressedFile.name;
+	pluploadFile.type = compressedFile.type;
+	pluploadFile.size = compressedFile.size;
+	pluploadFile.loaded = 0;
+	if (typeof plupload !== "undefined" && plupload.QUEUED != null) {
+		pluploadFile.status = plupload.QUEUED;
+	}
+	pluploadFile.__squeezeDone = true;
+}
+
+/**
+ * @param {HTMLInputElement} input
+ * @param {Record<string, unknown>} compressOptions
+ */
+async function compressSingleInputFiles(input, compressOptions) {
+	const list = input.files ? Array.from(input.files) : [];
+	if (!list.length) return;
+
+	const form = input.closest("form");
+	const fieldEl =
+		input.closest(".ginput_container_fileupload") ||
+		input.closest(".gfield") ||
+		input.parentElement;
+
+	const opts = { ...compressOptions, auto_compress: true };
+	const statusExtraClasses = [GF_STATUS_CLASS];
+	const progressOpts = { extraClasses: statusExtraClasses };
+
+	ensureGfStyles();
+	disarmGfInlineSizeCheck(input);
+	// Drop any size error GF showed for the uncompressed original.
+	clearGfFileSizeMessage(input);
+
+	const hasImage = list.some((f) => typeof f?.type === "string" && f.type.startsWith("image/"));
+	if (hasImage && fieldEl) {
+		(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.showFormCompressProgress)(fieldEl, progressOpts);
+	}
+
+	try {
+		const outFiles = [];
+		for (const file of list) {
+			outFiles.push(
+				await (0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.compressFormFile)(file, {
+					compressOptions: opts,
+					fieldEl,
+					form,
+					showProgress: true,
+					statusExtraClasses,
+				})
+			);
+		}
+
+		try {
+			input.files = filesToDataTransfer(outFiles).files;
+		} catch (e) {
+			console.warn(LOG_PREFIX, "could not assign compressed files to input; leaving original.", e);
+		}
+
+		// Size limit applies to the squeezed file (error only if still too large).
+		validateGfSingleFileSizeAfterCompress(input);
+	} finally {
+		if (hasImage && fieldEl) {
+			(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.hideFormCompressProgress)(fieldEl);
+		}
+	}
+}
+
+/**
+ * @param {object} uploader Plupload uploader
+ * @param {HTMLFormElement} form
+ * @param {Element} multiEl .gform_fileupload_multifile
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindPluploadUploader(uploader, form, multiEl, compressOptions) {
+	if (!uploader || uploader.__squeezeBound) return;
+	uploader.__squeezeBound = true;
+
+	// Accept oversized images into the queue; enforce the real limit after Squeeze.
+	relaxPluploadSizeLimit(uploader);
+
+	const fieldEl =
+		multiEl.closest(".ginput_container_fileupload") ||
+		multiEl.closest(".gfield") ||
+		multiEl;
+	const opts = { ...compressOptions, auto_compress: true };
+	const statusExtraClasses = [GF_STATUS_CLASS];
+
+	uploader.bind("BeforeUpload", (up, file) => {
+		if (file.__squeezeDone) {
+			return;
+		}
+
+		const native = toBrowserFile(file, file.name);
+		if (!native || !String(native.type || "").startsWith("image/")) {
+			file.__squeezeDone = true;
+			const maxBytes = getPluploadOrigMaxBytes(up);
+			if (maxBytes > 0 && (file.size || 0) > maxBytes) {
+				rejectGfMultiFileOverLimit(up, file, multiEl);
+				return false;
+			}
+			return;
+		}
+
+		up.stop();
+
+		void (async () => {
+			ensureGfStyles();
+			(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.showFormCompressProgress)(fieldEl, { extraClasses: statusExtraClasses });
+			try {
+				const compressed = await (0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.compressFormFile)(native, {
+					compressOptions: opts,
+					fieldEl,
+					form,
+					showProgress: true,
+					statusExtraClasses,
+				});
+				const out = compressed instanceof File ? compressed : native;
+				const maxBytes = getPluploadOrigMaxBytes(up);
+				if (maxBytes > 0 && out.size > maxBytes) {
+					// Remove from Plupload queue + preview row so it cannot be submitted.
+					rejectGfMultiFileOverLimit(up, file, multiEl, out.name || file.name);
+				} else {
+					applyCompressedToPluploadFile(file, out);
+				}
+			} catch (e) {
+				console.warn(LOG_PREFIX, "multi-file compress failed; uploading original.", e);
+				file.__squeezeDone = true;
+			} finally {
+				(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.hideFormCompressProgress)(fieldEl);
+			}
+			// Resume remaining queued files (this one is gone if rejected).
+			try {
+				up.start();
+			} catch (e) {
+				console.warn(LOG_PREFIX, "uploader.start failed", e);
+			}
+		})();
+
+		return false;
+	});
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindMultiFileUploaders(form, compressOptions) {
+	const nodes = form.querySelectorAll(".gform_fileupload_multifile");
+	if (!nodes.length) return;
+
+	const $ = window.jQuery;
+	const map = window.gfMultiFileUploader && window.gfMultiFileUploader.uploaders;
+
+	nodes.forEach((el) => {
+		let containerId = el.id;
+		if ($ && typeof $(el).data === "function") {
+			const settings = $(el).data("settings");
+			if (settings && settings.container) {
+				containerId = settings.container;
+			}
+		}
+		const uploader = map && map[containerId];
+		if (uploader) {
+			bindPluploadUploader(uploader, form, el, compressOptions);
+		}
+	});
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindForm(form, compressOptions) {
+	if (!form) return;
+
+	ensureGfStyles();
+	bindMultiFileUploaders(form, compressOptions);
+
+	// Disarm on every bind/post_render — GF may re-inject onchange with the field HTML.
+	form.querySelectorAll('.gfield--type-fileupload input[type="file"], .ginput_container_fileupload input[type="file"]').forEach((input) => {
+		if (input instanceof HTMLInputElement) disarmGfInlineSizeCheck(input);
+	});
+
+	if (form[BOUND_KEY]) {
+		return;
+	}
+	form[BOUND_KEY] = true;
+
+	(0,_form_compress_js__WEBPACK_IMPORTED_MODULE_0__.installFormSubmitGate)(form, {
+		onBlocked: showGfWaitingResponse,
+		onResume: clearGfWaitingResponse,
+	});
+
+	form.addEventListener("change", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLInputElement) || target.type !== "file") {
+			return;
+		}
+		// Multi-file fields do not use a native file input for the queue.
+		if (target.closest(".gform_fileupload_multifile")) {
+			return;
+		}
+		if (!target.closest(".gfield--type-fileupload, .ginput_container_fileupload, .gfield")) {
+			return;
+		}
+		disarmGfInlineSizeCheck(target);
+		void compressSingleInputFiles(target, compressOptions);
+	});
+}
+
+/**
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindAllForms(compressOptions) {
+	document.querySelectorAll('form[id^="gform_"]').forEach((form) => {
+		bindForm(/** @type {HTMLFormElement} */ (form), compressOptions);
+	});
+}
+
+/**
+ * @param {Record<string, unknown>} compressOptions
+ */
+function bindPostRender(compressOptions) {
+	const $ = window.jQuery;
+	if ($ && typeof $.fn?.on === "function") {
+		$(document).on("gform_post_render", (_event, formId) => {
+			const form = document.getElementById(`gform_${formId}`);
+			if (form) {
+				bindForm(/** @type {HTMLFormElement} */ (form), compressOptions);
+			} else {
+				bindAllForms(compressOptions);
+			}
+		});
+	}
+
+	// Modern GF also fires a CustomEvent-style trigger; listen for the jQuery path above primarily.
+	document.addEventListener("gform/postRender", (event) => {
+		const formId = event?.detail?.formId;
+		if (formId == null) {
+			bindAllForms(compressOptions);
+			return;
+		}
+		const form = document.getElementById(`gform_${formId}`);
+		if (form) {
+			bindForm(/** @type {HTMLFormElement} */ (form), compressOptions);
+		}
+	});
+}
+
+/**
+ * @param {Record<string, unknown>} compressOptions Parsed squeezeOptions.options
+ */
+function initGfUploadCompat(compressOptions) {
+	if (typeof window === "undefined" || typeof document === "undefined") {
+		return;
+	}
+
+	// Gravity Forms form compression is Premium-only (same gate as Elementor).
+	if (typeof squeezeOptions !== "undefined" && !squeezeOptions.isPremium) {
+		console.info(LOG_PREFIX, "compat skipped: Gravity Forms form uploads require Squeeze Premium.");
+		return;
+	}
+
+	if (!isOptionEnabled(compressOptions?.form_compress)) {
+		console.info(LOG_PREFIX, "compat skipped: Squeeze form uploads (form_compress) is off.");
+		return;
+	}
+
+	const run = () => {
+		bindAllForms(compressOptions);
+		bindPostRender(compressOptions);
+	};
+
+	const boot = () => {
+		if (typeof window.gform !== "undefined" && typeof window.gform.initializeOnLoaded === "function") {
+			window.gform.initializeOnLoaded(run);
+		} else {
+			run();
+		}
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", boot);
+	} else {
+		boot();
+	}
+}
+
+
+
+
+/***/ }),
+
 /***/ "./assets/js/handlers.js":
 /*!*******************************!*\
   !*** ./assets/js/handlers.js ***!
@@ -10,6 +1541,7 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "bindUploadHooks": () => (/* reexport safe */ _upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.bindUploadHooks),
 /* harmony export */   "handleBulkButtonClick": () => (/* binding */ handleBulkButtonClick),
 /* harmony export */   "handleBulkFromPage": () => (/* binding */ handleBulkFromPage),
 /* harmony export */   "handleBulkToggle": () => (/* binding */ handleBulkToggle),
@@ -25,9 +1557,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "handleOnLeave": () => (/* binding */ handleOnLeave),
 /* harmony export */   "handleRecursiveUpload": () => (/* binding */ handleRecursiveUpload),
 /* harmony export */   "handleRestoreBtnClick": () => (/* binding */ handleRestoreBtnClick),
-/* harmony export */   "handleSingleBtnClick": () => (/* binding */ handleSingleBtnClick)
+/* harmony export */   "handleSingleBtnClick": () => (/* binding */ handleSingleBtnClick),
+/* harmony export */   "initBulkFromPageForm": () => (/* binding */ initBulkFromPageForm)
 /* harmony export */ });
 /* harmony import */ var _helpers_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers.js */ "./assets/js/helpers.js");
+/* harmony import */ var _bulk_timing_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bulk-timing.js */ "./assets/js/bulk-timing.js");
+/* harmony import */ var _upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./upload-parallel.js */ "./assets/js/upload-parallel.js");
+
+
+
+
 
 
 
@@ -394,17 +1933,22 @@ const handleBulkButtonClick = async (event, process, mediaIDs, currentPage) => {
   _helpers_js__WEBPACK_IMPORTED_MODULE_0__.disableBulkButtons();
   window.onbeforeunload = handleOnLeave;
 
-  if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.process === process) {
+  const isResume = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.process === process;
+  if (isResume) {
     if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.mediaIDs/*.length > 0*/) {
       mediaIDs = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.mediaIDs;
     }
     if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.page) {
       currentPage = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.page;
     }
+  } else {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.resetRunSavings();
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming = null;
   }
 
   const isPaused = handleBulkToggle(event, process, mediaIDs, currentPage);
   if (isPaused) {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.pause?.();
     _helpers_js__WEBPACK_IMPORTED_MODULE_0__.updateButtonText(event.target, __('Pausing...', 'squeeze'), '#pause-button-icon');
     return;
   }
@@ -413,15 +1957,25 @@ const handleBulkButtonClick = async (event, process, mediaIDs, currentPage) => {
   event.target.disabled = false;
   _helpers_js__WEBPACK_IMPORTED_MODULE_0__.focusBulkAction(event.target);
 
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming || _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming.mode !== 'sequential') {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming = (0,_bulk_timing_js__WEBPACK_IMPORTED_MODULE_1__.createBulkTiming)('sequential', {
+      poolSize: 1,
+      path: process,
+    });
+  } else {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming.resume();
+  }
+
   try {
     const finalResponse = await handleRecursiveUpload(process, mediaIDs, currentPage, true);
 
     if (finalResponse?.mediaIDs) {
       if (finalResponse.mediaIDs.length === 0 && finalResponse.page >= totalPages) {
+        _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.logSummary?.();
         _helpers_js__WEBPACK_IMPORTED_MODULE_0__.logMessage(__('All images have been processed!', 'squeeze'), { isEnd: true });
         _helpers_js__WEBPACK_IMPORTED_MODULE_0__.showPopupMessage( {
           title: __('Squeezing complete', 'squeeze'),
-          message: __('All images have been processed!', 'squeeze'),
+          message: _helpers_js__WEBPACK_IMPORTED_MODULE_0__.formatBulkCompletionMessage(),
           type: 'success'
         });
         window.onbeforeunload = null;
@@ -430,6 +1984,7 @@ const handleBulkButtonClick = async (event, process, mediaIDs, currentPage) => {
     }
   } catch (error) {
     console.error(error);
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.logSummary?.();
     _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restoreBulkButtons();
     window.onbeforeunload = null;
     alert(__('An error has occured. Check the console for details.', 'squeeze'));
@@ -533,7 +2088,9 @@ const handleBulkPause = (data, currentPage) => {
 
 const handleUpdateChart = (uncompressedImagesCount) => {
   const linearStats = document.querySelector(".squeeze-bulk-media-stats--linear");
-  const squeezedImages = document.querySelector(".squeeze-bulk-media-stats-item-value");
+  const squeezedImages = document.querySelector(
+    ".squeeze-bulk-media-stats-item--squeezed .squeeze-bulk-media-stats-item-value"
+  ) || document.querySelector(".squeeze-bulk-media-stats-item-value");
 
   const imagesLeft = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.totalImages - uncompressedImagesCount;
   const percentage = parseFloat((imagesLeft / _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.totalImages) * 100).toFixed(2);
@@ -547,6 +2104,7 @@ const handleUpdateChart = (uncompressedImagesCount) => {
     if (squeezedImages) {
       squeezedImages.textContent = `${imagesLeft} / ${_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.totalImages}`;
     }
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.updateBulkSavingsDisplay();
     return;
   }
 
@@ -562,6 +2120,7 @@ const handleUpdateChart = (uncompressedImagesCount) => {
   if (squeezedImages) {
     squeezedImages.textContent = `${imagesLeft} / ${_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.totalImages}`;
   }
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.updateBulkSavingsDisplay();
 };
 
 const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = false) => {
@@ -600,14 +2159,22 @@ const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = fa
   _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.lastId = data[0] || 0; // update lastId to the last processed ID
   const stillWorkingTimeoutId = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.waitBulkMessage(mediaLogWrapper, filename);
 
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming || _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming.mode !== 'sequential') {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming = (0,_bulk_timing_js__WEBPACK_IMPORTED_MODULE_1__.createBulkTiming)('sequential', { poolSize: 1, path });
+  }
+
   try {
-    const response = await Squeeze.handleBulkUpload(path, data);
+    const response = await Squeeze.handleBulkUpload(path, data, _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming);
 
     clearTimeout(stillWorkingTimeoutId);
 
     //console.log('handleRecursiveUpload response', response);
 
     await logAndThumbnail(filename, response, mediaLogWrapper);
+
+    if (response?.success !== false) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.addRunSavingsFromResponse(response);
+    }
 
     if (isUpdateChart && path !== 'all') {
       let uncompressedImagesCount = 0;
@@ -621,6 +2188,8 @@ const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = fa
     }
 
     if (checkPaused(data, currentPage)) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.pause?.();
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.logSummary?.();
       return { success: false, data: 'Process has been paused!', mediaIDs: data, page: currentPage };
     }
 
@@ -630,7 +2199,10 @@ const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = fa
       return handleRecursiveUpload(path, response.mediaIDs, currentPage, isUpdateChart);
     } else {
       currentPage += 1;
-      if (currentPage > totalPages) return { ...response, page: currentPage };
+      if (currentPage > totalPages) {
+        _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.logSummary?.();
+        return { ...response, page: currentPage };
+      }
 
       const lastId = initData[initData.length - 1];
       const maybeGetNextMediaIDs = await Squeeze.getNextAttachments(currentPage, path, lastId);
@@ -640,6 +2212,7 @@ const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = fa
       }
     }
 
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.bulkTiming?.logSummary?.();
     return response;
 
   } catch (error) {
@@ -678,71 +2251,81 @@ const handleRecursiveUpload = async (path, data, currentPage, isUpdateChart = fa
 /**
  * Handles the compression of image before upload using Squeeze.
  * It compresses only the original image, not the thumbnails.
- * 
+ * Compress → upload is sequential; after-upload AJAX may defer the next HTTP upload.
+ *
  * @param {object} up - The plupload instance
  * @param {object} pluploadFile - The file to be compressed
  * @param {object} compressOptions - The compression options object
- * @returns {boolean} - Returns false to prevent further processing of the file
+ * @returns {boolean} - Returns false to prevent Plupload from starting HTTP for this file
  */
-const handleCompressBeforeUpload = async (up, pluploadFile, compressOptions) => {
+const handleCompressBeforeUpload = (up, pluploadFile, compressOptions) => {
   //*
-  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isSqueezeAvailable()) return;
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isSqueezeAvailable()) return true;
 
-  if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isFileAlreadyProcessed(pluploadFile)) return;
-  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isImageFile(pluploadFile)) return;
+  (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.ensureUploadTiming)();
+  // Mark (or clear) client-precompressed flags on this async-upload request.
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.syncClientCompressedMultipartParams(up, pluploadFile);
+
+  // Already compressed (or excluded/failed): upload now — unless after-upload AJAX is still running.
+  if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isFileAlreadyProcessed(pluploadFile)) {
+    if ((0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.shouldDeferNextUpload)()) {
+      window.onbeforeunload = handleOnLeave;
+      return (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.deferAlreadyReadyUpload)(up, pluploadFile);
+    }
+    (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.noteUploadStarted)(pluploadFile);
+    return true;
+  }
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isImageFile(pluploadFile)) return true;
 
   const file = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.getNativeFile(pluploadFile);
   const { type, subtype } = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.parseMimeType(file);
 
-  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeCompressAttachment(type, subtype, compressOptions)) return;
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeCompressAttachment(type, subtype, compressOptions)) return true;
 
-  up?.stop();
   window.onbeforeunload = handleOnLeave;
 
-  if (await _helpers_js__WEBPACK_IMPORTED_MODULE_0__.isExcludedFile(pluploadFile, up)) return;
-  //*/
+  up?.stop();
 
-  try {
-    return await processCompression(up, pluploadFile, file, compressOptions);
-  } catch (error) {
-    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.handleCompressionError(error, up, pluploadFile);
-    return false;
-  }
+  void (async () => {
+    try {
+      if (await _helpers_js__WEBPACK_IMPORTED_MODULE_0__.isExcludedFile(pluploadFile, up)) {
+        _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
+        return;
+      }
+      await processCompression(up, pluploadFile, file, compressOptions);
+    } catch (error) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.handleCompressionError(error, up, pluploadFile);
+    }
+  })();
+
+  return false;
+  //*/
 }
 
 async function processCompression(up, pluploadFile, file, compressOptions) {
 
   //*
-  let originalFile = file;
+  const compressStarted = (typeof performance !== 'undefined' && performance.now)
+    ? performance.now()
+    : Date.now();
 
   const base64Obj = await Squeeze.compressBeforeUpload(file);
-  if (!base64Obj?.base64) {
+  const compressMs = Math.round(
+    ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - compressStarted
+  );
+
+  const ok = await (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.applyUploadCompressionResult)(up, pluploadFile, file, base64Obj, compressOptions, {
+    restart: false,
+  });
+  (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.recordUploadCompressMs)(compressMs, { skipped: !ok });
+
+  if (!ok) {
     console.warn('Compression skipped or failed for:', file.name);
-    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markFileFailed(pluploadFile);
-    if (up) {
-      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
-    }
+    if (up) _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
     return;
   }
 
-  if (compressOptions?.backup_original) {
-    originalFile = await _helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeBackupOriginal(file, compressOptions);
-    pluploadFile.originalFile = originalFile;
-  }
-
-  const compressedFile = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.base64ToFile(base64Obj.base64, file.name, file.type);
-  const newSource = new mOxie.File(null, compressedFile);
-  if (!newSource) {
-    console.error('Failed to create new mOxie.File from base64 data');
-    return;
-  }
-
-  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markFileCompressed(pluploadFile, newSource, base64Obj);
-  if (up) {
-    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
-  }
-
-  //console.timeEnd('Compressing image:', pluploadFile.name);
+  if (up) _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
 
   return true;
   //*/
@@ -753,9 +2336,11 @@ const handleMultiFileFormUpload = (compressOptions) => {
 
   const SqueezeUploader = uploader;
 
-  SqueezeUploader.bind('BeforeUpload', async function (up, pluploadFile) {
+  (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.bindUploadHooks)(SqueezeUploader, compressOptions);
+
+  SqueezeUploader.bind('BeforeUpload', function (up, pluploadFile) {
     //console.log('BeforeUpload', up, pluploadFile.name, pluploadFile);
-    handleCompressBeforeUpload(up, pluploadFile, compressOptions)
+    return handleCompressBeforeUpload(up, pluploadFile, compressOptions);
   });
 
   SqueezeUploader.bind('FileUploaded', function (up, file, response) {
@@ -782,6 +2367,24 @@ const handleCompressAfterUpload = async (file, compressOptions, response = null)
     return;
   }
 
+  // Huge images: original was squeezed before upload; keep WP thumbs (skip second admin-ajax pass).
+  // Sidecar: still ship the full-size WebP built before upload (no thumb WebP / no metadata regen).
+  if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.shouldSkipAfterUploadThumbs(file)) {
+    window.onbeforeunload = null;
+    void _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markAttachmentClientCompressed(attachmentID, file?.originalSize || 0, {
+      base64Webp: file?.base64Webp || '',
+    });
+    if (mediaItem) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.waitForItemLoad(mediaItem, false).then(() => {
+        mediaItem.innerHTML += `<div class="squeeze_status">${__(
+          'Large image: squeezed on upload. Thumbnail re-squeeze skipped to protect the server.',
+          'squeeze'
+        )}</div>`;
+      });
+    }
+    return;
+  }
+
   let attachment = file?.attachment;
   const type = attachment?.attributes?.type ?? file?.type?.split('/')[0];
   const subtype = attachment?.attributes?.subtype ?? file?.type?.split('/')[1];
@@ -791,6 +2394,7 @@ const handleCompressAfterUpload = async (file, compressOptions, response = null)
     return; // Skip compression for this attachment
   }
 
+  (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.incrementAfterUploadPending)();
   window.onbeforeunload = handleOnLeave;
   
   // set 'uploading' param to true, to pause the uploading process
@@ -814,11 +2418,24 @@ const handleCompressAfterUpload = async (file, compressOptions, response = null)
   _helpers_js__WEBPACK_IMPORTED_MODULE_0__.extendAttachment(attachment, file);
 
   try {
+    const compressStarted = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
     const compressData = await Squeeze.handleCompress(attachment);
+    (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.recordUploadCompressMs)(Math.round(
+      ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - compressStarted
+    ));
     if (attachment && typeof attachment.set === 'function') {
       attachment.set('percent', 75); // Set percent to 75% to indicate compression is done
     }
+    const uploadStarted = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
     const uploadData = await Squeeze.handleUpload({ attachment, base64: compressData });
+    const timing = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming;
+    timing?.markUpload(Math.round(
+      ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - uploadStarted
+    ));
 
     if (uploadData.success) {
       if (mediaItem) {
@@ -835,11 +2452,15 @@ const handleCompressAfterUpload = async (file, compressOptions, response = null)
   } catch (error) {
     console.error(error);
     _helpers_js__WEBPACK_IMPORTED_MODULE_0__.updateAttachmentUIFailed(mediaItem, error);
+    if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isGatewayError(error)) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.haltUploadQueue('after-upload gateway error');
+    }
   } finally {
     if (attachment && typeof attachment.set === 'function') {
       attachment.set('uploading', false);
     }
     window.onbeforeunload = null;
+    (0,_upload_parallel_js__WEBPACK_IMPORTED_MODULE_2__.decrementAfterUploadPending)();
   }
 }
 
@@ -855,6 +2476,8 @@ const handleCompressAfterUpload = async (file, compressOptions, response = null)
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "addRunSavingsFromResponse": () => (/* binding */ addRunSavingsFromResponse),
+/* harmony export */   "appendClientCompressedFormFields": () => (/* binding */ appendClientCompressedFormFields),
 /* harmony export */   "base64SizeInBytes": () => (/* binding */ base64SizeInBytes),
 /* harmony export */   "base64ToBlob": () => (/* binding */ base64ToBlob),
 /* harmony export */   "base64ToFile": () => (/* binding */ base64ToFile),
@@ -866,10 +2489,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "extendAttachment": () => (/* binding */ extendAttachment),
 /* harmony export */   "fileToBase64": () => (/* binding */ fileToBase64),
 /* harmony export */   "focusBulkAction": () => (/* binding */ focusBulkAction),
+/* harmony export */   "formatBulkCompletionMessage": () => (/* binding */ formatBulkCompletionMessage),
 /* harmony export */   "getBulkButtonLabels": () => (/* binding */ getBulkButtonLabels),
 /* harmony export */   "getCompressedSizeFromSqueezeResponse": () => (/* binding */ getCompressedSizeFromSqueezeResponse),
 /* harmony export */   "getFileFromUrl": () => (/* binding */ getFileFromUrl),
 /* harmony export */   "getNativeFile": () => (/* binding */ getNativeFile),
+/* harmony export */   "haltUploadQueue": () => (/* binding */ haltUploadQueue),
 /* harmony export */   "handleCompressionError": () => (/* binding */ handleCompressionError),
 /* harmony export */   "handleRemovePathButton": () => (/* binding */ handleRemovePathButton),
 /* harmony export */   "hideBulkPausedBanner": () => (/* binding */ hideBulkPausedBanner),
@@ -878,9 +2503,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isExcludedFile": () => (/* binding */ isExcludedFile),
 /* harmony export */   "isFileAlreadyProcessed": () => (/* binding */ isFileAlreadyProcessed),
 /* harmony export */   "isFileFailedAfterCompression": () => (/* binding */ isFileFailedAfterCompression),
+/* harmony export */   "isGatewayError": () => (/* binding */ isGatewayError),
 /* harmony export */   "isImageFile": () => (/* binding */ isImageFile),
 /* harmony export */   "isSqueezeAvailable": () => (/* binding */ isSqueezeAvailable),
+/* harmony export */   "isSupportedImageFormat": () => (/* binding */ isSupportedImageFormat),
+/* harmony export */   "isUploadQueueHalted": () => (/* binding */ isUploadQueueHalted),
 /* harmony export */   "logMessage": () => (/* binding */ logMessage),
+/* harmony export */   "markAttachmentClientCompressed": () => (/* binding */ markAttachmentClientCompressed),
 /* harmony export */   "markFileCompressed": () => (/* binding */ markFileCompressed),
 /* harmony export */   "markFileExcluded": () => (/* binding */ markFileExcluded),
 /* harmony export */   "markFileFailed": () => (/* binding */ markFileFailed),
@@ -892,17 +2521,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "removeAllButtons": () => (/* binding */ removeAllButtons),
 /* harmony export */   "renderDirectories": () => (/* binding */ renderDirectories),
 /* harmony export */   "renderTemplate": () => (/* binding */ renderTemplate),
+/* harmony export */   "resetRunSavings": () => (/* binding */ resetRunSavings),
+/* harmony export */   "resetUploadQueueHalt": () => (/* binding */ resetUploadQueueHalt),
+/* harmony export */   "resolveCompressedUploadTarget": () => (/* binding */ resolveCompressedUploadTarget),
 /* harmony export */   "restartUploader": () => (/* binding */ restartUploader),
 /* harmony export */   "restoreBulkActionItems": () => (/* binding */ restoreBulkActionItems),
 /* harmony export */   "restoreBulkButtons": () => (/* binding */ restoreBulkButtons),
+/* harmony export */   "shouldSkipAfterUploadThumbs": () => (/* binding */ shouldSkipAfterUploadThumbs),
 /* harmony export */   "showBulkPausedBanner": () => (/* binding */ showBulkPausedBanner),
 /* harmony export */   "showPopupMessage": () => (/* binding */ showPopupMessage),
 /* harmony export */   "squeezeLoadingAnimationHTML": () => (/* binding */ squeezeLoadingAnimationHTML),
 /* harmony export */   "syncAttachmentFileSizeModel": () => (/* binding */ syncAttachmentFileSizeModel),
+/* harmony export */   "syncClientCompressedMultipartParams": () => (/* binding */ syncClientCompressedMultipartParams),
 /* harmony export */   "syncDirectoryDialogCheckboxesFromPathInput": () => (/* binding */ syncDirectoryDialogCheckboxesFromPathInput),
 /* harmony export */   "updateAttachmentFileSizeDisplay": () => (/* binding */ updateAttachmentFileSizeDisplay),
 /* harmony export */   "updateAttachmentUI": () => (/* binding */ updateAttachmentUI),
 /* harmony export */   "updateAttachmentUIFailed": () => (/* binding */ updateAttachmentUIFailed),
+/* harmony export */   "updateBulkSavingsDisplay": () => (/* binding */ updateBulkSavingsDisplay),
 /* harmony export */   "updateButtonText": () => (/* binding */ updateButtonText),
 /* harmony export */   "waitBulkMessage": () => (/* binding */ waitBulkMessage),
 /* harmony export */   "waitForItemLoad": () => (/* binding */ waitForItemLoad),
@@ -937,6 +2572,11 @@ const elements = {
   pauseBulkBtn: document.querySelector("[name='squeeze_pause_page_bulk']"),
   bulkPausedBanner: document.getElementById('squeeze-bulk-paused-banner'),
   bulkPausedBannerText: document.getElementById('squeeze-bulk-paused-banner-text'),
+  bulkFromPageBtn: document.querySelector("[name='squeeze_bulk_from_page_button']"),
+  bulkPagePicker: document.querySelector(".squeeze-page-picker"),
+  bulkPageSearch: document.getElementById('squeeze-bulk-page-search'),
+  bulkPageList: document.getElementById('squeeze-bulk-page-list'),
+  bulkPageUrl: document.getElementById('squeeze-bulk-page-url'),
 }
 
 const getBulkActionItem = (btn) => btn?.closest('.squeeze-bulk-media-actions__item');
@@ -974,7 +2614,11 @@ const cachedMediaData = {
   lastId: 0,
   totalImages: document.querySelector("[name='squeeze_bulk_total_images']")?.value || 0,
   uncompressedImages: document.querySelector("[name='squeeze_bulk_uncompressed_images']")?.value || 0,
-  target: null
+  target: null,
+  runSavedBytes: 0,
+  runImageCount: 0,
+  siteSavedDelta: 0,
+  siteImageDelta: 0,
 }
 
 const loadTemplate = async (templatePath, data) => {
@@ -1438,6 +3082,124 @@ const getCompressedSizeFromSqueezeResponse = (response) => {
 };
 
 /**
+ * Reset per-run savings totals (call when starting a fresh bulk, not when resuming).
+ */
+const resetRunSavings = () => {
+  cachedMediaData.runSavedBytes = 0;
+  cachedMediaData.runImageCount = 0;
+  cachedMediaData.siteSavedDelta = 0;
+  cachedMediaData.siteImageDelta = 0;
+  updateBulkSavingsDisplay();
+};
+
+/**
+ * Add savings from a successful squeeze_update_attachment response to the current run totals.
+ * @param {object} response
+ */
+const addRunSavingsFromResponse = (response) => {
+  if (response?.success === false) return;
+
+  const sizes = response?.data?.sizes;
+  if (!sizes || typeof sizes !== 'object') return;
+
+  let before = 0;
+  let after = 0;
+  for (const sizeData of Object.values(sizes)) {
+    if (!sizeData || typeof sizeData !== 'object') continue;
+    const original = Number(sizeData.original_size);
+    const compressed = Number(sizeData.compressed_size);
+    if (Number.isFinite(original) && original > 0) before += original;
+    if (Number.isFinite(compressed) && compressed >= 0) after += compressed;
+  }
+
+  if (before <= 0 && after <= 0) return;
+
+  const runSaved = Math.max(0, before - after);
+  cachedMediaData.runSavedBytes = (cachedMediaData.runSavedBytes || 0) + runSaved;
+  cachedMediaData.runImageCount = (cachedMediaData.runImageCount || 0) + 1;
+
+  // Site "Total saved" only tracks Media Library meta (not Directory Squeeze).
+  if (response?.data?.persisted_savings) {
+    const delta = Number(response.data.savings_delta);
+    cachedMediaData.siteSavedDelta = (cachedMediaData.siteSavedDelta || 0)
+      + (Number.isFinite(delta) ? delta : runSaved);
+    if (response.data.savings_is_new !== false) {
+      cachedMediaData.siteImageDelta = (cachedMediaData.siteImageDelta || 0) + 1;
+    }
+    updateBulkSavingsDisplay();
+  }
+};
+
+/**
+ * Refresh the Bulk page "Total saved" label from page baseline + current run site deltas.
+ */
+const updateBulkSavingsDisplay = () => {
+  const savingsEl = document.querySelector('.squeeze-bulk-media-stats-item--savings');
+  if (!savingsEl) return;
+
+  const valueEl = savingsEl.querySelector('.squeeze-bulk-media-stats-item-value');
+  if (!valueEl) return;
+
+  const baselineSaved = Number(savingsEl.dataset.baselineSaved) || 0;
+  const baselineCount = Number(savingsEl.dataset.baselineCount) || 0;
+  const saved = Math.max(0, baselineSaved + (cachedMediaData.siteSavedDelta || 0));
+  const count = Math.max(0, baselineCount + (cachedMediaData.siteImageDelta || 0));
+
+  if (saved <= 0 || count <= 0) {
+    savingsEl.hidden = true;
+    valueEl.textContent = '';
+    return;
+  }
+
+  valueEl.textContent = sprintf(
+    /* translators: 1: human-readable bytes saved, 2: number of images with savings data */
+    __('%1$s on %2$d images', 'squeeze'),
+    humanFileSize(saved, 0),
+    count
+  );
+  savingsEl.hidden = false;
+};
+
+/**
+ * Build the bulk-completion popup body: run savings + review CTA (no upsell).
+ * @param {string} [extraHtml] Optional HTML appended after the review link (e.g. redirect notice).
+ * @returns {string}
+ */
+const formatBulkCompletionMessage = (extraHtml = '') => {
+  const saved = cachedMediaData.runSavedBytes || 0;
+  const count = cachedMediaData.runImageCount || 0;
+  const reviewUrl = (typeof squeezeOptions !== 'undefined' && squeezeOptions?.reviewUrl)
+    ? squeezeOptions.reviewUrl
+    : 'https://wordpress.org/support/plugin/squeeze/reviews/?rate=5#new-post';
+
+  let message;
+  if (count > 0 && saved > 0) {
+    message = sprintf(
+      /* translators: 1: human-readable bytes saved, 2: number of images */
+      __('Saved %1$s on %2$d images', 'squeeze'),
+      humanFileSize(saved, 0),
+      count
+    );
+  } else if (count > 0) {
+    message = sprintf(
+      /* translators: %d: number of images processed */
+      __('Processed %d images', 'squeeze'),
+      count
+    );
+  } else {
+    message = __('All images have been processed!', 'squeeze');
+  }
+
+  message += `<br><br><a class="squeeze-review-link" href="${reviewUrl}" target="_blank" rel="noopener noreferrer">${__('Enjoying Squeeze? Please leave a review', 'squeeze')}</a>`;
+
+  if (extraHtml) {
+    message += `<br>${extraHtml}`;
+  }
+
+  return message;
+};
+
+/**
  * Update WordPress media modal / attachment details .file-size label(s).
  * @param {Element|null} contextEl click target or any node inside the details UI
  * @param {{ bytes?: number|null, humanReadable?: string|null }} size
@@ -1497,12 +3259,20 @@ const base64SizeInBytes = (base64) => {
   return (base64String.length * 3) / 4 - padding;
 }
 
+/**
+ * Whether the MIME subtype is a Squeeze-supported raster format.
+ * @param {string} attachmentType e.g. 'image'
+ * @param {string} attachmentSubType e.g. 'jpeg', 'gif'
+ * @returns {boolean}
+ */
+const isSupportedImageFormat = (attachmentType, attachmentSubType) => {
+  const allowedMimeTypes = ['jpeg', 'png', 'webp', 'avif'];
+  return attachmentType === 'image' && allowedMimeTypes.includes(attachmentSubType);
+};
+
 const maybeCompressAttachment = (attachmentType, attachmentSubType, compressOptions = null) => {
   const isAutoCompress = compressOptions?.auto_compress ?? true;
-  const allowedMimeTypes = ['jpeg', 'png', 'webp', 'avif'];
-  const isImage = attachmentType === 'image' && allowedMimeTypes.includes(attachmentSubType);
-
-  return isImage && isAutoCompress;
+  return isSupportedImageFormat(attachmentType, attachmentSubType) && isAutoCompress;
 };
 
 const base64ToBlob = (base64, type = 'image/jpeg') => {
@@ -1524,6 +3294,38 @@ const base64ToBlob = (base64, type = 'image/jpeg') => {
 const base64ToFile = (base64, fileName = 'image.jpg', type = 'image/jpeg') => {
   const blob = base64ToBlob(base64, type);
   return new File([blob], fileName, { type: type });
+}
+
+/**
+ * Direct WebP: upload as .webp / image/webp from the start so WordPress builds
+ * WebP attachment metadata once (avoids after-upload wp_generate_attachment_metadata).
+ *
+ * @param {{ name?: string, type?: string }|null} file
+ * @param {object} [compressOptions]
+ * @param {{ isDirectWebp?: boolean }|null} [base64Obj]
+ * @returns {{ name: string, type: string, isDirectWebp: boolean }}
+ */
+function resolveCompressedUploadTarget(file, compressOptions = {}, base64Obj = null) {
+  const name = file?.name || 'image.jpg';
+  const type = file?.type || 'image/jpeg';
+  const alreadyWebp = type === 'image/webp' || /\.webp$/i.test(name);
+  // Direct WebP only rewrites JPEG/PNG. AVIF stays AVIF — renaming AVIF bytes to
+  // .webp makes the Media Library show a broken image and breaks Compare.
+  const isAvif = type === 'image/avif' || /\.avif$/i.test(name);
+  const wantDirectWebp = !!(
+    base64Obj?.isDirectWebp
+    || (compressOptions?.direct_webp && !alreadyWebp && !isAvif)
+  );
+
+  if (!wantDirectWebp) {
+    return { name, type, isDirectWebp: false };
+  }
+
+  return {
+    name: name.replace(/\.[^.]+$/, '') + '.webp',
+    type: 'image/webp',
+    isDirectWebp: true,
+  };
 }
 
 const fileToBase64 = (file) => {
@@ -1607,6 +3409,10 @@ const extendAttachment = async (attachment, file) => {
     attributes.originalFile = file.originalFile; // Use the original file from the attachment to be able to create a backup
   }
 
+  if (file?.originalSize > 0) {
+    attributes.originalSize = file.originalSize; // Pre-compress byte size for savings when originalFile is not sent
+  }
+
   return attachment;
 }
 
@@ -1667,13 +3473,200 @@ function markFileFailed(pluploadFile) {
   pluploadFile._isFailed = true;
 }
 
-function markFileCompressed(pluploadFile, newSource, base64Obj) {
+function markFileCompressed(pluploadFile, newSource, base64Obj, uploadTarget = null) {
   pluploadFile.getSource = () => newSource;
   pluploadFile.status = plupload.QUEUED;
   pluploadFile.loaded = 0;
   pluploadFile._isSqueezed = true;
   pluploadFile.base64 = base64Obj.base64;
   pluploadFile.base64Webp = base64Obj?.base64Webp;
+  if (base64Obj?.isHugeForUpload) {
+    pluploadFile._squeezeSkipAfterUploadThumbs = true;
+  }
+  if (uploadTarget?.name) {
+    pluploadFile.name = uploadTarget.name;
+  }
+  if (uploadTarget?.type) {
+    pluploadFile.type = uploadTarget.type;
+  }
+  if (uploadTarget?.isDirectWebp) {
+    pluploadFile._squeezeDirectWebpUpload = true;
+  }
+}
+
+/** Huge uploads: skip after-upload thumb AJAX (WP thumbs from squeezed original are enough). */
+function shouldSkipAfterUploadThumbs(file) {
+  return !!(file?._squeezeSkipAfterUploadThumbs);
+}
+
+/**
+ * Tell PHP (add_attachment) this Plupload file was already squeezed in the browser.
+ * Clears markers when the current file is not squeezed so the next upload cannot inherit them.
+ *
+ * @param {object} up Plupload uploader
+ * @param {object} [pluploadFile]
+ */
+function syncClientCompressedMultipartParams(up, pluploadFile) {
+  if (!up?.settings) return;
+  if (!up.settings.multipart_params || typeof up.settings.multipart_params !== 'object') {
+    up.settings.multipart_params = {};
+  }
+  const params = up.settings.multipart_params;
+  delete params._squeeze_client;
+  delete params._squeeze_client_nonce;
+  delete params._squeeze_original_size;
+
+  if (!pluploadFile?._isSqueezed) return;
+
+  const nonce = (typeof Squeeze !== 'undefined' && Squeeze?.nonce) ? Squeeze.nonce : null;
+  if (!nonce) return;
+
+  params._squeeze_client = '1';
+  params._squeeze_client_nonce = String(nonce);
+  if (pluploadFile.originalSize > 0) {
+    params._squeeze_original_size = String(pluploadFile.originalSize);
+  }
+}
+
+/**
+ * Append client-compressed markers to a FormData body (block editor / REST media).
+ *
+ * @param {FormData} formData
+ * @param {{ originalSize?: number }|null} [meta]
+ */
+function appendClientCompressedFormFields(formData, meta = null) {
+  if (!formData || typeof formData.append !== 'function') return;
+  const nonce = (typeof Squeeze !== 'undefined' && Squeeze?.nonce) ? Squeeze.nonce : null;
+  if (!nonce) return;
+  formData.append('_squeeze_client', '1');
+  formData.append('_squeeze_client_nonce', String(nonce));
+  const originalSize = Number(meta?.originalSize) || 0;
+  if (originalSize > 0) {
+    formData.append('_squeeze_original_size', String(originalSize));
+  }
+}
+
+/**
+ * Light AJAX: mark attachment as squeezed when after-upload thumb squeeze was skipped.
+ * Optionally ships a pre-built full-size sidecar WebP (auto_webp / sidecar mode).
+ *
+ * @param {number|string} attachmentId
+ * @param {number} [originalSize]
+ * @param {{ base64Webp?: string }} [options]
+ * @returns {Promise<object|null>}
+ */
+async function markAttachmentClientCompressed(attachmentId, originalSize = 0, options = {}) {
+  const id = Number(attachmentId) || 0;
+  if (id <= 0 || typeof Squeeze === 'undefined' || !Squeeze?.ajaxUrl || !Squeeze?.nonce) {
+    return null;
+  }
+  const base64Webp = typeof options?.base64Webp === 'string' ? options.base64Webp : '';
+  try {
+    let res;
+    if (base64Webp) {
+      const fd = new FormData();
+      fd.append('action', 'squeeze_mark_client_compressed');
+      fd.append('_ajax_nonce', String(Squeeze.nonce));
+      fd.append('attachmentID', String(id));
+      if (originalSize > 0) {
+        fd.append('originalSize', String(originalSize));
+      }
+      fd.append('base64Webp', base64Webp);
+      res = await fetch(Squeeze.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd,
+      });
+    } else {
+      const body = new URLSearchParams();
+      body.set('action', 'squeeze_mark_client_compressed');
+      body.set('_ajax_nonce', String(Squeeze.nonce));
+      body.set('attachmentID', String(id));
+      if (originalSize > 0) {
+        body.set('originalSize', String(originalSize));
+      }
+      res = await fetch(Squeeze.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: body.toString(),
+      });
+    }
+    return await res.json();
+  } catch (e) {
+    console.error('[Squeeze] mark client compressed failed', e);
+    return null;
+  }
+}
+
+/** HTTP failures that mean the host is likely down — stop the upload queue. */
+function isGatewayError(err) {
+  const status = Number(err?.status ?? err?.statusCode ?? err?.response?.status ?? 0);
+  // TasteWP / some shared hosts return 404 when PHP/nginx dies mid-batch.
+  if (status === 404 || status === 500 || status === 502 || status === 503 || status === 504) {
+    return true;
+  }
+  const msg = String(err?.message || err?.response || err || '');
+  return /\b404\b|\b500\b|\b502\b|\b503\b|\b504\b|Bad Gateway|Gateway Time-?out/i.test(msg);
+}
+
+let uploadQueueHalted = false;
+
+function isUploadQueueHalted() {
+  return uploadQueueHalted;
+}
+
+const HALT_NOTICE_ID = 'squeeze-upload-halt-notice';
+
+function removeUploadQueueHaltNotice() {
+  try {
+    document.getElementById(HALT_NOTICE_ID)?.remove();
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function showUploadQueueHaltNotice() {
+  if (typeof document === 'undefined') return;
+  try {
+    if (document.getElementById(HALT_NOTICE_ID)) return;
+    const el = document.createElement('div');
+    el.id = HALT_NOTICE_ID;
+    el.className = 'notice notice-error squeeze-upload-halt-notice';
+    el.setAttribute('role', 'alert');
+    const p = document.createElement('p');
+    p.textContent = __(
+      'Squeeze stopped further uploads because the server returned an error (404/500/502/503/504). Wait a moment, then try the remaining files again.',
+      'squeeze'
+    );
+    el.appendChild(p);
+    const host =
+      document.querySelector('#media-items')
+      || document.querySelector('.media-frame-content')
+      || document.querySelector('.media-frame')
+      || document.querySelector('.wrap')
+      || document.body;
+    host?.insertBefore(el, host.firstChild);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function resetUploadQueueHalt() {
+  uploadQueueHalted = false;
+  removeUploadQueueHaltNotice();
+}
+
+/** Stop further Plupload restarts after a host crash (404/500/502/503/504). */
+function haltUploadQueue(reason) {
+  uploadQueueHalted = true;
+  console.warn('[Squeeze] Upload queue halted:', reason || 'gateway error');
+  showUploadQueueHaltNotice();
+  try {
+    cachedMediaData.uploadUploader?.stop?.();
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 function restartUploader(up) {
@@ -1682,7 +3675,9 @@ function restartUploader(up) {
 }
 
 async function maybeBackupOriginal(file, compressOptions) {
-  const isDirectWebp = compressOptions?.direct_webp && file.type !== 'image/webp';
+  const isDirectWebp = compressOptions?.direct_webp
+    && file.type !== 'image/webp'
+    && file.type !== 'image/avif';
   if (isDirectWebp) {
     return await Squeeze.convertFileToWebp(file);
   }
@@ -2083,11 +4078,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "checkMegapixelLimit": () => (/* binding */ checkMegapixelLimit),
 /* harmony export */   "computeContainResize": () => (/* binding */ computeContainResize),
 /* harmony export */   "computePoolSize": () => (/* binding */ computePoolSize),
+/* harmony export */   "detectImageTypeFromMagic": () => (/* binding */ detectImageTypeFromMagic),
 /* harmony export */   "formatOomMessage": () => (/* binding */ formatOomMessage),
 /* harmony export */   "getMegapixelLimit": () => (/* binding */ getMegapixelLimit),
 /* harmony export */   "getMemorySettings": () => (/* binding */ getMemorySettings),
+/* harmony export */   "getServerSafeMegapixelLimit": () => (/* binding */ getServerSafeMegapixelLimit),
+/* harmony export */   "getUploadSafeMegapixelLimit": () => (/* binding */ getUploadSafeMegapixelLimit),
 /* harmony export */   "isLowMemoryDevice": () => (/* binding */ isLowMemoryDevice),
 /* harmony export */   "isWasmOomError": () => (/* binding */ isWasmOomError),
+/* harmony export */   "mapAvifQualityToCqLevel": () => (/* binding */ mapAvifQualityToCqLevel),
 /* harmony export */   "readImageDimensionsFromBuffer": () => (/* binding */ readImageDimensionsFromBuffer),
 /* harmony export */   "shouldForceSingleThreadAvif": () => (/* binding */ shouldForceSingleThreadAvif)
 /* harmony export */ });
@@ -2104,25 +4103,15 @@ const MEGAPIXEL_LIMITS = {
 };
 
 /**
- * Cap bulk concurrency by available device memory, not raw CPU cores.
- * Image compression is memory-bound; unrestricted hardwareConcurrency
- * can spawn many WASM heaps and trigger OutOfMemory on low-RAM devices.
+ * Soft concurrency for WASM: always 1 — sequential compress only.
+ * (Multi-worker parallel was removed; low-RAM / mobile browsers crashed.)
  *
- * @param {number|undefined} deviceMemory  navigator.deviceMemory (GB), or undefined
- * @param {number|undefined} hardwareConcurrency  navigator.hardwareConcurrency
+ * @param {number|undefined} deviceMemory
+ * @param {number|undefined} hardwareConcurrency
  * @returns {number} pool size (>= 1)
  */
 function computePoolSize(deviceMemory, hardwareConcurrency) {
-  const cores = Math.max(1, Number(hardwareConcurrency) || 1);
-  const gb = deviceMemory == null ? null : Number(deviceMemory);
-
-  if (gb != null && !Number.isNaN(gb)) {
-    if (gb <= 2) return 1;
-    if (gb <= 4) return Math.min(cores, 2);
-  }
-
-  // Cap even on powerful machines — diminishing returns past a few parallel WASM jobs.
-  return Math.min(cores, 4);
+  return 1;
 }
 
 /**
@@ -2143,6 +4132,65 @@ function isLowMemoryDevice(deviceMemory) {
  */
 function shouldForceSingleThreadAvif(deviceMemory) {
   return isLowMemoryDevice(deviceMemory);
+}
+
+/**
+ * Map Squeeze's AVIF "Quality" setting (0–100, higher = better) to
+ * @jsquash/avif@1.x cqLevel (0–63, higher = worse).
+ *
+ * The settings UI stores avif_cqLevel as a JPEG-like quality slider (default 70).
+ * Passing that value straight through exceeds cqLevel's max (63) and makes the
+ * WASM encoder return null → "Encoding error."
+ *
+ * @param {unknown} quality
+ * @returns {number} cqLevel in [0, 63]
+ */
+function mapAvifQualityToCqLevel(quality) {
+  const q = Number(quality);
+  if (!Number.isFinite(q)) {
+    return 33; // @jsquash/avif defaultOptions.cqLevel
+  }
+  const clamped = Math.min(100, Math.max(0, q));
+  return Math.round(63 - (clamped / 100) * 63);
+}
+
+/**
+ * Detect image subtype from the first bytes (ignores declared MIME).
+ *
+ * @param {ArrayBuffer|Uint8Array} input
+ * @returns {'jpeg'|'png'|'webp'|'avif'|null}
+ */
+function detectImageTypeFromMagic(input) {
+  let bytes;
+  if (input instanceof Uint8Array) {
+    bytes = input;
+  } else if (input instanceof ArrayBuffer) {
+    bytes = new Uint8Array(input);
+  } else {
+    return null;
+  }
+  if (bytes.byteLength < 12) return null;
+
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'png';
+  // RIFF....WEBP
+  if (
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) {
+    return 'webp';
+  }
+  // ISO BMFF: ....ftyp.... (AVIF / HEIF family — treat ftyp+avif/avis/mif1 as avif for our codecs)
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    if (brand === 'avif' || brand === 'avis' || brand === 'mif1' || brand === 'miaf') {
+      return 'avif';
+    }
+    // Some AVIFs put avif later in the brands list — scan a small window.
+    const head = String.fromCharCode(...bytes.subarray(8, Math.min(bytes.byteLength, 32)));
+    if (head.includes('avif') || head.includes('avis')) return 'avif';
+  }
+  return null;
 }
 
 /**
@@ -2174,6 +4222,43 @@ function checkMegapixelLimit(width, height, megapixelLimit) {
     megapixels,
     limit,
   };
+}
+
+/**
+ * WP_MAX_MEMORY_LIMIT (bytes) → soft megapixel cap for upload metadata safety.
+ * Uses RGBA decode budget with ~2× headroom for intermediates (-scaled / thumbs).
+ *
+ * @param {number} serverMemoryBytes
+ * @returns {number} megapixel limit (Infinity when unknown)
+ */
+function getServerSafeMegapixelLimit(serverMemoryBytes) {
+  const bytes = Number(serverMemoryBytes) || 0;
+  if (bytes <= 0) return Number.POSITIVE_INFINITY;
+  return bytes / 8 / 1e6;
+}
+
+/**
+ * Effective upload safety cap = min(browser soft limit, server-safe limit).
+ *
+ * @param {number|undefined} deviceMemory
+ * @param {number} [serverMemoryBytes]
+ * @returns {number}
+ */
+function getUploadSafeMegapixelLimit(deviceMemory, serverMemoryBytes = 0) {
+  return Math.min(
+    getMegapixelLimit(deviceMemory),
+    getServerSafeMegapixelLimit(serverMemoryBytes)
+  );
+}
+
+function readLocalizedServerMemoryBytes() {
+  try {
+    if (typeof squeezeOptions === 'undefined') return 0;
+    const n = Number(squeezeOptions.wpMaxMemoryBytes);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch (e) {
+    return 0;
+  }
 }
 
 /**
@@ -2366,18 +4451,24 @@ function formatOomMessage(error, translate = (s) => s) {
 }
 
 /**
- * Snapshot of device memory settings to pass into the worker.
+ * Snapshot of device + server memory settings to pass into the worker.
  *
  * @param {{ deviceMemory?: number, hardwareConcurrency?: number }} [nav]
- * @returns {{ deviceMemory: number|undefined, poolSize: number, forceSingleThreadAvif: boolean, megapixelLimit: number }}
+ * @param {number} [serverMemoryBytes]  WP_MAX_MEMORY_LIMIT bytes (from squeezeOptions)
+ * @returns {{ deviceMemory: number|undefined, poolSize: number, forceSingleThreadAvif: boolean, megapixelLimit: number, serverMemoryBytes: number }}
  */
-function getMemorySettings(nav = typeof navigator !== 'undefined' ? navigator : {}) {
+function getMemorySettings(
+  nav = typeof navigator !== 'undefined' ? navigator : {},
+  serverMemoryBytes = readLocalizedServerMemoryBytes()
+) {
   const deviceMemory = nav.deviceMemory;
+  const serverBytes = Number(serverMemoryBytes) || 0;
   return {
     deviceMemory,
     poolSize: computePoolSize(deviceMemory, nav.hardwareConcurrency),
     forceSingleThreadAvif: shouldForceSingleThreadAvif(deviceMemory),
-    megapixelLimit: getMegapixelLimit(deviceMemory),
+    megapixelLimit: getUploadSafeMegapixelLimit(deviceMemory, serverBytes),
+    serverMemoryBytes: serverBytes,
   };
 }
 
@@ -2442,7 +4533,7 @@ class SQUEEZE {
     this.ajaxUrl = squeeze.ajaxUrl; // ajax url
     this.timeout = parseInt(this.options.timeout) * 1000; // convert to milliseconds
     this.memory = (0,_memory_js__WEBPACK_IMPORTED_MODULE_2__.getMemorySettings)(typeof navigator !== 'undefined' ? navigator : {});
-    this.poolSize = this.memory.poolSize; // memory-aware concurrency (not raw core count)
+    this.poolSize = 1; // sequential compress only (multi-worker parallel removed)
     this.settingsPageUrl = squeeze.settingsPageUrl || ''; // settings page URL
     this.assetsVersion = squeeze.assetsVersion || ''; // cache-bust Worker + chunks after deploy
     this._workerPool = null;
@@ -2479,6 +4570,22 @@ class SQUEEZE {
   }
 
   /**
+   * Worker fetch() resolves relative URLs against the worker script URL, not the page.
+   * Always pass absolute http(s) URLs into the worker.
+   *
+   * @param {string|undefined|null} url
+   * @returns {string|undefined}
+   */
+  _toAbsoluteUrl = (url) => {
+    if (!url) return undefined;
+    try {
+      return new URL(url, window.location.href).href;
+    } catch {
+      return url;
+    }
+  }
+
+  /**
    * Build a same-origin proxy URL for an attachment image.
    * The browser can fetch this without CORS errors; the PHP handler streams the
    * actual image (from local disk or from the provider) back to the browser.
@@ -2508,6 +4615,9 @@ class SQUEEZE {
     const proxied = {};
     for (const [sizeName, sizeData] of Object.entries(sizes)) {
       proxied[sizeName] = { ...sizeData };
+      if (sizeData?.url) {
+        proxied[sizeName].url = this._toAbsoluteUrl(sizeData.url);
+      }
       if (sizeData?.url && this._isCrossOrigin(sizeData.url)) {
         proxied[sizeName].fetchUrl = this._buildProxyUrl(attachmentId, sizeName);
       }
@@ -2515,9 +4625,12 @@ class SQUEEZE {
     return proxied;
   }
 
-  handleCompress = async ( attachment, type = 'uncompressed' ) => {
+  handleCompress = async ( attachment, type = 'uncompressed', optionsOverride = null ) => {
+    const compressOptions = optionsOverride
+      ? { ...this.options, ...optionsOverride }
+      : this.options;
     const attachmentData = attachment.attributes;
-    const url = attachmentData?.originalImageURL ?? attachmentData.url;
+    const url = this._toAbsoluteUrl(attachmentData?.originalImageURL ?? attachmentData.url);
     const mime = attachmentData.mime;
     const name = attachmentData.name;
     const filename = attachmentData?.originalImageName ?? attachmentData.filename;
@@ -2645,7 +4758,7 @@ class SQUEEZE {
         base64Compressed,
         base64WebpCompressed,
         type,
-        options: this.options,
+        options: compressOptions,
         memory: {
           deviceMemory: this.memory.deviceMemory,
           forceSingleThreadAvif: this.memory.forceSingleThreadAvif,
@@ -2669,6 +4782,7 @@ class SQUEEZE {
     const isDirectWebp = base64?.isDirectWebp && mime !== 'image/webp';
     const isBackupOriginal = this.options?.backup_original ?? false; // check if backup original is enabled
     let originalFile = attachmentData?.originalFile ?? null; // the original file, used for creating backup
+    const originalSize = attachmentData?.originalSize ?? null; // pre-compress size (pre-upload) when originalFile is absent
     
     // if originalFile is not provided, try to get it from the URL
     // used when the attachment needs to be converted to webp from jpg or png
@@ -2699,6 +4813,7 @@ class SQUEEZE {
       url: url,
       process: type,
       originalFile: originalFile,
+      originalSize: originalSize,
     }
 
     const formData = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.objectToFormData)(data);
@@ -2754,50 +4869,46 @@ class SQUEEZE {
 
   }
 
-  handleBulkUpload = async (type = 'uncompressed', mediaIDs = []) => {
-    let currentID;
-    let attachment;
-
-    switch (type) {
-      case 'all':
-      case 'uncompressed':
-        currentID = mediaIDs[0];
-        break;
-      case 'path':
-        currentID = mediaIDs[0]?.filename;
-        break;
-      default:
-        currentID = 0;
-        break;
-    }
-
+  /**
+   * Resolve one bulk-queue item to an attachment without mutating the queue.
+   * Used by sequential handleBulkUpload.
+   *
+   * @param {string} type  uncompressed | all | path
+   * @param {number|object} item  attachment ID or path-item object
+   * @returns {Promise<{ok:true, attachment:object}|{ok:false, data:*, success?:boolean}>}
+   */
+  prepareBulkAttachment = async (type = 'uncompressed', item) => {
     if (type === 'path') {
-
       
 
-      attachment = {
-        attributes: {
-          url: mediaIDs[0].url,
-          mime: mediaIDs[0].mime,
-          name: mediaIDs[0].name,
-          filename: mediaIDs[0].filename,
-          id: mediaIDs[0].id,
-          sizes: mediaIDs[0]?.sizes,
-        }
-      }
+      return {
+        ok: true,
+        attachment: {
+          attributes: {
+            url: item.url,
+            mime: item.mime,
+            name: item.name,
+            filename: item.filename,
+            id: item.id,
+            sizes: item?.sizes,
+          },
+        },
+      };
+    }
 
-    } else {
+    const attachmentResponse = await this.getAttachment(item);
+    if (attachmentResponse.success === false) {
+      return {
+        ok: false,
+        data: attachmentResponse.data,
+        success: false,
+      };
+    }
 
-      const attachmentResponse = await this.getAttachment(currentID); 
-      if (attachmentResponse.success === false) {
-        if (Array.isArray(mediaIDs)) mediaIDs.shift();
-        return {
-          'mediaIDs': mediaIDs,
-          'data': attachmentResponse.data
-        }
-      }
-      const attachmentData = attachmentResponse.data;
-      attachment = {
+    const attachmentData = attachmentResponse.data;
+    return {
+      ok: true,
+      attachment: {
         attributes: {
           url: attachmentData.url,
           mime: attachmentData.mime,
@@ -2805,37 +4916,88 @@ class SQUEEZE {
           filename: attachmentData.filename,
           id: attachmentData.id,
           sizes: attachmentData.sizes,
-        }
-      }
+        },
+      },
+    };
+  }
 
+  /**
+   * Prepare + compress one bulk item (no upload). Safe for concurrent calls
+   * up to WorkerPool size — does not mutate shared queues.
+   *
+   * @returns {Promise<{ok:true, attachment:object, compressData:*}|{ok:false, data:*, success?:boolean}>}
+   */
+  compressBulkItem = async (type = 'uncompressed', item) => {
+    const prepared = await this.prepareBulkAttachment(type, item);
+    if (!prepared.ok) {
+      return prepared;
     }
 
-    if (Array.isArray(mediaIDs)) mediaIDs.shift();
-
-    const mediaType = attachment.attributes.mime.split("/")[0];
-    const mediaSubType = attachment.attributes.mime.split("/")[1];
+    const attachment = prepared.attachment;
+    const mediaType = attachment.attributes.mime.split('/')[0];
+    const mediaSubType = attachment.attributes.mime.split('/')[1];
 
     if (!(0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeCompressAttachment)(mediaType, mediaSubType)) {
       return {
-        'mediaIDs': mediaIDs,
-        'data': __('Skipped: the image is broken or its format is not supported or excluded from squeezing.', 'squeeze')
-      }
+        ok: false,
+        data: __('Skipped: the image is broken or its format is not supported or excluded from squeezing.', 'squeeze'),
+      };
     }
 
     try {
-      const compressData = await this.handleCompress( attachment, type );
-      const uploadData = await this.handleUpload({ attachment: attachment, base64: compressData, type: type, mediaIDs: mediaIDs })
-
-      return uploadData;
-
+      const compressData = await this.handleCompress(attachment, type);
+      return { ok: true, attachment, compressData };
     } catch (error) {
       return {
-        'mediaIDs': mediaIDs,
-        'data': error?.message ?? error,
-        'success': false
-      }
+        ok: false,
+        data: error?.message ?? error,
+        success: false,
+      };
+    }
+  }
+
+  handleBulkUpload = async (type = 'uncompressed', mediaIDs = [], timing = null) => {
+    const item = mediaIDs[0];
+    if (Array.isArray(mediaIDs)) mediaIDs.shift();
+
+    const compressStarted = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const compressed = await this.compressBulkItem(type, item);
+    const compressMs = Math.round(
+      ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - compressStarted
+    );
+    timing?.markCompress?.(compressMs);
+
+    if (!compressed.ok) {
+      timing?.markImage?.({ skipped: true });
+      return {
+        mediaIDs,
+        data: compressed.data,
+        ...(compressed.success === false ? { success: false } : {}),
+      };
     }
 
+    try {
+      const uploadStarted = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const uploadData = await this.handleUpload({
+        attachment: compressed.attachment,
+        base64: compressed.compressData,
+        type,
+        mediaIDs,
+      });
+      const uploadMs = Math.round(
+        ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - uploadStarted
+      );
+      timing?.markUpload?.(uploadMs);
+      timing?.markImage?.({ skipped: uploadData?.success === false });
+      return uploadData;
+    } catch (error) {
+      timing?.markImage?.({ skipped: true });
+      return {
+        mediaIDs,
+        data: error?.message ?? error,
+        success: false,
+      };
+    }
   }
 
   
@@ -2967,7 +5129,7 @@ class SQUEEZE {
    * @param {object} compressSizes - Optional sizes for compression
    * @returns {Promise<object|boolean>} - Returns a Promise that resolves to the compressed file as a base64 object or false if the file is invalid
    */
-  compressBeforeUpload = async (file, compressSizes = null) => {
+  compressBeforeUpload = async (file, compressSizes = null, optionsOverride = null) => {
     if (!(file instanceof Blob) && !(file instanceof File) && (file.constructor.name !== 'File')) {
       console.error('Invalid file type:', file);
       return false; // Return false if the file is not a Blob or File
@@ -2987,7 +5149,7 @@ class SQUEEZE {
     }
 
     try {
-      const base64Obj = await this.handleCompress(attachment);
+      const base64Obj = await this.handleCompress(attachment, 'uncompressed', optionsOverride);
 
       return base64Obj; // Return the compressed file as base64Obj
     } catch (error) {
@@ -3231,6 +5393,305 @@ class SQUEEZE {
 
 /***/ }),
 
+/***/ "./assets/js/upload-parallel.js":
+/*!**************************************!*\
+  !*** ./assets/js/upload-parallel.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "applyUploadCompressionResult": () => (/* binding */ applyUploadCompressionResult),
+/* harmony export */   "bindUploadHooks": () => (/* binding */ bindUploadHooks),
+/* harmony export */   "decrementAfterUploadPending": () => (/* binding */ decrementAfterUploadPending),
+/* harmony export */   "deferAlreadyReadyUpload": () => (/* binding */ deferAlreadyReadyUpload),
+/* harmony export */   "ensureUploadTiming": () => (/* binding */ ensureUploadTiming),
+/* harmony export */   "incrementAfterUploadPending": () => (/* binding */ incrementAfterUploadPending),
+/* harmony export */   "noteUploadEnded": () => (/* binding */ noteUploadEnded),
+/* harmony export */   "noteUploadStarted": () => (/* binding */ noteUploadStarted),
+/* harmony export */   "notifyPluploadUploadComplete": () => (/* binding */ notifyPluploadUploadComplete),
+/* harmony export */   "onPluploadFileUploaded": () => (/* binding */ onPluploadFileUploaded),
+/* harmony export */   "recordUploadCompressMs": () => (/* binding */ recordUploadCompressMs),
+/* harmony export */   "resetFileToQueued": () => (/* binding */ resetFileToQueued),
+/* harmony export */   "scheduleNextUpload": () => (/* binding */ scheduleNextUpload),
+/* harmony export */   "shouldDeferNextUpload": () => (/* binding */ shouldDeferNextUpload),
+/* harmony export */   "tryFinalizeUploadTiming": () => (/* binding */ tryFinalizeUploadTiming)
+/* harmony export */ });
+/* harmony import */ var _helpers_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers.js */ "./assets/js/helpers.js");
+/* harmony import */ var _bulk_timing_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bulk-timing.js */ "./assets/js/bulk-timing.js");
+/**
+ * Media Library upload helpers (sequential compress → upload):
+ * - Timing summary for the batch
+ * - Never start the next HTTP upload while after-upload AJAX is still running
+ * - Apply pre-upload compress result onto the Plupload file (incl. huge → skip thumbs)
+ */
+
+
+
+
+
+let pendingAfterUpload = 0;
+let pluploadComplete = false;
+let httpUploadInFlight = false;
+let restartTimer = null;
+let restartScheduled = false;
+
+const now = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+
+function getUploadTiming() {
+  return _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming || null;
+}
+
+function ensureUploadTiming() {
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadBatchActive || !_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming) {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming = (0,_bulk_timing_js__WEBPACK_IMPORTED_MODULE_1__.createBulkTiming)('sequential', { poolSize: 1, path: 'upload' });
+  } else {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming.resume();
+  }
+
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadBatchActive = true;
+  pluploadComplete = false;
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.resetUploadQueueHalt();
+  if (restartTimer) {
+    clearTimeout(restartTimer);
+    restartTimer = null;
+  }
+  restartScheduled = false;
+  return _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadTiming;
+}
+
+function noteUploadStarted(pluploadFile) {
+  if (!pluploadFile || !_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadBatchActive) return;
+  pluploadFile._squeezeUploadStarted = now();
+  httpUploadInFlight = true;
+}
+
+/** @returns {number} upload duration ms (0 if unknown) */
+function noteUploadEnded(pluploadFile) {
+  const timing = getUploadTiming();
+  let uploadMs = 0;
+  if (pluploadFile?._squeezeUploadStarted) {
+    uploadMs = Math.round(now() - pluploadFile._squeezeUploadStarted);
+    if (timing) timing.markUpload(uploadMs);
+    delete pluploadFile._squeezeUploadStarted;
+  }
+  if (pluploadFile) pluploadFile._squeezeUploadDone = true;
+  httpUploadInFlight = false;
+  return uploadMs;
+}
+
+function recordUploadCompressMs(ms, { skipped = false } = {}) {
+  const timing = getUploadTiming();
+  if (!timing || !Number.isFinite(ms) || ms < 0) return;
+  timing.markCompress(Math.round(ms));
+  if (skipped) timing.markImage({ skipped: true });
+}
+
+function incrementAfterUploadPending() {
+  pendingAfterUpload += 1;
+}
+
+function decrementAfterUploadPending() {
+  pendingAfterUpload = Math.max(0, pendingAfterUpload - 1);
+  tryFinalizeUploadTiming();
+  scheduleNextUpload(_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadUploader);
+}
+
+function notifyPluploadUploadComplete() {
+  pluploadComplete = true;
+  tryFinalizeUploadTiming();
+}
+
+function tryFinalizeUploadTiming() {
+  const timing = getUploadTiming();
+  if (!timing || !_helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadBatchActive || !pluploadComplete) return;
+  if (pendingAfterUpload > 0 || httpUploadInFlight) return;
+
+  timing.logSummary();
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadBatchActive = false;
+  pluploadComplete = false;
+}
+
+/**
+ * Plupload sets status=UPLOADING before BeforeUpload. Returning false without
+ * resetting leaves the file invisible to uploadNext (QUEUED only).
+ */
+function resetFileToQueued(pluploadFile) {
+  if (!pluploadFile || typeof plupload === 'undefined') return;
+  if (pluploadFile.status === plupload.DONE || pluploadFile.status === plupload.FAILED) return;
+  pluploadFile.status = plupload.QUEUED;
+}
+
+async function applyUploadCompressionResult(
+  up,
+  pluploadFile,
+  file,
+  base64Obj,
+  compressOptions,
+  { restart = false } = {}
+) {
+  if (!base64Obj?.base64) {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markFileFailed(pluploadFile);
+    recordUploadCompressMs(0, { skipped: true });
+    if (restart && up) _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
+    return false;
+  }
+
+  pluploadFile.originalSize = file.size;
+
+  if (compressOptions?.backup_original) {
+    const originalFile = await _helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeBackupOriginal(file, compressOptions);
+    pluploadFile.originalFile = originalFile;
+  }
+
+  const uploadTarget = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.resolveCompressedUploadTarget(file, compressOptions, base64Obj);
+  const compressedFile = _helpers_js__WEBPACK_IMPORTED_MODULE_0__.base64ToFile(
+    base64Obj.base64,
+    uploadTarget.name,
+    uploadTarget.type
+  );
+  const newSource = new mOxie.File(null, compressedFile);
+  if (!newSource) {
+    console.error('Failed to create new mOxie.File from base64 data');
+    _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markFileFailed(pluploadFile);
+    recordUploadCompressMs(0, { skipped: true });
+    if (restart && up) _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
+    return false;
+  }
+
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.markFileCompressed(pluploadFile, newSource, base64Obj, uploadTarget);
+  if (restart && up) _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
+  return true;
+}
+
+/** True when the next HTTP upload must wait for after-upload AJAX. */
+function shouldDeferNextUpload() {
+  return pendingAfterUpload > 0;
+}
+
+function hasPendingUploads(up) {
+  if (!up?.files?.length) return false;
+  return up.files.some((f) => {
+    if (f._squeezeUploadDone) return false;
+    if (typeof plupload !== 'undefined' && (f.status === plupload.DONE || f.status === plupload.FAILED)) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * After upload (+ after-upload AJAX), restart Plupload for the next queued file.
+ */
+function scheduleNextUpload(up) {
+  if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isUploadQueueHalted()) {
+    return;
+  }
+  if (!up || !hasPendingUploads(up)) return;
+  if (pendingAfterUpload > 0 || httpUploadInFlight) {
+    return;
+  }
+  if (restartScheduled) return;
+  restartScheduled = true;
+
+  if (restartTimer) clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    restartScheduled = false;
+    restartTimer = null;
+    if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isUploadQueueHalted()) return;
+    if (pendingAfterUpload > 0 || httpUploadInFlight) {
+      scheduleNextUpload(up);
+      return;
+    }
+    if (!hasPendingUploads(up)) return;
+    try {
+      for (const f of up.files || []) {
+        if (typeof plupload !== 'undefined' && f.status === plupload.UPLOADING && !f._squeezeUploadDone) {
+          resetFileToQueued(f);
+        }
+      }
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.restartUploader(up);
+    } catch (e) {
+      console.error('Squeeze upload: restart failed', e);
+    }
+  }, 0);
+}
+
+/**
+ * Sync BeforeUpload helper when the next file is already compressed but
+ * after-upload AJAX is still running: stop + re-queue. Returns false.
+ */
+function deferAlreadyReadyUpload(up, pluploadFile) {
+  up?.stop?.();
+  resetFileToQueued(pluploadFile);
+  scheduleNextUpload(up);
+  return false;
+}
+
+function onPluploadFileUploaded(up, file) {
+  noteUploadEnded(file);
+  const timing = getUploadTiming();
+  if (timing && _helpers_js__WEBPACK_IMPORTED_MODULE_0__.isFileAlreadyProcessed(file)) {
+    timing.markImage({
+      skipped: !!(file._isFailed || file._isExcluded),
+    });
+  }
+  if (pendingAfterUpload === 0) {
+    scheduleNextUpload(up);
+  }
+  tryFinalizeUploadTiming();
+}
+
+/**
+ * Bind timing + after-upload serialization hooks.
+ */
+function bindUploadHooks(uploader, compressOptions) {
+  if (!uploader || uploader._squeezeUploadHooksBound) return;
+  uploader._squeezeUploadHooksBound = true;
+
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadUploader = uploader;
+  _helpers_js__WEBPACK_IMPORTED_MODULE_0__.cachedMediaData.uploadCompressOptions = compressOptions;
+
+  uploader.bind('FilesAdded', () => {
+    ensureUploadTiming();
+  });
+
+  uploader.bind('UploadComplete', (up) => {
+    httpUploadInFlight = false;
+
+    const stuck = (up.files || []).find(
+      (f) => typeof plupload !== 'undefined'
+        && f.status === plupload.UPLOADING
+        && !f._squeezeUploadDone
+    );
+    if (stuck) {
+      resetFileToQueued(stuck);
+      scheduleNextUpload(up);
+      return;
+    }
+
+    notifyPluploadUploadComplete();
+  });
+
+  uploader.bind('FileUploaded', (up, file) => {
+    onPluploadFileUploaded(up, file);
+  });
+
+  uploader.bind('Error', (up, err) => {
+    httpUploadInFlight = false;
+    if (err?.file) err.file._squeezeUploadDone = true;
+    if (_helpers_js__WEBPACK_IMPORTED_MODULE_0__.isGatewayError(err)) {
+      _helpers_js__WEBPACK_IMPORTED_MODULE_0__.haltUploadQueue(`plupload ${err?.status || 'gateway'} error`);
+      return;
+    }
+    scheduleNextUpload(up);
+  });
+}
+
+
+/***/ }),
+
 /***/ "./assets/js/voxel-upload-compat.js":
 /*!******************************************!*\
   !*** ./assets/js/voxel-upload-compat.js ***!
@@ -3390,20 +5851,20 @@ function formDataHasVoxelImageFiles(entries) {
  * @param {string} key FormData key or diagnostic label
  * @param {Record<string, unknown>} compressOptions
  * @param {object} squeeze window.Squeeze
- * @returns {Promise<{ out: File; metaSignal: boolean }>}
+ * @returns {Promise<{ out: File; metaSignal: boolean; originalSize: number }>}
  */
 async function compressOneVoxelImageIfNeeded(fileValue, key, compressOptions, squeeze) {
 	const { type, subtype } = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.parseMimeType)(fileValue);
 	if (!(0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.maybeCompressAttachment)(type, subtype, compressOptions)) {
 		vxLog("file skipped (format/settings):", fileValue.name, fileValue.type);
-		return { out: fileValue, metaSignal: false };
+		return { out: fileValue, metaSignal: false, originalSize: 0 };
 	}
 
 	if (typeof squeeze.isExcludedByName === "function") {
 		try {
 			if (await squeeze.isExcludedByName(fileValue.name)) {
 				vxLog("file skipped (exclusion list):", fileValue.name);
-				return { out: fileValue, metaSignal: false };
+				return { out: fileValue, metaSignal: false, originalSize: 0 };
 			}
 		} catch (e) {
 			vxWarn("exclude check failed; continuing with compression:", fileValue.name, e);
@@ -3417,19 +5878,20 @@ async function compressOneVoxelImageIfNeeded(fileValue, key, compressOptions, sq
 		const base64Obj = await squeeze.compressBeforeUpload(fileValue);
 		if (!base64Obj?.base64) {
 			vxWarn("compress returned no data; using original:", fileValue.name);
-			return { out: fileValue, metaSignal: false };
+			return { out: fileValue, metaSignal: false, originalSize: 0 };
 		}
-		const outFile = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.base64ToFile)(base64Obj.base64, fileValue.name, fileValue.type);
+		const uploadTarget = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.resolveCompressedUploadTarget)(fileValue, compressOptions, base64Obj);
+		const outFile = (0,_helpers_js__WEBPACK_IMPORTED_MODULE_0__.base64ToFile)(base64Obj.base64, uploadTarget.name, uploadTarget.type);
 		const ms = Math.round(performance.now() - t0);
 		if (outFile.size > inBytes) {
 			vxLog("compressed larger than original; using original:", fileValue.name, `(${inBytes} B vs ${outFile.size} B in ${ms} ms)`);
-			return { out: fileValue, metaSignal: false };
+			return { out: fileValue, metaSignal: false, originalSize: 0 };
 		}
 		vxLog("compressed:", fileValue.name, `(${inBytes} B → ${outFile.size} B in ${ms} ms)`);
-		return { out: outFile, metaSignal: true };
+		return { out: outFile, metaSignal: true, originalSize: inBytes };
 	} catch (e) {
 		vxWarn("compress failed; using original:", fileValue.name, e);
-		return { out: fileValue, metaSignal: false };
+		return { out: fileValue, metaSignal: false, originalSize: 0 };
 	}
 }
 
@@ -3439,13 +5901,17 @@ async function compressOneVoxelImageIfNeeded(fileValue, key, compressOptions, sq
  * @param {FormData} newFd
  * @param {boolean} metaSignal
  * @param {object | null} squeeze
+ * @param {number} [originalSize] Pre-compress bytes when exactly one image was squeezed.
  */
-function appendVoxelClientCompressedMarkers(newFd, metaSignal, squeeze) {
+function appendVoxelClientCompressedMarkers(newFd, metaSignal, squeeze, originalSize = 0) {
 	if (!metaSignal || !squeeze?.nonce) {
 		return;
 	}
 	newFd.append("_squeeze_voxel_client", "1");
 	newFd.append("_squeeze_voxel_nonce", String(squeeze.nonce));
+	if (originalSize > 0) {
+		newFd.append("_squeeze_original_size", String(originalSize));
+	}
 }
 
 function logFormDataDiag(reqUrl, entries) {
@@ -3705,13 +6171,17 @@ function scheduleJQueryProbe(urlTest) {
 async function buildFormDataFromSnapshot(entries, compressOptions, squeeze) {
 	const newFd = new FormData();
 	let metaSignal = false;
+	let compressedCount = 0;
+	let singleOriginalSize = 0;
 
 	for (const [key, value] of entries) {
 		if (/^files\[/i.test(key) && isImageFileLike(value)) {
 			const fileValue = ensureFileForCompression(/** @type {File | Blob} */ (value), key);
-			const { out, metaSignal: m } = await compressOneVoxelImageIfNeeded(fileValue, key, compressOptions, squeeze);
+			const { out, metaSignal: m, originalSize } = await compressOneVoxelImageIfNeeded(fileValue, key, compressOptions, squeeze);
 			if (m) {
 				metaSignal = true;
+				compressedCount += 1;
+				singleOriginalSize = originalSize;
 			}
 			newFd.append(key, out, out.name);
 			continue;
@@ -3725,7 +6195,9 @@ async function buildFormDataFromSnapshot(entries, compressOptions, squeeze) {
 		}
 	}
 
-	appendVoxelClientCompressedMarkers(newFd, metaSignal, squeeze);
+	// Only attach original size when a single image was squeezed (one attachment per request).
+	const originalSizeForMeta = compressedCount === 1 ? singleOriginalSize : 0;
+	appendVoxelClientCompressedMarkers(newFd, metaSignal, squeeze, originalSizeForMeta);
 	return newFd;
 }
 
@@ -4329,6 +6801,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _handlers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./handlers.js */ "./assets/js/handlers.js");
 /* harmony import */ var _voxel_upload_compat_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./voxel-upload-compat.js */ "./assets/js/voxel-upload-compat.js");
 /* harmony import */ var _instant_images_upload_compat_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./instant-images-upload-compat.js */ "./assets/js/instant-images-upload-compat.js");
+/* harmony import */ var _cf7_upload_compat_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./cf7-upload-compat.js */ "./assets/js/cf7-upload-compat.js");
+/* harmony import */ var _gf_upload_compat_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./gf-upload-compat.js */ "./assets/js/gf-upload-compat.js");
+
+
 
 
 
@@ -4347,6 +6823,8 @@ window.Squeeze = window.Squeeze || new _squeeze_js__WEBPACK_IMPORTED_MODULE_1__[
 
 (0,_voxel_upload_compat_js__WEBPACK_IMPORTED_MODULE_4__.initVoxelUploadCompat)(compressOptions);
 (0,_instant_images_upload_compat_js__WEBPACK_IMPORTED_MODULE_5__.initInstantImagesUploadCompat)(compressOptions);
+(0,_cf7_upload_compat_js__WEBPACK_IMPORTED_MODULE_6__.initCf7UploadCompat)(compressOptions);
+
 
 document.addEventListener("click", (event) => {
   _handlers_js__WEBPACK_IMPORTED_MODULE_3__.handleButtonsClick(event);
@@ -4381,6 +6859,7 @@ _helpers_js__WEBPACK_IMPORTED_MODULE_2__.elements.bulkPathBtn?.addEventListener(
   if (_helpers_js__WEBPACK_IMPORTED_MODULE_2__.cachedMediaData.process === 'path' && _helpers_js__WEBPACK_IMPORTED_MODULE_2__.cachedMediaData.mediaIDs.length > 0) {
     bulkPathData = _helpers_js__WEBPACK_IMPORTED_MODULE_2__.cachedMediaData.mediaIDs;
   } else {
+    _helpers_js__WEBPACK_IMPORTED_MODULE_2__.resetRunSavings();
     const pathData = await Squeeze.getAttachmentsByPath(path);
 
     if (pathData.success) {
@@ -4410,7 +6889,7 @@ _helpers_js__WEBPACK_IMPORTED_MODULE_2__.elements.bulkPathBtn?.addEventListener(
         _helpers_js__WEBPACK_IMPORTED_MODULE_2__.logMessage(__('All images have been processed!', 'squeeze'), { isEnd: true });
         _helpers_js__WEBPACK_IMPORTED_MODULE_2__.showPopupMessage( {
           title: __('Squeezing complete', 'squeeze'),
-          message: __('All images have been processed!', 'squeeze'),
+          message: _helpers_js__WEBPACK_IMPORTED_MODULE_2__.formatBulkCompletionMessage(),
           type: 'success'
         });
         window.onbeforeunload = null;
@@ -4544,9 +7023,11 @@ window.wp.domReady(()=>{
       // Now add *your* logic
       if (uploader) {
 
-        uploader.bind('BeforeUpload', async function (up, pluploadFile) {
+        _handlers_js__WEBPACK_IMPORTED_MODULE_3__.bindUploadHooks(uploader, compressOptions);
+
+        uploader.bind('BeforeUpload', function (up, pluploadFile) {
           //console.time('Compressing image:', pluploadFile.name);
-          _handlers_js__WEBPACK_IMPORTED_MODULE_3__.handleCompressBeforeUpload(up, pluploadFile, compressOptions);
+          return _handlers_js__WEBPACK_IMPORTED_MODULE_3__.handleCompressBeforeUpload(up, pluploadFile, compressOptions);
         });
 
         uploader.bind('FileUploaded', async function (up, file, response) {
@@ -4596,7 +7077,7 @@ const createTogglePreview = (attachmentId, isPlaceholder = false) => {
 
   if (isPlaceholder) {
     toggleInput.disabled = true;
-    toggleLabel.innerHTML += ' ' + sprintf(__('(<a href="%s" target="_blank">premium only</a>)', 'squeeze'), squeezeOptions.upgradeUrl);
+    toggleWrap.classList.add('is-placeholder');
   }
 
   toggleWrap.appendChild(toggleIcon);
@@ -4605,6 +7086,143 @@ const createTogglePreview = (attachmentId, isPlaceholder = false) => {
 
   return toggleWrap;
 }
+
+/**
+ * Checkout URL for the media-modal compare upsell.
+ * @returns {string}
+ */
+const getCompareCheckoutUrl = () => {
+  return squeezeOptions.checkoutUrls?.compare_media_modal
+    || squeezeOptions.checkoutUrl
+    || squeezeOptions.upgradeUrl;
+};
+
+/**
+ * Static before/after teaser shown to free users instead of live comparison.
+ * @param {string} imageUrl
+ * @returns {HTMLElement}
+ */
+const createCompareTeaser = (imageUrl) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'squeeze-compare-teaser';
+
+  const stage = document.createElement('div');
+  stage.className = 'squeeze-compare-teaser__stage';
+  if (imageUrl) {
+    stage.style.setProperty('--squeeze-teaser-image', `url("${String(imageUrl).replace(/"/g, '\\"')}")`);
+  }
+
+  const before = document.createElement('div');
+  before.className = 'squeeze-compare-teaser__before';
+  before.setAttribute('aria-hidden', 'true');
+  const after = document.createElement('div');
+  after.className = 'squeeze-compare-teaser__after';
+  after.setAttribute('aria-hidden', 'true');
+  const divider = document.createElement('div');
+  divider.className = 'squeeze-compare-teaser__divider';
+  divider.setAttribute('aria-hidden', 'true');
+
+  const labelBefore = document.createElement('span');
+  labelBefore.className = 'squeeze-compare-teaser__label squeeze-compare-teaser__label--before';
+  labelBefore.textContent = __('Before', 'squeeze');
+  const labelAfter = document.createElement('span');
+  labelAfter.className = 'squeeze-compare-teaser__label squeeze-compare-teaser__label--after';
+  labelAfter.textContent = __('After', 'squeeze');
+
+  stage.append(before, after, divider, labelBefore, labelAfter);
+
+  const text = document.createElement('p');
+  text.className = 'squeeze-compare-teaser__text';
+  text.textContent = __('Slide between the original and squeezed image in the Media Library before you commit.', 'squeeze');
+
+  const cta = document.createElement('a');
+  cta.className = 'button button-primary';
+  cta.href = getCompareCheckoutUrl();
+  cta.target = '_blank';
+  cta.rel = 'noopener noreferrer';
+  cta.textContent = __('Unlock Image Comparison', 'squeeze');
+
+  wrap.append(stage, text, cta);
+  return wrap;
+};
+
+/**
+ * Free-only: insert a before/after compare teaser into the media modal.
+ * @param {Object} detailsView wp.media view
+ */
+const addCompareTeaserToMediaModal = (detailsView) => {
+  if (squeezeOptions.isPremium) return;
+  if (!detailsView?.el || detailsView.el.querySelector('.squeeze-compare-teaser')) return;
+
+  const mime = detailsView.model?.get?.('mime') || '';
+  const [mimeType, mimeSubType] = mime.split('/');
+  if (!_helpers_js__WEBPACK_IMPORTED_MODULE_2__.isSupportedImageFormat(mimeType, mimeSubType)) return;
+
+  const editButton = detailsView.el.querySelector('.attachment-actions .edit-attachment');
+  const mediaViewElement = detailsView.el.querySelector('.attachment-media-view .thumbnail');
+  if (!editButton || !mediaViewElement) return;
+
+  const attachmentId = detailsView.model.get('id');
+  const attachmentURL = detailsView.model.get('url');
+  const toggleWrap = createTogglePreview(attachmentId, true);
+  editButton.insertAdjacentElement('afterend', toggleWrap);
+
+  const teaser = createCompareTeaser(attachmentURL);
+  teaser.hidden = true;
+  mediaViewElement.insertAdjacentElement('afterend', teaser);
+
+  const input = toggleWrap.querySelector('input');
+  input.disabled = false;
+  input.addEventListener('change', (event) => {
+    teaser.hidden = !event.target.checked;
+  });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (squeezeOptions.isPremium || typeof wp === 'undefined' || !wp.media) {
+    return;
+  }
+
+  const observeCompareTeaser = (root) => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) return;
+          let attachmentDetails = null;
+          if (node.matches?.('.attachment-details')) {
+            attachmentDetails = node;
+          } else if (node.querySelector) {
+            attachmentDetails = node.querySelector('.attachment-details');
+          }
+          if (!attachmentDetails) return;
+
+          const mediaFrame = wp.media.frame;
+          if (mediaFrame?.content?.get()) {
+            const currentView = mediaFrame.content.get();
+            if (currentView?.el?.contains(attachmentDetails)) {
+              requestAnimationFrame(() => addCompareTeaserToMediaModal(currentView));
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(root, { childList: true, subtree: true });
+  };
+
+  jQuery(document).on('click', '.media-button, .insert-media', () => {
+    setTimeout(() => {
+      const mediaModal = document.querySelector('.media-modal');
+      if (mediaModal) {
+        observeCompareTeaser(mediaModal);
+      }
+    }, 100);
+  });
+
+  if (document.querySelector('.wp-admin.upload-php')) {
+    observeCompareTeaser(document.body);
+  }
+});
 
 
 })();

@@ -1,36 +1,38 @@
-=== Squeeze – Image Optimization & Compression, WEBP Conversion ===
+=== Squeeze – Browser-Based Image Compression & WebP Converter (No API, No Limits) ===
 Contributors: barb0ss
 Tags: image compression, webp converter, image optimization, compress images, optimize images
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.17
+Stable tag: 1.8.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Compress images in WordPress & convert to WebP — no API key, no quotas, no cloud. Unlimited local image optimizer; private browser-side compression.
+Browser-based image compression & WebP—no API keys or quotas. Works on any hosting.
 
 == Description ==
-Unlimited image compression. No API keys. No quotas. Squeeze compresses images and converts them to WebP locally in your browser—no monthly caps, no third-party uploads.
+Image compression that runs in your browser: works on any hosting, better quality, no external servers, and compresses before upload.
 
-Unlike cloud-based plugins, Squeeze:
+Squeeze uses browser-side codecs (the same family as Squoosh.app)—not Imagick on your server and not a remote API. That means it works on weak shared hosting, your images never leave for third-party optimization servers (privacy- and GDPR-friendly), and files can be squeezed before they hit the Media Library. Convert to WebP, bulk-optimize existing images, and tune per-format quality—with no API keys and no monthly quotas.
 
-♾️ **No compression limits** — squeeze your entire Media Library, not just the first 100–500 images per month.
-☁️ **No third-party servers** — images never leave your site; processing happens locally in the browser (ideal for GDPR-sensitive and membership sites).
+Why Squeeze:
+
+🖥️ **Works on any hosting** — compression runs in the browser, so you do not need Imagick, binaries, or a powerful server.
+🔒 **No external servers** — image bytes stay on your site; nothing is uploaded to a cloud optimizer.
+⬆️ **Compress before upload** — shrink images in Gutenberg, GenerateBlocks, Instant Images imports, and the Voxel theme before (or right after) files hit the Media Library (Elementor on-upload squeeze is available in [Premium](https://pluginarium.com/squeeze/#premium)).
+📝 **Form uploads** — compress visitor photos in Contact Form 7 file fields before submit (Gravity Forms single- and multi-file fields in [Premium](https://pluginarium.com/squeeze/#premium)).
 ⚡ **Direct WebP conversion** — convert JPG/PNG to WebP and replace the original file on disk (no duplicate copies cluttering storage).
-🖼️ **Optimize on upload** — compress in Gutenberg, GenerateBlocks, Instant Images imports, and the Voxel theme before (or right after) files hit the Media Library (Elementor on-upload squeeze is available in [Premium](https://pluginarium.com/squeeze/#premium)).
+♾️ **No compression quotas** — squeeze your entire Media Library; the plugin does not impose a monthly image cap.
+🛡️ **Safer huge uploads** — soft megapixel limits reduce browser OOM; very large uploads skip after-upload thumbnail re-squeeze and stay marked as client-compressed.
 
 The result: smaller files, faster page loads, and lower hosting storage—without SaaS fees or API keys.
 
 [Squeeze official website](https://pluginarium.com/squeeze/) | [Plugin documentation](https://pluginarium.com/squeeze/squeeze-documentation/)
 
-== 🌟 New in 1.7.x ==
-* **Direct WebP conversion:** Convert JPG/PNG to WebP and replace originals—save storage without duplicate files.
-* **Pre-upload compression:** Shrink images in the browser before upload (Gutenberg, GenerateBlocks, Voxel create-post and gallery fields).
-* **Three WebP delivery modes:** Direct WebP, separate squeeze-webp folder with URL rewrite, or server-side delivery via .htaccess.
-* **Voxel theme support:** Pre-upload squeeze on multipart AJAX uploads in create-post and file/gallery fields.
-* **WP Offload Media support:** Compress CDN-hosted images (including when local files are removed), auto-detect provider/CDN URLs, and sync compressed/Direct WebP files to S3, GCS, DigitalOcean Spaces, and similar—**Direct WebP** recommended (sidecar WebP modes are not compatible with Offload).
-* **WordPress 7.1:** While **Squeeze on upload** is on, core’s built-in browser image processing is turned off so Gutenberg uploads keep Squeeze quality, Direct WebP, and backups. Turn on-upload off to use WordPress HEIC conversion and HDR thumbnails.
+== 🌟 New in 1.8 ==
+* **Squeeze form uploads:** compress images in the visitor’s browser on front-end forms — Contact Form 7 (free) and Gravity Forms single- / multi-file fields (Premium).
+* **Safer huge uploads:** soft megapixel limits, skip after-upload thumbnail re-squeeze on oversized files, optional full-size WebP sidecar, and clearer client-compressed markers so precompressed uploads are recognized on attach.
+* **Bulk savings:** site total on Media → Squeeze Bulk Tools (tracked since 1.8.0) and a completion summary after each run.
 
 == ✨ Key Features ==
 * **Faster pages:** Smaller images improve load time, Core Web Vitals, and mobile bandwidth use.
@@ -38,11 +40,12 @@ The result: smaller files, faster page loads, and lower hosting storage—withou
 * **Client-side squeezing:** Compress in the browser; nothing is uploaded to external optimization servers.
 * **Upload optimization:** Compress on the fly during upload so optimized files land in your Media Library.
 * **Gutenberg & GenerateBlocks:** Squeeze images as you add them in the block editor.
+* **Contact Form 7:** Compress visitor photos in CF7 file fields before submit (enable **Squeeze form uploads**).
 * **Voxel theme:** Compress before upload on Voxel create-post and file/gallery fields.
 * **Bulk compression:** Compress hundreds of Media Library images in one run (pause/resume supported).
 * **Custom directory squeeze:** Pick any folder under your site root and optimize all images inside it.
 * **Exclusions:** Skip images by URL or filename pattern (one per line).
-* **Fine-tuned quality:** Per-format tabs for JPEG, PNG, WebP, and AVIF (MozJPEG, OxiPNG-style PNG, and more).
+* **Fine-tuned quality:** Per-format tabs for JPEG, PNG, WebP, and AVIF (MozJPEG and more).
 * **Backup option:** Keep a `.bak` copy to restore the original after squeezing.
 * **Formats:** JPEG, PNG, WebP, and AVIF.
 
@@ -51,6 +54,7 @@ The result: smaller files, faster page loads, and lower hosting storage—withou
 * **Resize originals** to max width/height before squeeze.
 * **Bulk squeeze from a page** — all images used on one post or page.
 * **Elementor integration** — squeeze on upload while editing in Elementor.
+* **Gravity Forms uploads** — compress visitor photos on single- and multi-file fields before they hit your server.
 * **CDN URL** — map CDN image URLs to local files for all WebP delivery modes.
 * **Priority support & updates**
 
@@ -71,7 +75,7 @@ Open the Media Library, run Bulk Squeeze, or upload a new image — Squeeze runs
 == Frequently Asked Questions ==
 = How does the plugin work? =
 
-Squeeze compresses images in your browser using Web Workers and open-source codecs (MozJPEG for JPEG, Browser Image Compression for PNG, WebP and AVIF encoders). You can squeeze from the Media Library, bulk tools, custom folders, or during upload in supported editors.
+Squeeze compresses images in your browser using Web Workers and open-source codecs (MozJPEG for JPEG, Browser Image Compression for PNG, WebP and AVIF encoders). You can squeeze from the Media Library, bulk tools, custom folders, during upload in supported editors, or on front-end form file fields (Contact Form 7; Gravity Forms in Premium).
 
 = Do I need an API key or cloud account? =
 
@@ -83,11 +87,11 @@ No. Squeeze does not require ShortPixel, Imagify, or any third-party API. There 
 * **Privacy:** files stay on your server; compression runs in the admin browser.
 * **Direct WebP** can replace originals instead of keeping parallel JPG + WebP copies.
 * **No recurring API cost** for compression itself.
-* **Niche integrations:** Voxel pre-upload, Gutenberg/GenerateBlocks on upload; Elementor in Premium.
+* **Niche integrations:** Voxel pre-upload, Gutenberg/GenerateBlocks on upload, Contact Form 7 form uploads; Elementor and Gravity Forms in Premium.
 
 = How fast is compression? =
 
-Speed depends on your computer and image size. Large PNGs can take longer; increase **Squeeze timeout** under Settings → Squeeze → Basic Settings if needed.
+Speed depends on your computer and image size. Large PNGs can take longer; increase **Squeeze timeout** under Settings → Squeeze → Basic Settings if needed. Very large images may hit a soft megapixel limit for browser safety; Squeeze can still upload a squeezed original and skip the extra after-upload thumbnail pass.
 
 = Are images sent to an external server? =
 
@@ -137,7 +141,19 @@ Yes (free). Pre-upload compression runs on Voxel create-post and file/gallery AJ
 
 = Does Squeeze work with Elementor? =
 
-On-upload squeeze in Elementor is a **Premium** feature. Free version supports Gutenberg, GenerateBlocks, and Voxel.
+On-upload squeeze in Elementor is a **Premium** feature. The free version supports Gutenberg, GenerateBlocks, Voxel, and Contact Form 7 form uploads (when **Squeeze form uploads** is enabled).
+
+= Does Squeeze work with Contact Form 7? =
+
+Yes (free). Enable **Squeeze form uploads** under Settings → Squeeze → Basic Settings. Images picked in CF7 file fields are compressed in the visitor’s browser before submit. Keeps the original format (Direct WebP does not apply to form uploads).
+
+= Does Squeeze work with Gravity Forms? =
+
+Yes, in **Premium**, when **Squeeze form uploads** is enabled. Single-file and multi-file (Plupload) fields are supported. Free Squeeze covers Contact Form 7 form uploads, not Gravity Forms.
+
+= What is the difference between Squeeze on upload and Squeeze form uploads? =
+
+**Squeeze on upload** covers Media Library / editor / theme pipelines (Gutenberg, GenerateBlocks, Instant Images, Voxel; Elementor in Premium). **Squeeze form uploads** covers front-end form file fields (Contact Form 7; Gravity Forms in Premium). They are separate checkboxes.
 
 = Does Squeeze work with GenerateBlocks? =
 
@@ -207,7 +223,7 @@ Yes, if you want **unlimited local compression** without API keys or per-month i
 
 = How does Squeeze compare to EWWW Image Optimizer? =
 
-Both can optimize on your server. Squeeze focuses on **client-side codecs in the browser** (Squoosh-family encoders), **Direct WebP replacement** on disk, and **pre-upload squeeze** in Gutenberg, GenerateBlocks, and Voxel. EWWW often relies on server-side tools or paid cloud tiers. Choose Squeeze when you want no external compression queue and strong WebP storage savings.
+Both can optimize on your server. Squeeze focuses on **client-side codecs in the browser** (Squoosh-family encoders), **Direct WebP replacement** on disk, **pre-upload squeeze** in Gutenberg, GenerateBlocks, and Voxel, and **form uploads** (Contact Form 7; Gravity Forms in Premium). EWWW often relies on server-side tools or paid cloud tiers. Choose Squeeze when you want no external compression queue and strong WebP storage savings.
 
 = How do I compress my first image after installing? =
 
@@ -233,6 +249,16 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 
 [https://pluginarium.com/squeeze/squeeze-documentation/](https://pluginarium.com/squeeze/squeeze-documentation/)
 
+= How can I help translate Squeeze? =
+
+Squeeze is translated on [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/squeeze/) (WordPress Polyglots). German, Spanish, and French packs ship with the plugin; community suggestions and reviews there keep them current and unlock official language packs.
+
+* [German (de_DE)](https://translate.wordpress.org/projects/wp-plugins/squeeze/stable/de/default/)
+* [Spanish (es_ES)](https://translate.wordpress.org/projects/wp-plugins/squeeze/stable/es/default/)
+* [French (fr_FR)](https://translate.wordpress.org/projects/wp-plugins/squeeze/stable/fr/default/)
+
+New to translating WordPress? See the [Polyglots how-to](https://make.wordpress.org/polyglots/handbook/translating/how-to-translate/).
+
 == Screenshots ==
 1. Compressed image with Squeeze Plugin
 2. Squeeze's Bulk Compression Page
@@ -251,6 +277,14 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 15. Bulk Squeeze from a page (Premium feature)
 
 == Changelog ==
+= 1.8.0 =
+* Squeeze form uploads: compress visitor images in the browser on Contact Form 7 file fields (free) and Gravity Forms single-/multi-file fields (Premium); separate Basic Settings checkbox from Squeeze on upload
+* Soft megapixel limits and single-thread AVIF on low-RAM devices to reduce browser OutOfMemory on mobile / shared hosting
+* Huge uploads: skip after-upload thumbnail re-squeeze; mark attachment as client-compressed; optionally write the full-size WebP sidecar when sidecar mode is on
+* Plupload multipart markers (`_squeeze_client`) so precompressed uploads are recognized on `add_attachment`
+* Console timing summary table at the end of Bulk / upload runs (`[Squeeze timing]`)
+* Bulk savings totals on Media → Squeeze Bulk Tools (tracked since 1.8.0) and a completion summary after each run
+* Admin UX: Squeeze Bulk Tools naming, clearer savings messaging, Upgrade UTM links; DE/ES/FR translations
 = 1.7.17 =
 * Fix WordPress.org automated review block: emit WebAssembly codecs as separate `.wasm` files instead of inlining them as multi-megabyte JavaScript lines
 = 1.7.16 =
@@ -403,6 +437,8 @@ Yes. Image bytes are not sent to Squeeze’s servers for compression—processin
 * First release.
 
 == Upgrade Notice ==
+= 1.8.0 =
+* Form uploads (Contact Form 7 free; Gravity Forms Premium), safer huge uploads, and Bulk savings totals on Squeeze Bulk Tools.
 = 1.7.17 =
 * Unblocks WordPress.org updates by shipping WebAssembly codecs as separate `.wasm` files (no oversized inlined JS lines).
 = 1.7.16 =
